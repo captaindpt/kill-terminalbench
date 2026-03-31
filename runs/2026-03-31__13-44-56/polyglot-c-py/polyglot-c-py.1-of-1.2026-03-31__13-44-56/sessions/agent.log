@@ -1,0 +1,76 @@
+[?2004hroot@3bb8fc24aa24:/app# asciinema rec --stdin /logs/agent.cast
+[?2004l[0;32masciinema: recording asciicast to /logs/agent.cast[0m
+[0;32masciinema: press <ctrl-d> or type "exit" when you're done[0m
+[?2004hroot@3bb8fc24aa24:/app# clear
+[?2004l[H[J[3J[?2004hroot@3bb8fc24aa24:/app# mkdir -p /app/polyglot && python3 --version && gcc --version | head -1; tmux wait -S done
+[?2004lPython 3.12.3
+gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0
+[?2004hroot@3bb8fc24aa24:/app# cat > /app/polyglot/main.py.c << 'POLYGLOT_EOF'
+[?2004l[?2004h> #if 0
+[?2004l[?2004h> import sys
+[?2004l[?2004h> def fib(n):
+[?2004l[?2004h>     a, b = 0, 1
+[?2004l[?2004h>     for _ in range(n):
+[?2004l[?2004h>         a, b = b, a + b
+[?2004l[?2004h>     return a
+[?2004l[?2004h> print(fib(int(sys.argv[1])))
+[?2004l[?2004h> import os; os._exit(0)
+[?2004l[?2004h> #endif
+[?2004l[?2004h> 
+[?2004l[?2004h> #include <stdio.h>
+[?2004l[?2004h> #include <stdlib.h>
+[?2004l[?2004h> 
+[?2004l[?2004h> int main(int argc, char *argv[]) {
+[?2004l[?2004h>     long long n = atoll(argv[1]);
+[?2004l[?2004h>     long long a = 0, b = 1, temp;
+[?2004l[?2004h>     for (long long i = 0; i < n; i++) {
+[?2004l[?2004h>         temp = a + b;
+[?2004l[?2004h>         a = b;
+[?2004l[?2004h>         b = temp;
+[?2004l[?2004h>     }
+[?2004l[?2004h>     printf("%lld\n", a);
+[?2004l[?2004h>     return 0;
+[?2004l[?2004h> }
+[?2004l[?2004h> POLYGLOT_EOF; tmux wait -S done
+[?2004l[?2004h> echo ""; tmux wait -S done
+[?2004l[?2004h> printf 'POLYGLOT_EOF\n'; tmux wait -S done
+[?2004l[?2004h> tmux send-keys -t 0 'POLYGLOT_EOF' Enter; tmux wait -S done
+[?2004l[?2004h> tmux send-keys -t 0 C-c; tmux wait -S done
+[?2004l[?2004h> tmux send-keys -t 0 C-c ; sleep 1; tmux send-keys -t 0 C-c ; sleep 1; tmux send-keys -t 0 '' Enter; sleep 1; tmux wait -S done
+[?2004l[?2004h> tmux send-keys -t 0 C-c C-c C-c; tmux wait -S done
+[?2004l[?2004h> kill -9 $(tmux list-panes -t 0 -F '#{pane_pid}') 2>/dev/null; sleep 2; echo "done"; tmux wait -S done
+[?2004l[?2004h> python3 -c "
+[?2004l[?2004h> content = '''#if 0
+[?2004l[?2004h> import sys
+[?2004l[?2004h> def fib(n):
+[?2004l[?2004h>     a, b = 0, 1
+[?2004l[?2004h>     for _ in range(n):
+[?2004l[?2004h>         a, b = b, a + b
+[?2004l[?2004h>     return a
+[?2004l[?2004h> print(fib(int(sys.argv[1])))
+[?2004l[?2004h> import os; os._exit(0)
+[?2004l[?2004h> #endif
+[?2004l[?2004h> 
+[?2004l[?2004h> #include <stdio.h>
+[?2004l[?2004h> #include <stdlib.h>
+[?2004l[?2004h> 
+[?2004l[?2004h> int main(int argc, char *argv[]) {
+[?2004l[?2004h>     long long n = atoll(argv[1]);
+[?2004l[?2004h>     long long a = 0, b = 1, temp;
+[?2004l[?2004h>     for (long long i = 0; i < n; i++) {
+[?2004l[?2004h>         temp = a + b;
+[?2004l[?2004h>         a = b;
+[?2004l[?2004h>         b = temp;
+[?2004l[?2004h>     }
+[?2004l[?2004h>     printf(\"%lld\\\\n\", a);
+[?2004l[?2004h>     return 0;
+[?2004l[?2004h> }
+[?2004l[?2004h> '''
+[?2004l[?2004h> with open('/app/polyglot/main.py.c', 'w') as f:
+[?2004l[?2004h>     f.write(content)
+[?2004l[?2004h> print('File written')
+[?2004l[?2004h> "; tmux wait -S done
+[?2004l[?2004h> [?2004l
+bash: warning: here-document at line 3 delimited by end-of-file (wanted `POLYGLOT_EOF')
+[?2004hroot@3bb8fc24aa24:/app# pkill -9 -f "cat > /app/polyglot"; tmux wait -S done
+[?2004l[?2004hroot@3bb8fc24aa24:/app# 

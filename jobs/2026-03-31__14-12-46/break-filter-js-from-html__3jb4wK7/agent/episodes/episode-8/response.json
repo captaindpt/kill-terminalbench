@@ -1,0 +1,46 @@
+{
+  "id": "gen-1774980950-DadkFnJGo27FLF1ZUMqx",
+  "container": null,
+  "content": [
+    {
+      "citations": null,
+      "text": "Very interesting! Look at this one:\n\n`<style><!--</style><script>alert(1)//--></script>`\n\nOutput: `<style><!--</style>`\n\nBS4 thinks the `<script>alert(1)//--></script>` is part of the HTML comment inside the style tag. The `<!--` inside `<style>` starts a comment that BS4 thinks encompasses everything up to `-->`. So BS4 sees it all as style content and the script tag doesn't get decomposed (but it also gets swallowed into the style).\n\nWait, but the output is `<style><!--</style>` - it ate the script content entirely. That's BS4's reconstruction.\n\nLet me look at the SVG style one more carefully:",
+      "type": "text"
+    },
+    {
+      "id": "toolu_bdrk_01R2L5czSo9omMGvWVE6M6Gn",
+      "caller": {
+        "type": "direct"
+      },
+      "input": {
+        "command": "python3 -c \"\nfrom bs4 import BeautifulSoup\n\n# This one is interesting: <svg><style><script>alert(1)</style></svg>\n# Output: <svg><style><script>alert(1)</style></svg>\n# BS4 treated <script>alert(1) as text content of <style>\n# But what would a browser do?\n\n# In SVG context, <style> is a regular element, not a raw text element\n# So in a browser's SVG parser, <script> inside <style> might be treated as a real script element\n\nhtml = '<svg><style><script>alert(1)</style></svg>'\nsoup = BeautifulSoup(html, 'html.parser')\nprint('Tags:', [tag.name for tag in soup.find_all(True)])\nfor tag in soup.find_all(True):\n    print(f'  {tag.name}: children={list(tag.children)}')\n\"\n"
+      },
+      "name": "bash",
+      "type": "tool_use"
+    }
+  ],
+  "model": "anthropic/claude-4.6-opus-20260205",
+  "role": "assistant",
+  "stop_reason": "tool_use",
+  "stop_sequence": null,
+  "type": "message",
+  "usage": {
+    "cache_creation": null,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "inference_geo": null,
+    "input_tokens": 6581,
+    "output_tokens": 445,
+    "server_tool_use": null,
+    "service_tier": null,
+    "speed": "standard",
+    "cost": 0.04403,
+    "is_byok": false,
+    "cost_details": {
+      "upstream_inference_cost": 0.04403,
+      "upstream_inference_prompt_cost": 0.032905,
+      "upstream_inference_completions_cost": 0.011125
+    }
+  },
+  "provider": "Amazon Bedrock"
+}

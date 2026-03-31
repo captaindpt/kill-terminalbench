@@ -1,0 +1,316 @@
+root@3c56e8c07a20:/app# which git nginx sshd openssl && cat /etc/os-release; tmux wait -S done
+/usr/bin/git
+/usr/sbin/nginx
+/usr/sbin/sshd
+/usr/bin/openssl
+PRETTY_NAME="Ubuntu 24.04.2 LTS"
+NAME="Ubuntu"
+VERSION_ID="24.04"
+VERSION="24.04.2 LTS (Noble Numbat)"
+VERSION_CODENAME=noble
+ID=ubuntu
+ID_LIKE=debian
+HOME_URL="https://www.ubuntu.com/"
+SUPPORT_URL="https://help.ubuntu.com/"
+BUG_REPORT_URL="https://bugs.launchpad.net/ubuntu/"
+PRIVACY_POLICY_URL="https://www.ubuntu.com/legal/terms-and-policies/privacy-policy"
+UBUNTU_CODENAME=noble
+LOGO=ubuntu-logo
+root@3c56e8c07a20:/app# ps aux | head -20; tmux wait -S done
+USER         PID %CPU %MEM    VSZ   RSS TTY      STAT START   TIME COMMAND
+root           1  0.0  0.0   2380  1588 ?        Ss   18:16   0:00 sh -c sleep infinity
+root           7  0.0  0.0   2268  1220 ?        S    18:16   0:00 sleep infinity
+root          35  0.0  0.2   9480  4064 ?        Ss   18:16   0:00 tmux new-session -x 160 -y 40 -d -s agent ; set-option -t agent history-limit 50000 ; pipe-pa
+ne -t agent cat > /logs/agent.log
+root          36  0.0  0.1   4296  3656 pts/0    Ss   18:16   0:00 -bash
+root          38  0.0  0.0   2380  1584 ?        S    18:16   0:00 sh -c cat > /logs/agent.log
+root          43  0.0  0.0   2412  1220 ?        S    18:16   0:00 cat
+root          54  0.5  1.0 102964 21664 pts/0    Sl+  18:16   0:00 /usr/bin/python3 /usr/bin/asciinema rec --stdin /logs/agent.cast
+root          55  0.0  0.7  29140 15992 pts/0    S+   18:16   0:00 /usr/bin/python3 /usr/bin/asciinema rec --stdin /logs/agent.cast
+root          56  0.0  0.8  29152 16552 pts/0    S+   18:16   0:00 /usr/bin/python3 /usr/bin/asciinema rec --stdin /logs/agent.cast
+root          57  0.0  0.0   2380  1572 pts/1    Ss   18:16   0:00 sh -c /bin/bash
+root          58  0.0  0.1   4680  3812 pts/1    S    18:16   0:00 /bin/bash
+root         117  0.0  0.1   8012  3812 pts/1    R+   18:16   0:00 ps aux
+root         118  0.0  0.0   2664  1588 pts/1    S+   18:16   0:00 head -20
+root@3c56e8c07a20:/app# dpkg -l | grep -i openssh-server 2>/dev/null; ls /etc/ssh/sshd_config 2>/dev/null; tmux wait -S done
+ii  openssh-server                  1:9.6p1-3ubuntu13.15              arm64        secure shell (SSH) server, for secure access from remote machines
+/etc/ssh/sshd_config
+root@3c56e8c07a20:/app# # Step 1: Create the git user with password "password"
+root@3c56e8c07a20:/app# id git 2>/dev/null || useradd -m -s /usr/bin/git-shell git
+root@3c56e8c07a20:/app# echo "git:password" | chpasswd
+root@3c56e8c07a20:/app# echo "Git user created"
+Git user created
+root@3c56e8c07a20:/app#
+root@3c56e8c07a20:/app# # Create the .ssh directory for the git user
+root@3c56e8c07a20:/app# mkdir -p /home/git/.ssh
+root@3c56e8c07a20:/app# chown -R git:git /home/git/.ssh
+root@3c56e8c07a20:/app# chmod 700 /home/git/.ssh; tmux wait -S done
+root@3c56e8c07a20:/app# # Step 2: Create the bare git repository
+root@3c56e8c07a20:/app# mkdir -p /git
+root@3c56e8c07a20:/app# git init --bare /git/project
+hint: Using 'master' as the name for the initial branch. This default branch name
+hint: is subject to change. To configure the initial branch name to use in all
+hint: of your new repositories, which will suppress this warning, call:
+hint:
+hint:   git config --global init.defaultBranch <name>
+hint:
+hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+hint: 'development'. The just-created branch can be renamed via this command:
+hint:
+hint:   git branch -m <name>
+Initialized empty Git repository in /git/project/
+root@3c56e8c07a20:/app# chown -R git:git /git
+root@3c56e8c07a20:/app# echo "Bare repo created"; tmux wait -S done
+Bare repo created
+root@3c56e8c07a20:/app# # Step 3: Create deployment directories
+root@3c56e8c07a20:/app# mkdir -p /var/www/main
+root@3c56e8c07a20:/app# mkdir -p /var/www/dev
+root@3c56e8c07a20:/app# chown -R www-data:www-data /var/www/main /var/www/dev
+root@3c56e8c07a20:/app# echo "Deployment dirs created"; tmux wait -S done
+Deployment dirs created
+root@3c56e8c07a20:/app# # Step 4: Create the post-receive hook
+root@3c56e8c07a20:/app# cat > /git/project/hooks/post-receive << 'HOOK'
+> #!/bin/bash
+>
+> while read oldrev newrev refname; do
+>     branch=$(echo "$refname" | sed 's|refs/heads/||')
+>
+>     if [ "$branch" = "main" ]; then
+>         GIT_WORK_TREE=/var/www/main git checkout -f main
+>     fi
+>
+>     if [ "$branch" = "dev" ]; then
+>         GIT_WORK_TREE=/var/www/dev git checkout -f dev
+>     fi
+> done
+> HOOK
+root@3c56e8c07a20:/app#
+root@3c56e8c07a20:/app# chmod +x /git/project/hooks/post-receive
+root@3c56e8c07a20:/app# chown git:git /git/project/hooks/post-receive
+root@3c56e8c07a20:/app# echo "Post-receive hook created"; tmux wait -S done
+Post-receive hook created
+root@3c56e8c07a20:/app# # Make sure git user can write to deployment directories
+root@3c56e8c07a20:/app# chown -R git:git /var/www/main /var/www/dev
+root@3c56e8c07a20:/app# chmod -R 755 /var/www/main /var/www/dev
+root@3c56e8c07a20:/app# echo "Permissions set"; tmux wait -S done
+Permissions set
+root@3c56e8c07a20:/app# # Step 5: Generate self-signed SSL certificate
+root@3c56e8c07a20:/app# mkdir -p /etc/nginx/ssl
+root@3c56e8c07a20:/app# openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
+>     -keyout /etc/nginx/ssl/server.key \
+>     -out /etc/nginx/ssl/server.crt \
+>     -subj "/C=US/ST=Test/L=Test/O=Test/CN=localhost" 2>&1
+.........+...+.....+...+.......+...+...........+......+....+...+......+..+....+.....+...............+.+.........+...............+.....+......+.............+++++
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*.....+..+...+.+...+..+...+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*.+..+...
+.......+..+...+.......+.....+.....................+.......+..+......+......+...+......+....+.....+......+....+...+.....+......................+..+....+..+......
+.+...+............+......+......+...........+.......+..+......+...+.+.........+..............+...............+..........+...+..+.+.....+.+...+...........+.+....
+..+...............+..+............+.+...+.....+......+.+...+...........+...+...+....+........+...+...+..........+...............+..+.......+..+.........+.......
+........+....+.....+.+..+.......+............+........+...+...+......+.+..+......+.......+...+..+.........+......+...........................+.+......+.....+...
+......+.+......+.....+.......+.....+...............+.+..+...+.+...+..+......+.............+.....................+...+...........+.........+.......+...+...+..+..
+.............+.+.....+....+...+.................................+...........+....+..+...+....+........+.......+..+...+.+............+..+.+.....+......+.+.....+.
+..+.......+..............+...+...+.......+..+......+....+........+......+...............+.+...........+....+.....+.+.....+....+...+..+....+.........+......+....
+..........+......+.+......+..+.+.....+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+...+....+...+..+.+....................+....+.....+...+...+...+..........+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*..+..+...+.+......+...
+..............+.+......+...+...+..+...+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*.+...+...+........+....+...+.....+............+.........
+....+..+......+.+.....+...+.......+......+..+...+....+...+...+..+...+...+.+.....+......+...+....+..+..........+.....+..........+...+...+...+..+.........+...+.+.
+..........+.+........+.........+......+....+..+.+...+.....+....+.....+.........................+...+...+..+.........+..........+.....+.+..+.+..+....++++++++++++
++++++++++++++++++++++++++++++++++++++++++++++++++++++
+-----
+root@3c56e8c07a20:/app# echo "SSL cert created"; tmux wait -S done
+SSL cert created
+root@3c56e8c07a20:/app# # Step 6: Configure Nginx
+root@3c56e8c07a20:/app# cat > /etc/nginx/sites-available/git-deploy << 'NGINX'
+> server {
+>     listen 8443 ssl;
+>     server_name localhost;
+>
+>     ssl_certificate /etc/nginx/ssl/server.crt;
+>     ssl_certificate_key /etc/nginx/ssl/server.key;
+>
+>     # Dev branch at /dev/
+>     location /dev/ {
+>         alias /var/www/dev/;
+>         index index.html;
+>     }
+>
+>     # Main branch at /
+>     location / {
+>         root /var/www/main;
+>         index index.html;
+>     }
+> }
+> NGINX
+root@3c56e8c07a20:/app#
+root@3c56e8c07a20:/app# # Enable the site
+root@3c56e8c07a20:/app# rm -f /etc/nginx/sites-enabled/default
+root@3c56e8c07a20:/app# ln -sf /etc/nginx/sites-available/git-deploy /etc/nginx/sites-enabled/git-deploy
+root@3c56e8c07a20:/app#
+root@3c56e8c07a20:/app# # Test nginx config
+root@3c56e8c07a20:/app# nginx -t 2>&1; tmux wait -S done
+nginx: the configuration file /etc/nginx/nginx.conf syntax is ok
+nginx: configuration file /etc/nginx/nginx.conf test is successful
+root@3c56e8c07a20:/app# # Step 7: Configure SSH to allow password authentication
+root@3c56e8c07a20:/app# sed -i 's/^#*PasswordAuthentication.*/PasswordAuthentication yes/' /etc/ssh/sshd_config
+root@3c56e8c07a20:/app# sed -i 's/^#*PermitRootLogin.*/PermitRootLogin yes/' /etc/ssh/sshd_config
+root@3c56e8c07a20:/app# sed -i 's/^#*ChallengeResponseAuthentication.*/ChallengeResponseAuthentication no/' /etc/ssh/sshd_config
+root@3c56e8c07a20:/app# # Make sure KbdInteractiveAuthentication is enabled (Ubuntu 24.04)
+root@3c56e8c07a20:/app# sed -i 's/^#*KbdInteractiveAuthentication.*/KbdInteractiveAuthentication yes/' /etc/ssh/sshd_config
+root@3c56e8c07a20:/app#
+root@3c56e8c07a20:/app# # Ensure host keys exist
+root@3c56e8c07a20:/app# ssh-keygen -A 2>&1
+root@3c56e8c07a20:/app#
+root@3c56e8c07a20:/app# echo "SSH configured"; tmux wait -S done
+SSH configured
+root@3c56e8c07a20:/app# # The git user has git-shell, which is fine for git operations but we need to
+root@3c56e8c07a20:/app# # make sure git-shell is in /etc/shells
+root@3c56e8c07a20:/app# grep -q git-shell /etc/shells || echo "/usr/bin/git-shell" >> /etc/shells
+root@3c56e8c07a20:/app# cat /etc/shells
+# /etc/shells: valid login shells
+/bin/sh
+/usr/bin/sh
+/bin/bash
+/usr/bin/bash
+/bin/rbash
+/usr/bin/rbash
+/usr/bin/dash
+/usr/bin/tmux
+/usr/bin/git-shell
+root@3c56e8c07a20:/app#
+root@3c56e8c07a20:/app# # Also check the git user's shell
+root@3c56e8c07a20:/app# getent passwd git; tmux wait -S done
+git:x:1001:1001::/home/git:/usr/bin/git-shell
+root@3c56e8c07a20:/app# # Step 8: Start services
+root@3c56e8c07a20:/app# # Start SSH
+root@3c56e8c07a20:/app# mkdir -p /run/sshd
+root@3c56e8c07a20:/app# /usr/sbin/sshd 2>&1
+root@3c56e8c07a20:/app# echo "SSH started: $?"
+SSH started: 0
+root@3c56e8c07a20:/app#
+root@3c56e8c07a20:/app# # Start Nginx
+root@3c56e8c07a20:/app# nginx 2>&1
+root@3c56e8c07a20:/app# echo "Nginx started: $?"; tmux wait -S done
+Nginx started: 0
+root@3c56e8c07a20:/app# # Verify services are running
+root@3c56e8c07a20:/app# ss -tlnp | grep -E '(22|8443)'; tmux wait -S done
+LISTEN 0      128          0.0.0.0:22         0.0.0.0:*    users:(("sshd",pid=382,fd=3))
+LISTEN 0      511          0.0.0.0:8443       0.0.0.0:*    users:(("nginx",pid=385,fd=5))
+LISTEN 0      128             [::]:22            [::]:*    users:(("sshd",pid=382,fd=4))
+root@3c56e8c07a20:/app# # Step 9: Test the full workflow
+root@3c56e8c07a20:/app# # Install sshpass for password-based SSH auth
+root@3c56e8c07a20:/app# which sshpass || apt-get install -y sshpass 2>&1 | tail -3; tmux wait -S done
+Building dependency tree...
+Reading state information...
+E: Unable to locate package sshpass
+root@3c56e8c07a20:/app# # sshpass not available, let's use SSH with expect or ssh keys instead
+root@3c56e8c07a20:/app# # For testing, let's add our own SSH key to the git user's authorized_keys
+root@3c56e8c07a20:/app# ssh-keygen -t ed25519 -f /root/.ssh/id_ed25519 -N "" -q 2>/dev/null || true
+root@3c56e8c07a20:/app# cat /root/.ssh/id_ed25519.pub >> /home/git/.ssh/authorized_keys
+root@3c56e8c07a20:/app# chown git:git /home/git/.ssh/authorized_keys
+root@3c56e8c07a20:/app# chmod 600 /home/git/.ssh/authorized_keys
+root@3c56e8c07a20:/app# echo "SSH key added for testing"; tmux wait -S done
+SSH key added for testing
+root@3c56e8c07a20:/app# # Test clone
+root@3c56e8c07a20:/app# cd /tmp
+root@3c56e8c07a20:/tmp# rm -rf test-project
+root@3c56e8c07a20:/tmp# GIT_SSH_COMMAND="ssh -o StrictHostKeyChecking=no" git clone git@localhost:/git/project test-project 2>&1
+Cloning into 'test-project'...
+Warning: Permanently added 'localhost' (ED25519) to the list of known hosts.
+warning: You appear to have cloned an empty repository.
+root@3c56e8c07a20:/tmp# echo "Clone exit: $?"; tmux wait -S done
+Clone exit: 0
+root@3c56e8c07a20:/tmp# # Create main branch with content
+root@3c56e8c07a20:/tmp# cd /tmp/test-project
+root@3c56e8c07a20:/tmp/test-project# git config user.email "test@test.com"
+root@3c56e8c07a20:/tmp/test-project# git config user.name "Test"
+root@3c56e8c07a20:/tmp/test-project#
+root@3c56e8c07a20:/tmp/test-project# # Create main branch
+root@3c56e8c07a20:/tmp/test-project# git checkout -b main
+Switched to a new branch 'main'
+root@3c56e8c07a20:/tmp/test-project# echo "main branch content" > index.html
+root@3c56e8c07a20:/tmp/test-project# git add index.html
+root@3c56e8c07a20:/tmp/test-project# git commit -m "main branch content"
+[main (root-commit) 6cf0175] main branch content
+ 1 file changed, 1 insertion(+)
+ create mode 100644 index.html
+root@3c56e8c07a20:/tmp/test-project#
+root@3c56e8c07a20:/tmp/test-project# # Create dev branch
+root@3c56e8c07a20:/tmp/test-project# git checkout -b dev
+Switched to a new branch 'dev'
+root@3c56e8c07a20:/tmp/test-project# echo "dev branch content" > index.html
+root@3c56e8c07a20:/tmp/test-project# git add index.html
+root@3c56e8c07a20:/tmp/test-project# git commit -m "dev branch content"
+[dev eb338ea] dev branch content
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+root@3c56e8c07a20:/tmp/test-project#
+root@3c56e8c07a20:/tmp/test-project# echo "Branches created"; tmux wait -S done
+Branches created
+root@3c56e8c07a20:/tmp/test-project# # Push both branches
+root@3c56e8c07a20:/tmp/test-project# cd /tmp/test-project
+root@3c56e8c07a20:/tmp/test-project# GIT_SSH_COMMAND="ssh -o StrictHostKeyChecking=no" git push origin main dev 2>&1
+Enumerating objects: 6, done.
+Counting objects: 100% (6/6), done.
+Delta compression using up to 2 threads
+Compressing objects: 100% (2/2), done.
+Writing objects: 100% (6/6), 455 bytes | 455.00 KiB/s, done.
+Total 6 (delta 0), reused 0 (delta 0), pack-reused 0
+remote: Switched to branch 'main'
+remote: Switched to branch 'dev'
+To localhost:/git/project
+ * [new branch]      main -> main
+ * [new branch]      dev -> dev
+root@3c56e8c07a20:/tmp/test-project# echo "Push exit: $?"; tmux wait -S done
+Push exit: 0
+root@3c56e8c07a20:/tmp/test-project# # Verify deployments
+root@3c56e8c07a20:/tmp/test-project# echo "=== Main branch file ==="
+=== Main branch file ===
+root@3c56e8c07a20:/tmp/test-project# cat /var/www/main/index.html
+main branch content
+root@3c56e8c07a20:/tmp/test-project# echo "=== Dev branch file ==="
+=== Dev branch file ===
+root@3c56e8c07a20:/tmp/test-project# cat /var/www/dev/index.html
+dev branch content
+root@3c56e8c07a20:/tmp/test-project#
+root@3c56e8c07a20:/tmp/test-project# echo ""
+
+root@3c56e8c07a20:/tmp/test-project# echo "=== HTTPS Main ==="
+=== HTTPS Main ===
+root@3c56e8c07a20:/tmp/test-project# curl -ks https://localhost:8443/index.html
+main branch content
+root@3c56e8c07a20:/tmp/test-project# echo ""
+
+root@3c56e8c07a20:/tmp/test-project# echo "=== HTTPS Dev ==="
+=== HTTPS Dev ===
+root@3c56e8c07a20:/tmp/test-project# curl -ks https://localhost:8443/dev/index.html; tmux wait -S done
+dev branch content
+root@3c56e8c07a20:/tmp/test-project# # Clean up test artifacts, reset deployments for the real test
+root@3c56e8c07a20:/tmp/test-project# rm -rf /tmp/test-project
+root@3c56e8c07a20:/tmp/test-project# rm -f /var/www/main/index.html /var/www/dev/index.html
+root@3c56e8c07a20:/tmp/test-project#
+root@3c56e8c07a20:/tmp/test-project# # Verify password auth is configured in sshd
+root@3c56e8c07a20:/tmp/test-project# grep -E "^PasswordAuthentication" /etc/ssh/sshd_config
+PasswordAuthentication yes
+root@3c56e8c07a20:/tmp/test-project# echo ""
+
+root@3c56e8c07a20:/tmp/test-project#
+root@3c56e8c07a20:/tmp/test-project# # Verify the git repo is still intact
+root@3c56e8c07a20:/tmp/test-project# ls /git/project/hooks/post-receive
+/git/project/hooks/post-receive
+root@3c56e8c07a20:/tmp/test-project# cat /git/project/hooks/post-receive
+#!/bin/bash
+
+while read oldrev newrev refname; do
+    branch=$(echo "$refname" | sed 's|refs/heads/||')
+
+    if [ "$branch" = "main" ]; then
+        GIT_WORK_TREE=/var/www/main git checkout -f main
+    fi
+
+    if [ "$branch" = "dev" ]; then
+        GIT_WORK_TREE=/var/www/dev git checkout -f dev
+    fi
+done
+root@3c56e8c07a20:/tmp/test-project#
+root@3c56e8c07a20:/tmp/test-project# cd /app
+root@3c56e8c07a20:/app# echo "Cleanup done"; tmux wait -S done
+Cleanup done
+root@3c56e8c07a20:/app#

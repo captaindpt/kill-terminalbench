@@ -1,0 +1,352 @@
+[?2004hroot@c396f1b0920c:/app# asciinema rec --stdin /logs/agent.cast
+[?2004l[0;32masciinema: recording asciicast to /logs/agent.cast[0m
+[0;32masciinema: press <ctrl-d> or type "exit" when you're done[0m
+[?2004hroot@c396f1b0920c:/app# clear
+[?2004l[H[J[3J[?2004hroot@c396f1b0920c:/app# cd /app && ls -la trunc.db; tmux wait -S done
+[?2004l-rw-r--r-- 1 root root 4096 Mar 31 16:28 trunc.db
+[?2004hroot@c396f1b0920c:/app# cd /app && file trunc.db; tmux wait -S done
+[?2004lbash: file: command not found
+[?2004hroot@c396f1b0920c:/app# cd /app && xxd trunc.db | head -20; tmux wait -S done
+[?2004lbash: xxd: command not found
+[?2004hroot@c396f1b0920c:/app# cd /app && python3 -c "
+[?2004l[?2004h> with open('trunc.db', 'rb') as f:
+[?2004l[?2004h>     data = f.read()
+[?2004l[?2004h> print(f'File size: {len(data)} bytes')
+[?2004l[?2004h> print('First 100 bytes hex:')
+[?2004l[?2004h> print(data[:100].hex())
+[?2004l[?2004h> print('First 100 bytes repr:')
+[?2004l[?2004h> print(repr(data[:100]))
+[?2004l[?2004h> "; tmux wait -S done
+[?2004lFile size: 4096 bytes
+First 100 bytes hex:
+0d0000000a0f49000ff00fdf0fce0fbd0fac0f9b0f8a0f790f610f49000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+First 100 bytes repr:
+b'\r\x00\x00\x00\n\x0fI\x00\x0f\xf0\x0f\xdf\x0f\xce\x0f\xbd\x0f\xac\x0f\x9b\x0f\x8a\x0fy\x0fa\x0fI\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00'
+[?2004hroot@c396f1b0920c:/app# cd /app && python3 -c "
+[?2004l[?2004h> with open('trunc.db', 'rb') as f:
+[?2004l[?2004h>     data = f.read()
+[?2004l[?2004h> print(f'File size: {len(data)} bytes')
+[?2004l[?2004h> # This looks like a B-tree leaf page (0x0d = 13)
+[?2004l[?2004h> # Page type: 0x0d (leaf table b-tree)
+[?2004l[?2004h> # First freeblock: 0x0000
+[?2004l[?2004h> # Number of cells: 0x000a = 10
+[?2004l[?2004h> # First byte of cell content area: 0x0f49
+[?2004l[?2004h> # Cell pointer array starts at offset 8 (for non-first page) or 12 (for first page)
+[?2004l[?2004h> # But this seems to be the first page since there's no SQLite header
+[?2004l[?2004h> 
+[?2004l[?2004h> # Let's look at cell pointers
+[?2004l[?2004h> import struct
+[?2004l[?2004h> page_type = data[0]
+[?2004l[?2004h> print(f'Page type: 0x{page_type:02x}')
+[?2004l[?2004h> first_freeblock = struct.unpack('>H', data[1:3])[0]
+[?2004l[?2004h> print(f'First freeblock: {first_freeblock}')
+[?2004l[?2004h> num_cells = struct.unpack('>H', data[3:5])[0]
+[?2004l[?2004h> print(f'Number of cells: {num_cells}')
+[?2004l[?2004h> cell_content_start = struct.unpack('>H', data[5:7])[0]
+[?2004l[?2004h> print(f'Cell content start: {cell_content_start}')
+[?2004l[?2004h> # fragmented free bytes
+[?2004l[?2004h> frag = data[7]
+[?2004l[?2004h> print(f'Fragmented free bytes: {frag}')
+[?2004l[?2004h> 
+[?2004l[?2004h> # Cell pointers start at offset 8 for a leaf page
+[?2004l[?2004h> pointers = []
+[?2004l[?2004h> for i in range(num_cells):
+[?2004l[?2004h>     offset = 8 + i * 2
+[?2004l[?2004h>     ptr = struct.unpack('>H', data[offset:offset+2])[0]
+[?2004l[?2004h>     pointers.append(ptr)
+[?2004l[?2004h>     print(f'Cell {i}: offset {ptr} (0x{ptr:04x})')
+[?2004l[?2004h> "; tmux wait -S done
+[?2004lFile size: 4096 bytes
+Page type: 0x0d
+First freeblock: 0
+Number of cells: 10
+Cell content start: 3913
+Fragmented free bytes: 0
+Cell 0: offset 4080 (0x0ff0)
+Cell 1: offset 4063 (0x0fdf)
+Cell 2: offset 4046 (0x0fce)
+Cell 3: offset 4029 (0x0fbd)
+Cell 4: offset 4012 (0x0fac)
+Cell 5: offset 3995 (0x0f9b)
+Cell 6: offset 3978 (0x0f8a)
+Cell 7: offset 3961 (0x0f79)
+Cell 8: offset 3937 (0x0f61)
+Cell 9: offset 3913 (0x0f49)
+[?2004hroot@c396f1b0920c:/app# cd /app && python3 -c "
+[?2004l[?2004h> with open('trunc.db', 'rb') as f:
+[?2004l[?2004h>     data = f.read()
+[?2004l[?2004h> 
+[?2004l[?2004h> # Parse each cell - these are leaf table b-tree cells
+[?2004l[?2004h> # Format: payload_length (varint), rowid (varint), payload
+[?2004l[?2004h> 
+[?2004l[?2004h> def read_varint(data, offset):
+[?2004l[?2004h>     result = 0
+[?2004l[?2004h>     for i in range(9):
+[?2004l[?2004h>         byte = data[offset + i]
+[?2004l[?2004h>         if i < 8:
+[?2004l[?2004h>             result = (result << 7) | (byte & 0x7f)
+[?2004l[?2004h>             if byte < 0x80:
+[?2004l[?2004h>                 return result, offset + i + 1
+[?2004l[?2004h>         else:
+[?2004l[?2004h>             result = (result << 8) | byte
+[?2004l[?2004h>             return result, offset + i + 1
+[?2004l[?2004h>     return result, offset
+[?2004l[?2004h> 
+[?2004l[?2004h> pointers = [4080, 4063, 4046, 4029, 4012, 3995, 3978, 3961, 3937, 3913]
+[?2004l[?2004h> 
+[?2004l[?2004h> for i, ptr in enumerate(pointers):
+[?2004l[?2004h>     payload_len, pos = read_varint(data, ptr)
+[?2004l[?2004h>     rowid, pos = read_varint(data, pos)
+[?2004l[?2004h>     # Now read the record header
+[?2004l[?2004h>     header_size, hpos = read_varint(data, pos)
+[?2004l[?2004h>     record_start = pos
+[?2004l[?2004h>     # Read serial types from header
+[?2004l[?2004h>     serial_types = []
+[?2004l[?2004h>     curr = hpos
+[?2004l[?2004h>     while curr < pos + header_size:
+[?2004l[?2004h>         st, curr = read_varint(data, curr)
+[?2004l[?2004h>         serial_types.append(st)
+[?2004l[?2004h>     
+[?2004l[?2004h>     print(f'Cell {i}: ptr={ptr}, payload_len={payload_len}, rowid={rowid}, header_size={header_size}, serial_types={serial_types}')
+[?2004l[?2004h>     
+[?2004l[?2004h>     # Now read the values
+[?2004l[?2004h>     data_offset = pos + header_size
+[?2004l[?2004h>     values = []
+[?2004l[?2004h>     for st in serial_types:
+[?2004l[?2004h>         if st == 0:
+[?2004l[?2004h>             values.append(None)
+[?2004l[?2004h>             # NULL, 0 bytes
+[?2004l[?2004h>         elif st == 1:
+[?2004l[?2004h>             val = data[data_offset]
+[?2004l[?2004h>             if val >= 128: val -= 256
+[?2004l[?2004h>             values.append(val)
+[?2004l[?2004h>             data_offset += 1
+[?2004l[?2004h>         elif st == 2:
+[?2004l[?2004h>             import struct
+[?2004l[?2004h>             val = struct.unpack('>h', data[data_offset:data_offset+2])[0]
+[?2004l[?2004h>             values.append(val)
+[?2004l[?2004h>             data_offset += 2
+[?2004l[?2004h>         elif st == 3:
+[?2004l[?2004h>             import struct
+[?2004l[?2004h>             val_bytes = data[data_offset:data_offset+3]
+[?2004l[?2004h>             val = int.from_bytes(val_bytes, 'big', signed=True)
+[?2004l[?2004h>             values.append(val)
+[?2004l[?2004h>             data_offset += 3
+[?2004l[?2004h>         elif st == 4:
+[?2004l[?2004h>             import struct
+[?2004l[?2004h>             val = struct.unpack('>i', data[data_offset:data_offset+4])[0]
+[?2004l[?2004h>             values.append(val)
+[?2004l[?2004h>             data_offset += 4
+[?2004l[?2004h>         elif st >= 13 and st % 2 == 1:
+[?2004l[?2004h>             # text
+[?2004l[?2004h>             length = (st - 13) // 2
+[?2004l[?2004h>             val = data[data_offset:data_offset+length].decode('utf-8')
+[?2004l[?2004h>             values.append(val)
+[?2004l[?2004h>             data_offset += length
+[?2004l[?2004h>         elif st >= 12 and st % 2 == 0:
+[?2004l[?2004h>             # blob
+[?2004l[?2004h>             length = (st - 12) // 2
+[?2004l[?2004h>             val = data[data_offset:data_offset+length]
+[?2004l[?2004h>             values.append(val)
+[?2004l[?2004h>             data_offset += length
+[?2004l[?2004h>         else:
+[?2004l[?2004h>             values.append(f'UNKNOWN_TYPE_{st}')
+[?2004l[?2004h>     
+[?2004l[?2004h>     print(f'  Values: {values}')
+[?2004l[?2004h>     # Show raw bytes
+[?2004l[?2004h>     cell_end = ptr + 1 + payload_len + 5  # approximate
+[?2004l[?2004h>     print(f'  Raw: {data[ptr:ptr+payload_len+5].hex()}')
+[?2004l[?2004h>     print()
+[?2004l[?2004h> "; tmux wait -S done
+[?2004lCell 0: ptr=4080, payload_len=14, rowid=1, header_size=4, serial_types=[0, 33, 9]
+  Values: [None, 'testword00', 'UNKNOWN_TYPE_9']
+  Raw: 0e010400210974657374776f72643030
+
+Cell 1: ptr=4063, payload_len=15, rowid=2, header_size=4, serial_types=[0, 33, 1]
+  Values: [None, 'testword01', 2]
+  Raw: 0f020400210174657374776f72643031020e0104
+
+Cell 2: ptr=4046, payload_len=15, rowid=3, header_size=4, serial_types=[0, 33, 1]
+  Values: [None, 'testword02', 10]
+  Raw: 0f030400210174657374776f726430320a0f0204
+
+Cell 3: ptr=4029, payload_len=15, rowid=4, header_size=4, serial_types=[0, 33, 1]
+  Values: [None, 'testword03', 25]
+  Raw: 0f040400210174657374776f72643033190f0304
+
+Cell 4: ptr=4012, payload_len=15, rowid=5, header_size=4, serial_types=[0, 33, 1]
+  Values: [None, 'testword04', 42]
+  Raw: 0f050400210174657374776f726430342a0f0404
+
+Cell 5: ptr=3995, payload_len=15, rowid=6, header_size=4, serial_types=[0, 33, 1]
+  Values: [None, 'testword05', 50]
+  Raw: 0f060400210174657374776f72643035320f0504
+
+Cell 6: ptr=3978, payload_len=15, rowid=7, header_size=4, serial_types=[0, 33, 1]
+  Values: [None, 'testword06', 75]
+  Raw: 0f070400210174657374776f726430364b0f0604
+
+Cell 7: ptr=3961, payload_len=15, rowid=8, header_size=4, serial_types=[0, 33, 1]
+  Values: [None, 'testword07', 99]
+  Raw: 0f080400210174657374776f72643037630f0704
+
+Cell 8: ptr=3937, payload_len=22, rowid=9, header_size=4, serial_types=[0, 33, 7]
+  Values: [None, 'testword08', 'UNKNOWN_TYPE_7']
+  Raw: 16090400210774657374776f726430384058ff5c28f5c28f0f0804
+
+Cell 9: ptr=3913, payload_len=22, rowid=10, header_size=4, serial_types=[0, 33, 7]
+  Values: [None, 'testword09', 'UNKNOWN_TYPE_7']
+  Raw: 160a0400210774657374776f726430393fe0000000000000160904
+
+[?2004hroot@c396f1b0920c:/app# cd /app && python3 -c "
+[?2004l[?2004h> import struct, json
+[?2004l[?2004h> 
+[?2004l[?2004h> with open('trunc.db', 'rb') as f:
+[?2004l[?2004h>     data = f.read()
+[?2004l[?2004h> 
+[?2004l[?2004h> def read_varint(data, offset):
+[?2004l[?2004h>     result = 0
+[?2004l[?2004h>     for i in range(9):
+[?2004l[?2004h>         byte = data[offset + i]
+[?2004l[?2004h>         if i < 8:
+[?2004l[?2004h>             result = (result << 7) | (byte & 0x7f)
+[?2004l[?2004h>             if byte < 0x80:
+[?2004l[?2004h>                 return result, offset + i + 1
+[?2004l[?2004h>         else:
+[?2004l[?2004h>             result = (result << 8) | byte
+[?2004l[?2004h>             return result, offset + i + 1
+[?2004l[?2004h>     return result, offset
+[?2004l[?2004h> 
+[?2004l[?2004h> pointers = [4080, 4063, 4046, 4029, 4012, 3995, 3978, 3961, 3937, 3913]
+[?2004l[?2004h> 
+[?2004l[?2004h> results = []
+[?2004l[?2004h> for i, ptr in enumerate(pointers):
+[?2004l[?2004h>     payload_len, pos = read_varint(data, ptr)
+[?2004l[?2004h>     rowid, pos = read_varint(data, pos)
+[?2004l[?2004h>     header_size, hpos = read_varint(data, pos)
+[?2004l[?2004h>     record_start = pos
+[?2004l[?2004h>     serial_types = []
+[?2004l[?2004h>     curr = hpos
+[?2004l[?2004h>     while curr < pos + header_size:
+[?2004l[?2004h>         st, curr = read_varint(data, curr)
+[?2004l[?2004h>         serial_types.append(st)
+[?2004l[?2004h>     
+[?2004l[?2004h>     data_offset = pos + header_size
+[?2004l[?2004h>     values = []
+[?2004l[?2004h>     for st in serial_types:
+[?2004l[?2004h>         if st == 0:
+[?2004l[?2004h>             values.append(None)
+[?2004l[?2004h>         elif st == 1:
+[?2004l[?2004h>             val = data[data_offset]
+[?2004l[?2004h>             if val >= 128: val -= 256
+[?2004l[?2004h>             values.append(val)
+[?2004l[?2004h>             data_offset += 1
+[?2004l[?2004h>         elif st == 2:
+[?2004l[?2004h>             val = struct.unpack('>h', data[data_offset:data_offset+2])[0]
+[?2004l[?2004h>             values.append(val)
+[?2004l[?2004h>             data_offset += 2
+[?2004l[?2004h>         elif st == 3:
+[?2004l[?2004h>             val = int.from_bytes(data[data_offset:data_offset+3], 'big', signed=True)
+[?2004l[?2004h>             values.append(val)
+[?2004l[?2004h>             data_offset += 3
+[?2004l[?2004h>         elif st == 4:
+[?2004l[?2004h>             val = struct.unpack('>i', data[data_offset:data_offset+4])[0]
+[?2004l[?2004h>             values.append(val)
+[?2004l[?2004h>             data_offset += 4
+[?2004l[?2004h>         elif st == 5:
+[?2004l[?2004h>             val = int.from_bytes(data[data_offset:data_offset+6], 'big', signed=True)
+[?2004l[?2004h>             values.append(val)
+[?2004l[?2004h>             data_offset += 6
+[?2004l[?2004h>         elif st == 6:
+[?2004l[?2004h>             val = struct.unpack('>q', data[data_offset:data_offset+8])[0]
+[?2004l[?2004h>             values.append(val)
+[?2004l[?2004h>             data_offset += 8
+[?2004l[?2004h>         elif st == 7:
+[?2004l[?2004h>             val = struct.unpack('>d', data[data_offset:data_offset+8])[0]
+[?2004l[?2004h>             values.append(val)
+[?2004l[?2004h>             data_offset += 8
+[?2004l[?2004h>         elif st == 8:
+[?2004l[?2004h>             values.append(0)
+[?2004l[?2004h>         elif st == 9:
+[?2004l[?2004h>             values.append(1)
+[?2004l[?2004h>         elif st >= 13 and st % 2 == 1:
+[?2004l[?2004h>             length = (st - 13) // 2
+[?2004l[?2004h>             val = data[data_offset:data_offset+length].decode('utf-8')
+[?2004l[?2004h>             values.append(val)
+[?2004l[?2004h>             data_offset += length
+[?2004l[?2004h>         elif st >= 12 and st % 2 == 0:
+[?2004l[?2004h>             length = (st - 12) // 2
+[?2004l[?2004h>             val = data[data_offset:data_offset+length]
+[?2004l[?2004h>             values.append(val)
+[?2004l[?2004h>             data_offset += length
+[?2004l[?2004h>     
+[?2004l[?2004h>     # Column 0 is NULL (probably an auto-increment id), column 1 is word, column 2 is value
+[?2004l[?2004h>     word = values[1]
+[?2004l[?2004h>     value = values[2]
+[?2004l[?2004h>     results.append({'word': word, 'value': value})
+[?2004l[?2004h>     print(f'Row {rowid}: word={word}, value={value}')
+[?2004l[?2004h> 
+[?2004l[?2004h> with open('recover.json', 'w') as f:
+[?2004l[?2004h>     json.dump(results, f, indent=2)
+[?2004l[?2004h> print()
+[?2004l[?2004h> print('Wrote', len(results), 'rows to recover.json')
+[?2004l[?2004h> "; tmux wait -S done
+[?2004lRow 1: word=testword00, value=1
+Row 2: word=testword01, value=2
+Row 3: word=testword02, value=10
+Row 4: word=testword03, value=25
+Row 5: word=testword04, value=42
+Row 6: word=testword05, value=50
+Row 7: word=testword06, value=75
+Row 8: word=testword07, value=99
+Row 9: word=testword08, value=99.99
+Row 10: word=testword09, value=0.5
+
+Wrote 10 rows to recover.json
+[?2004hroot@c396f1b0920c:/app# cat /app/recover.json; tmux wait -S done
+[?2004l[
+  {
+    "word": "testword00",
+    "value": 1
+  },
+  {
+    "word": "testword01",
+    "value": 2
+  },
+  {
+    "word": "testword02",
+    "value": 10
+  },
+  {
+    "word": "testword03",
+    "value": 25
+  },
+  {
+    "word": "testword04",
+    "value": 42
+  },
+  {
+    "word": "testword05",
+    "value": 50
+  },
+  {
+    "word": "testword06",
+    "value": 75
+  },
+  {
+    "word": "testword07",
+    "value": 99
+  },
+  {
+    "word": "testword08",
+    "value": 99.99
+  },
+  {
+    "word": "testword09",
+    "value": 0.5
+  }
+][?2004hroot@c396f1b0920c:/app# [?2004l
+exit
+[0;32masciinema: recording finished[0m
+[0;32masciinema: asciicast saved to /logs/agent.cast[0m
+[?2004hroot@c396f1b0920c:/app# 

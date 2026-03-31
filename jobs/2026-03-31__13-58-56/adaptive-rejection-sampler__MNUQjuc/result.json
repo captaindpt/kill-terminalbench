@@ -1,0 +1,105 @@
+{
+    "id": "986d525a-5222-4bd5-9e72-16cd974b8a1d",
+    "task_name": "adaptive-rejection-sampler",
+    "trial_name": "adaptive-rejection-sampler__MNUQjuc",
+    "trial_uri": "file:///Users/manirashahmadi/ccode/kill-terminalbench/jobs/2026-03-31__13-58-56/adaptive-rejection-sampler__MNUQjuc",
+    "task_id": {
+        "git_url": "https://github.com/laude-institute/terminal-bench-2.git",
+        "git_commit_id": "69671fbaac6d67a7ef0dfec016cc38a64ef7a77c",
+        "path": "adaptive-rejection-sampler"
+    },
+    "source": "terminal-bench",
+    "task_checksum": "4fde6e809c475b000ae3ea4135f906ffe4775bccae7dafd0b123f4ecc9fcf697",
+    "config": {
+        "task": {
+            "path": "adaptive-rejection-sampler",
+            "git_url": "https://github.com/laude-institute/terminal-bench-2.git",
+            "git_commit_id": "69671fbaac6d67a7ef0dfec016cc38a64ef7a77c",
+            "name": null,
+            "ref": null,
+            "overwrite": false,
+            "download_dir": null,
+            "source": "terminal-bench"
+        },
+        "trial_name": "adaptive-rejection-sampler__MNUQjuc",
+        "trials_dir": "jobs/2026-03-31__13-58-56",
+        "timeout_multiplier": 1.0,
+        "agent_timeout_multiplier": null,
+        "verifier_timeout_multiplier": null,
+        "agent_setup_timeout_multiplier": null,
+        "environment_build_timeout_multiplier": null,
+        "agent": {
+            "name": null,
+            "import_path": "ktb.harbor_agent:OpenRouterHarborAgent",
+            "model_name": "anthropic/claude-opus-4.6",
+            "override_timeout_sec": null,
+            "override_setup_timeout_sec": null,
+            "max_timeout_sec": null,
+            "kwargs": {
+                "max_episodes": 75,
+                "temperature": 1.0,
+                "command_timeout": 300
+            },
+            "env": {}
+        },
+        "environment": {
+            "type": "docker",
+            "import_path": null,
+            "force_build": false,
+            "delete": true,
+            "override_cpus": null,
+            "override_memory_mb": null,
+            "override_storage_mb": null,
+            "override_gpus": null,
+            "suppress_override_warnings": false,
+            "mounts_json": null,
+            "env": {},
+            "kwargs": {}
+        },
+        "verifier": {
+            "override_timeout_sec": null,
+            "max_timeout_sec": null,
+            "disable": false
+        },
+        "artifacts": [],
+        "job_id": "2bf5c88e-c21b-44a5-a17a-c7225b58be82"
+    },
+    "agent_info": {
+        "name": "ktb-openrouter",
+        "version": "0.1.0",
+        "model_info": {
+            "name": "claude-opus-4.6",
+            "provider": "anthropic"
+        }
+    },
+    "agent_result": {
+        "n_input_tokens": null,
+        "n_cache_tokens": null,
+        "n_output_tokens": null,
+        "cost_usd": null,
+        "rollout_details": null,
+        "metadata": null
+    },
+    "verifier_result": null,
+    "exception_info": {
+        "exception_type": "RuntimeError",
+        "exception_message": "Command timed out after 300 seconds",
+        "exception_traceback": "Traceback (most recent call last):\n  File \"/opt/homebrew/Cellar/python@3.12/3.12.12_2/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/tasks.py\", line 520, in wait_for\n    return await fut\n           ^^^^^^^^^\n  File \"/opt/homebrew/Cellar/python@3.12/3.12.12_2/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/subprocess.py\", line 201, in communicate\n    stdin, stdout, stderr = await tasks.gather(stdin, stdout, stderr)\n                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/homebrew/Cellar/python@3.12/3.12.12_2/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/subprocess.py\", line 181, in _read_stream\n    output = await stream.read()\n             ^^^^^^^^^^^^^^^^^^^\n  File \"/opt/homebrew/Cellar/python@3.12/3.12.12_2/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/streams.py\", line 706, in read\n    block = await self.read(self._limit)\n            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/homebrew/Cellar/python@3.12/3.12.12_2/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/streams.py\", line 713, in read\n    await self._wait_for_data('read')\n  File \"/opt/homebrew/Cellar/python@3.12/3.12.12_2/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/streams.py\", line 545, in _wait_for_data\n    await self._waiter\nasyncio.exceptions.CancelledError\n\nThe above exception was the direct cause of the following exception:\n\nTraceback (most recent call last):\n  File \"/Users/manirashahmadi/ccode/kill-terminalbench/.venv/lib/python3.12/site-packages/harbor/environments/docker/docker.py\", line 292, in _run_docker_compose_command\n    stdout_bytes, stderr_bytes = await asyncio.wait_for(\n                                 ^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/homebrew/Cellar/python@3.12/3.12.12_2/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/tasks.py\", line 519, in wait_for\n    async with timeouts.timeout(timeout):\n               ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/homebrew/Cellar/python@3.12/3.12.12_2/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/timeouts.py\", line 115, in __aexit__\n    raise TimeoutError from exc_val\nTimeoutError\n\nDuring handling of the above exception, another exception occurred:\n\nTraceback (most recent call last):\n  File \"/Users/manirashahmadi/ccode/kill-terminalbench/.venv/lib/python3.12/site-packages/harbor/trial/trial.py\", line 538, in run\n    await self._execute_agent()\n  File \"/Users/manirashahmadi/ccode/kill-terminalbench/.venv/lib/python3.12/site-packages/harbor/trial/trial.py\", line 285, in _execute_agent\n    await asyncio.wait_for(\n  File \"/opt/homebrew/Cellar/python@3.12/3.12.12_2/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/tasks.py\", line 520, in wait_for\n    return await fut\n           ^^^^^^^^^\n  File \"/Users/manirashahmadi/ccode/kill-terminalbench/ktb/harbor_agent.py\", line 117, in run\n    result = await environment.exec(command, timeout_sec=timeout_sec)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/manirashahmadi/ccode/kill-terminalbench/.venv/lib/python3.12/site-packages/harbor/environments/docker/docker.py\", line 485, in exec\n    return await self._run_docker_compose_command(\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/manirashahmadi/ccode/kill-terminalbench/.venv/lib/python3.12/site-packages/harbor/environments/docker/docker.py\", line 306, in _run_docker_compose_command\n    raise RuntimeError(f\"Command timed out after {timeout_sec} seconds\")\nRuntimeError: Command timed out after 300 seconds\n",
+        "occurred_at": "2026-03-31T14:04:20.745229"
+    },
+    "started_at": "2026-03-31T17:59:02.419778Z",
+    "finished_at": "2026-03-31T18:04:31.747370Z",
+    "environment_setup": {
+        "started_at": "2026-03-31T17:59:02.420537Z",
+        "finished_at": "2026-03-31T17:59:13.494673Z"
+    },
+    "agent_setup": {
+        "started_at": "2026-03-31T17:59:13.494909Z",
+        "finished_at": "2026-03-31T17:59:13.495032Z"
+    },
+    "agent_execution": {
+        "started_at": "2026-03-31T17:59:13.495244Z",
+        "finished_at": "2026-03-31T18:04:20.735047Z"
+    },
+    "verifier": null
+}

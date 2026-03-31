@@ -1,0 +1,7 @@
+[
+  {
+    "type": "tool_result",
+    "tool_use_id": "toolu_bdrk_01Ph8PEXaM4K4gWSwqxKwGf8",
+    "content": "[exit_code=0]\n\nmachines. See https://lists.debian.org/debian-devel/2023/09/msg00175.html\nfor more information.\"\n\ncase `uname -m` in\n    i386|i586|i686|x86_64)\n        # Check whether this system supports SSE3 (aka PNI)\n        if ! grep -q 'sse3\\|pni' /proc/cpuinfo; then\n            display_msg \"$nosse3\"\n            exit 1\n        fi\n        ;;\n    armv7l)\n        # Check whether this system supports NEON or ASIMD. Even though there\n        # could be ARMv8 systems without ASIMD, we're far more likely to hit\n        # v8 hardware emulating v7 systems with buggy VMs; so don't even\n        # bother checking armv8l for now. If we do check in the future, they\n        # advertise 'asimd' instead of 'neon'.\n        if ! grep -q 'neon\\|asimd' /proc/cpuinfo; then\n            display_msg \"$noneon\"\n            exit 1\n        fi\n        ;;\nesac\n\n# Clean up old crash reports (see https://bugs.debian.org/1015931)\n# after 30 days."
+  }
+]

@@ -1,0 +1,125 @@
+root@389eea274d78:/app# head -20 /app/daily_temp_sf_high.csv; tmux wait -S done
+date,temperature
+2025-04-19,64
+2025-04-20,63
+2025-04-21,70
+2025-04-22,66
+2025-04-23,57
+2025-04-24,55
+2025-04-25,57root@389eea274d78:/app# head -20 /app/daily_temp_sf_low.csv; tmux wait -S done
+date,temperature
+04/19/2025 06:00:00,48
+04/20/2025 06:00:00,52
+04-23-2025 06:00:00,52
+04-22-2025 06:00:00,48
+04-24-2025 06:00:00,52
+04-21-2025 06:00:00,48
+04-25-2025 06:00:00,52root@389eea274d78:/app# cat /app/daily_temp_sf_high.csv; tmux wait -S done
+date,temperature
+2025-04-19,64
+2025-04-20,63
+2025-04-21,70
+2025-04-22,66
+2025-04-23,57
+2025-04-24,55
+2025-04-25,57root@389eea274d78:/app# cat /app/daily_temp_sf_low.csv; tmux wait -S done
+date,temperature
+04/19/2025 06:00:00,48
+04/20/2025 06:00:00,52
+04-23-2025 06:00:00,52
+04-22-2025 06:00:00,48
+04-24-2025 06:00:00,52
+04-21-2025 06:00:00,48
+04-25-2025 06:00:00,52root@389eea274d78:/app# python3 << 'EOF'
+> import csv
+> from datetime import datetime
+>
+> # Read high temps
+> highs = {}
+> with open('/app/daily_temp_sf_high.csv') as f:
+>     reader = csv.reader(f)
+>     next(reader)  # skip header
+>     for row in reader:
+>         date_str, temp = row[0], int(row[1])
+>         date = datetime.strptime(date_str, '%Y-%m-%d').date()
+>         highs[date] = temp
+>
+> # Read low temps - dates have mixed formats and include time
+> lows = {}
+> with open('/app/daily_temp_sf_low.csv') as f:
+>     reader = csv.reader(f)
+>     next(reader)  # skip header
+>     for row in reader:
+>         date_str, temp = row[0], int(row[1])
+>         # Try different date formats
+>         for fmt in ['%m/%d/%Y %H:%M:%S', '%m-%d-%Y %H:%M:%S']:
+>             try:
+>                 date = datetime.strptime(date_str, fmt).date()
+>                 break
+>             except ValueError:
+>                 continue
+>         lows[date] = temp
+>
+> print("Highs:", highs)
+> print("Lows:", lows)
+>
+> # Calculate differences for matching dates
+> diffs = []
+> for date in sorted(highs.keys()):
+>     if date in lows:
+>         diff = highs[date] - lows[date]
+>         print(f"{date}: high={highs[date]}, low={lows[date]}, diff={diff}")
+>         diffs.append(diff)
+>
+> avg_diff = sum(diffs) / len(diffs)
+> print(f"\nAverage difference: {avg_diff}")
+>
+> # Write to file
+> with open('/app/avg_temp.txt', 'w') as f:
+>     f.write(str(round(avg_diff, 1)))
+> EOF; tmux wait -S done
+> ; tmux wait -S done
+
+root@389eea274d78:/app# python3 /app/calc.py; tmux wait -S done
+python3: can't open file '/app/calc.py': [Errno 2] No such file or directory
+root@389eea274d78:/app# cat > /app/calc.py << 'PYEOF'
+> import csv
+> from datetime import datetime
+>
+> highs = {}
+> with open('/app/daily_temp_sf_high.csv') as f:
+>     reader = csv.reader(f)
+>     next(reader)
+>     for row in reader:
+>         date_str, temp = row[0], int(row[1])
+>         date = datetime.strptime(date_str, '%Y-%m-%d').date()
+>         highs[date] = temp
+>
+> lows = {}
+> with open('/app/daily_temp_sf_low.csv') as f:
+>     reader = csv.reader(f)
+>     next(reader)
+>     for row in reader:
+>         date_str, temp = row[0], int(row[1])
+>         for fmt in ['%m/%d/%Y %H:%M:%S', '%m-%d-%Y %H:%M:%S']:
+>             try:
+>                 date = datetime.strptime(date_str, fmt).date()
+>                 break
+>             except ValueError:
+>                 continue
+>         lows[date] = temp
+>
+> diffs = []
+> for date in sorted(highs.keys()):
+>     if date in lows:
+>         diff = highs[date] - lows[date]
+>         print(f"{date}: high={highs[date]}, low={lows[date]}, diff={diff}")
+>         diffs.append(diff)
+>
+> avg_diff = sum(diffs) / len(diffs)
+> print(f"Average difference: {avg_diff}")
+>
+> with open('/app/avg_temp.txt', 'w') as f:
+>     f.write(str(round(avg_diff, 1)))
+> PYEOF; tmux wait -S done
+>

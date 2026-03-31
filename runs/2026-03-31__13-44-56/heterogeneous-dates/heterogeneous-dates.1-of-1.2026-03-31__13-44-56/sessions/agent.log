@@ -1,0 +1,136 @@
+[?2004hroot@389eea274d78:/app# asciinema rec --stdin /logs/agent.cast
+[?2004l[0;32masciinema: recording asciicast to /logs/agent.cast[0m
+[0;32masciinema: press <ctrl-d> or type "exit" when you're done[0m
+[?2004hroot@389eea274d78:/app# clear
+[?2004l[H[J[3J[?2004hroot@389eea274d78:/app# head -20 /app/daily_temp_sf_high.csv; tmux wait -S done
+[?2004ldate,temperature
+2025-04-19,64
+2025-04-20,63
+2025-04-21,70
+2025-04-22,66
+2025-04-23,57
+2025-04-24,55
+2025-04-25,57[?2004hroot@389eea274d78:/app# head -20 /app/daily_temp_sf_low.csv; tmux wait -S done
+[?2004ldate,temperature
+04/19/2025 06:00:00,48
+04/20/2025 06:00:00,52
+04-23-2025 06:00:00,52
+04-22-2025 06:00:00,48
+04-24-2025 06:00:00,52
+04-21-2025 06:00:00,48
+04-25-2025 06:00:00,52[?2004hroot@389eea274d78:/app# cat /app/daily_temp_sf_high.csv; tmux wait -S done
+[?2004ldate,temperature
+2025-04-19,64
+2025-04-20,63
+2025-04-21,70
+2025-04-22,66
+2025-04-23,57
+2025-04-24,55
+2025-04-25,57[?2004hroot@389eea274d78:/app# cat /app/daily_temp_sf_low.csv; tmux wait -S done
+[?2004ldate,temperature
+04/19/2025 06:00:00,48
+04/20/2025 06:00:00,52
+04-23-2025 06:00:00,52
+04-22-2025 06:00:00,48
+04-24-2025 06:00:00,52
+04-21-2025 06:00:00,48
+04-25-2025 06:00:00,52[?2004hroot@389eea274d78:/app# python3 << 'EOF'
+[?2004l[?2004h> import csv
+[?2004l[?2004h> from datetime import datetime
+[?2004l[?2004h> 
+[?2004l[?2004h> # Read high temps
+[?2004l[?2004h> highs = {}
+[?2004l[?2004h> with open('/app/daily_temp_sf_high.csv') as f:
+[?2004l[?2004h>     reader = csv.reader(f)
+[?2004l[?2004h>     next(reader)  # skip header
+[?2004l[?2004h>     for row in reader:
+[?2004l[?2004h>         date_str, temp = row[0], int(row[1])
+[?2004l[?2004h>         date = datetime.strptime(date_str, '%Y-%m-%d').date()
+[?2004l[?2004h>         highs[date] = temp
+[?2004l[?2004h> 
+[?2004l[?2004h> # Read low temps - dates have mixed formats and include time
+[?2004l[?2004h> lows = {}
+[?2004l[?2004h> with open('/app/daily_temp_sf_low.csv') as f:
+[?2004l[?2004h>     reader = csv.reader(f)
+[?2004l[?2004h>     next(reader)  # skip header
+[?2004l[?2004h>     for row in reader:
+[?2004l[?2004h>         date_str, temp = row[0], int(row[1])
+[?2004l[?2004h>         # Try different date formats
+[?2004l[?2004h>         for fmt in ['%m/%d/%Y %H:%M:%S', '%m-%d-%Y %H:%M:%S']:
+[?2004l[?2004h>             try:
+[?2004l[?2004h>                 date = datetime.strptime(date_str, fmt).date()
+[?2004l[?2004h>                 break
+[?2004l[?2004h>             except ValueError:
+[?2004l[?2004h>                 continue
+[?2004l[?2004h>         lows[date] = temp
+[?2004l[?2004h> 
+[?2004l[?2004h> print("Highs:", highs)
+[?2004l[?2004h> print("Lows:", lows)
+[?2004l[?2004h> 
+[?2004l[?2004h> # Calculate differences for matching dates
+[?2004l[?2004h> diffs = []
+[?2004l[?2004h> for date in sorted(highs.keys()):
+[?2004l[?2004h>     if date in lows:
+[?2004l[?2004h>         diff = highs[date] - lows[date]
+[?2004l[?2004h>         print(f"{date}: high={highs[date]}, low={lows[date]}, diff={diff}")
+[?2004l[?2004h>         diffs.append(diff)
+[?2004l[?2004h> 
+[?2004l[?2004h> avg_diff = sum(diffs) / len(diffs)
+[?2004l[?2004h> print(f"\nAverage difference: {avg_diff}")
+[?2004l[?2004h> 
+[?2004l[?2004h> # Write to file
+[?2004l[?2004h> with open('/app/avg_temp.txt', 'w') as f:
+[?2004l[?2004h>     f.write(str(round(avg_diff, 1)))
+[?2004l[?2004h> EOF; tmux wait -S done
+[?2004l[?2004h> ^C[?2004l[?2004h[C[C; tmux wait -S done
+[?2004l
+[?2004hroot@389eea274d78:/app# python3 /app/calc.py; tmux wait -S done
+[?2004lpython3: can't open file '/app/calc.py': [Errno 2] No such file or directory
+[?2004hroot@389eea274d78:/app# cat > /app/calc.py << 'PYEOF'
+[?2004l[?2004h> import csv
+[?2004l[?2004h> from datetime import datetime
+[?2004l[?2004h> 
+[?2004l[?2004h> highs = {}
+[?2004l[?2004h> with open('/app/daily_temp_sf_high.csv') as f:
+[?2004l[?2004h>     reader = csv.reader(f)
+[?2004l[?2004h>     next(reader)
+[?2004l[?2004h>     for row in reader:
+[?2004l[?2004h>         date_str, temp = row[0], int(row[1])
+[?2004l[?2004h>         date = datetime.strptime(date_str, '%Y-%m-%d').date()
+[?2004l[?2004h>         highs[date] = temp
+[?2004l[?2004h> 
+[?2004l[?2004h> lows = {}
+[?2004l[?2004h> with open('/app/daily_temp_sf_low.csv') as f:
+[?2004l[?2004h>     reader = csv.reader(f)
+[?2004l[?2004h>     next(reader)
+[?2004l[?2004h>     for row in reader:
+[?2004l[?2004h>         date_str, temp = row[0], int(row[1])
+[?2004l[?2004h>         for fmt in ['%m/%d/%Y %H:%M:%S', '%m-%d-%Y %H:%M:%S']:
+[?2004l[?2004h>             try:
+[?2004l[?2004h>                 date = datetime.strptime(date_str, fmt).date()
+[?2004l[?2004h>                 break
+[?2004l[?2004h>             except ValueError:
+[?2004l[?2004h>                 continue
+[?2004l[?2004h>         lows[date] = temp
+[?2004l[?2004h> 
+[?2004l[?2004h> diffs = []
+[?2004l[?2004h> for date in sorted(highs.keys()):
+[?2004l[?2004h>     if date in lows:
+[?2004l[?2004h>         diff = highs[date] - lows[date]
+[?2004l[?2004h>         print(f"{date}: high={highs[date]}, low={lows[date]}, diff={diff}")
+[?2004l[?2004h>         diffs.append(diff)
+[?2004l[?2004h> 
+[?2004l[?2004h> avg_diff = sum(diffs) / len(diffs)
+[?2004l[?2004h> print(f"Average difference: {avg_diff}")
+[?2004l[?2004h> 
+[?2004l[?2004h> with open('/app/avg_temp.txt', 'w') as f:
+[?2004l[?2004h>     f.write(str(round(avg_diff, 1)))
+[?2004l[?2004h> PYEOF; tmux wait -S done
+[?2004l[?2004h> [?2004l
+bash: warning: here-document at line 56 delimited by end-of-file (wanted `PYEOF')
+[?2004hroot@389eea274d78:/app# python3 /app/calc.py; tmux wait -S done
+[?2004l  File [35m"/app/calc.py"[0m, line [35m39[0m
+    PYEOF; tmux [1;31mwait[0m -S done
+                [1;31m^^^^[0m
+[1;35mSyntaxError[0m: [35minvalid syntax[0m
+[?2004hroot@389eea274d78:/app# 

@@ -1,0 +1,41 @@
+{
+  "id": "gen-1774981059-U0yFnvruWvPhmaPcYe5l",
+  "container": null,
+  "content": [
+    {
+      "id": "toolu_bdrk_01NixwN4m2PyQa6w9BavTwTW",
+      "caller": {
+        "type": "direct"
+      },
+      "input": {
+        "command": "python3 -c \"\nfrom bs4 import BeautifulSoup\n\n# Let me think about noscript more carefully.\n# In a BROWSER with JavaScript ENABLED:\n#   <noscript> content is treated as RAW TEXT (like <style>, <script>)\n#   So </noscript> inside is the only way to close it\n#   Any HTML entities are displayed literally (not parsed)\n#\n# BS4's html.parser: treats <noscript> content as... let me check\n\nhtml = '<noscript><p>hello</p></noscript>'\nsoup = BeautifulSoup(html, 'html.parser')\nprint('noscript content:', soup.noscript.contents)\nprint('noscript output:', str(soup))\nprint()\n\n# What about this: BS4 sees the noscript and parses HTML inside it\n# When it outputs, it writes the HTML. But the browser (with JS enabled)\n# treats everything inside noscript as raw text until </noscript>\n# So the browser shows the HTML tags as text, not as rendered HTML\n\n# The mXSS would be: make BS4 decode entities that result in </noscript> in output\n# Then the browser would see </noscript> in raw text mode, close the noscript,\n# and then parse the rest as HTML\n\n# But we need BS4 to produce </noscript> in its output that wasn't a tag boundary in BS4's view\n\n# What if noscript contains an attribute with </noscript>?\nhtml = '<noscript><a title=\\\"</noscript><img src=x onerror=alert(1)>\\\">test</a></noscript>'\nsoup = BeautifulSoup(html, 'html.parser')\nprint('noscript attr trick:', repr(str(soup)))\nprint('Tags:', [(tag.name, dict(tag.attrs)) for tag in soup.find_all(True)])\n\"\n"
+      },
+      "name": "bash",
+      "type": "tool_use"
+    }
+  ],
+  "model": "anthropic/claude-4.6-opus-20260205",
+  "role": "assistant",
+  "stop_reason": "tool_use",
+  "stop_sequence": null,
+  "type": "message",
+  "usage": {
+    "cache_creation": null,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "inference_geo": null,
+    "input_tokens": 12234,
+    "output_tokens": 509,
+    "server_tool_use": null,
+    "service_tier": null,
+    "speed": "standard",
+    "cost": 0.073895,
+    "is_byok": false,
+    "cost_details": {
+      "upstream_inference_cost": 0.073895,
+      "upstream_inference_prompt_cost": 0.06117,
+      "upstream_inference_completions_cost": 0.012725
+    }
+  },
+  "provider": "Amazon Bedrock"
+}

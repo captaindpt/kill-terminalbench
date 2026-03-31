@@ -1,0 +1,69 @@
+root@3bb8fc24aa24:/app# mkdir -p /app/polyglot && python3 --version && gcc --version | head -1; tmux wait -S done
+Python 3.12.3
+gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0
+root@3bb8fc24aa24:/app# cat > /app/polyglot/main.py.c << 'POLYGLOT_EOF'
+> #if 0
+> import sys
+> def fib(n):
+>     a, b = 0, 1
+>     for _ in range(n):
+>         a, b = b, a + b
+>     return a
+> print(fib(int(sys.argv[1])))
+> import os; os._exit(0)
+> #endif
+>
+> #include <stdio.h>
+> #include <stdlib.h>
+>
+> int main(int argc, char *argv[]) {
+>     long long n = atoll(argv[1]);
+>     long long a = 0, b = 1, temp;
+>     for (long long i = 0; i < n; i++) {
+>         temp = a + b;
+>         a = b;
+>         b = temp;
+>     }
+>     printf("%lld\n", a);
+>     return 0;
+> }
+> POLYGLOT_EOF; tmux wait -S done
+> echo ""; tmux wait -S done
+> printf 'POLYGLOT_EOF\n'; tmux wait -S done
+> tmux send-keys -t 0 'POLYGLOT_EOF' Enter; tmux wait -S done
+> tmux send-keys -t 0 C-c; tmux wait -S done
+> tmux send-keys -t 0 C-c ; sleep 1; tmux send-keys -t 0 C-c ; sleep 1; tmux send-keys -t 0 '' Enter; sleep 1; tmux wait -S done
+> tmux send-keys -t 0 C-c C-c C-c; tmux wait -S done
+> kill -9 $(tmux list-panes -t 0 -F '#{pane_pid}') 2>/dev/null; sleep 2; echo "done"; tmux wait -S done
+> python3 -c "
+> content = '''#if 0
+> import sys
+> def fib(n):
+>     a, b = 0, 1
+>     for _ in range(n):
+>         a, b = b, a + b
+>     return a
+> print(fib(int(sys.argv[1])))
+> import os; os._exit(0)
+> #endif
+>
+> #include <stdio.h>
+> #include <stdlib.h>
+>
+> int main(int argc, char *argv[]) {
+>     long long n = atoll(argv[1]);
+>     long long a = 0, b = 1, temp;
+>     for (long long i = 0; i < n; i++) {
+>         temp = a + b;
+>         a = b;
+>         b = temp;
+>     }
+>     printf(\"%lld\\\\n\", a);
+>     return 0;
+> }
+> '''
+> with open('/app/polyglot/main.py.c', 'w') as f:
+>     f.write(content)
+> print('File written')
+> "; tmux wait -S done
+>
