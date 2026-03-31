@@ -6,21 +6,13 @@ import json
 from pathlib import Path
 from typing import Any
 
-from .openrouter_common import SYSTEM_PROMPT, TOOLS, ensure_dir, get_openrouter_client, truncate_text
+from .harbor_compaction import compact_messages, is_prompt_too_long_error, should_compact
+from .harbor_tooling import ToolExecution, ensure_remote_artifact_dir, format_exec_output, prepare_tool_results
+from .openrouter_common import SYSTEM_PROMPT, TOOLS, ensure_dir, get_openrouter_client
 
 from harbor.agents.base import BaseAgent
 from harbor.environments.base import BaseEnvironment
 from harbor.models.agent.context import AgentContext
-
-
-def _format_exec_output(stdout: str | None, stderr: str | None, return_code: int) -> str:
-    parts = [f"[exit_code={return_code}]"]
-    if stdout:
-        parts.append(stdout.rstrip())
-    if stderr:
-        parts.append(f"[stderr]\n{stderr.rstrip()}")
-    return truncate_text("\n\n".join(part for part in parts if part))
-
 
 INFRA_BLOCKERS = (
     "lacks support for the sse3 instruction set",
@@ -57,7 +49,7 @@ class OpenRouterHarborAgent(BaseAgent):
         return "0.1.0"
 
     async def setup(self, environment: BaseEnvironment) -> None:
-        pass
+        await ensure_remote_artifact_dir(environment)
 
     @staticmethod
     def _update_context(
@@ -91,6 +83,7 @@ class OpenRouterHarborAgent(BaseAgent):
         total_output_tokens = 0
         total_cost = 0.0
         generation_ids: list[str] = []
+        compaction_count = 0
 
         agent_logs = ensure_dir(self.logs_dir / "episodes")
         messages: list[dict[str, Any]] = [
@@ -101,15 +94,41 @@ class OpenRouterHarborAgent(BaseAgent):
         ]
 
         for episode in range(self._max_episodes):
+            model_attempts = 0
             try:
-                response = self._client.messages.create(
-                    model=self.model_name or "anthropic/claude-opus-4.6",
-                    max_tokens=16384,
-                    system=SYSTEM_PROMPT,
-                    tools=TOOLS,
-                    messages=messages,
-                    temperature=self._temperature,
-                )
+                current_max_tokens = 8192
+                while True:
+                    try:
+                        response = self._client.messages.create(
+                            model=self.model_name or "anthropic/claude-opus-4.6",
+                            max_tokens=current_max_tokens,
+                            system=SYSTEM_PROMPT,
+                            tools=TOOLS,
+                            messages=messages,
+                            temperature=self._temperature,
+                        )
+                    except Exception as exc:
+                        if (
+                            is_prompt_too_long_error(exc)
+                            and model_attempts < 3
+                            and len(messages) > 2
+                        ):
+                            messages = compact_messages(
+                                client=self._client,
+                                messages=messages,
+                                logs_dir=self.logs_dir,
+                                compaction_index=compaction_count,
+                            )
+                            compaction_count += 1
+                            model_attempts += 1
+                            continue
+                        raise
+
+                    if response.stop_reason == "max_tokens" and current_max_tokens < 65536:
+                        current_max_tokens = 65536
+                        model_attempts += 1
+                        continue
+                    break
             except Exception as exc:
                 self._update_context(
                     context,
@@ -174,22 +193,31 @@ class OpenRouterHarborAgent(BaseAgent):
                 timeout_sec = min(timeout_sec, self._command_timeout)
 
                 result = await environment.exec(command, timeout_sec=timeout_sec)
-                output = _format_exec_output(
+                execution = ToolExecution(
+                    tool_use_id=block.id,
+                    command=command,
+                    return_code=result.return_code,
+                    stdout=result.stdout,
+                    stderr=result.stderr,
+                )
+                tool_results.append(execution)
+
+                output = format_exec_output(
                     stdout=result.stdout,
                     stderr=result.stderr,
                     return_code=result.return_code,
-                )
-                tool_results.append(
-                    {
-                        "type": "tool_result",
-                        "tool_use_id": block.id,
-                        "content": output,
-                    }
+                    command=command,
                 )
 
                 if _is_infra_blocker(output):
+                    persisted_tool_results = await prepare_tool_results(
+                        executions=tool_results,
+                        episode=episode,
+                        logs_dir=self.logs_dir,
+                        environment=environment,
+                    )
                     (episode_dir / "tool-results.json").write_text(
-                        json.dumps(tool_results, indent=2)
+                        json.dumps(persisted_tool_results, indent=2)
                     )
                     self._update_context(
                         context,
@@ -214,10 +242,25 @@ class OpenRouterHarborAgent(BaseAgent):
             if not tool_results:
                 break
 
-            (episode_dir / "tool-results.json").write_text(
-                json.dumps(tool_results, indent=2)
+            persisted_tool_results = await prepare_tool_results(
+                executions=tool_results,
+                episode=episode,
+                logs_dir=self.logs_dir,
+                environment=environment,
             )
-            messages.append({"role": "user", "content": tool_results})
+            (episode_dir / "tool-results.json").write_text(
+                json.dumps(persisted_tool_results, indent=2)
+            )
+            messages.append({"role": "user", "content": persisted_tool_results})
+
+            if should_compact(total_input_tokens, messages):
+                messages = compact_messages(
+                    client=self._client,
+                    messages=messages,
+                    logs_dir=self.logs_dir,
+                    compaction_index=compaction_count,
+                )
+                compaction_count += 1
 
         self._update_context(
             context,
@@ -226,4 +269,5 @@ class OpenRouterHarborAgent(BaseAgent):
             total_cost=total_cost,
             generation_ids=generation_ids,
             episodes_completed=len(list(agent_logs.glob("episode-*"))),
+            metadata_extra={"compactions": compaction_count},
         )

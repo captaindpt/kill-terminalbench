@@ -17,6 +17,14 @@
   - initial `tb2-diverse-15` launch accidentally started an unfiltered full-dataset run
   - cause: Harbor path used `args.tasks` instead of resolved `task_ids`
   - corrected run started at `jobs/2026-03-31__14-12-46`
+- Harbor agent upgraded for longer tasks:
+  - large tool outputs persist to disk and are uploaded back into the task container for later rereads
+  - old conversation history is compacted through OpenRouter using a cheaper summary model
+  - common non-error `exit_code=1` cases now include semantic notes
+  - model calls now have an explicit timeout and retry budget
+- Execution policy clarified:
+  - this ARM machine is for development and synthetic harness checks
+  - the rented `x86_64` machine is the source of truth for TB2 subset/full benchmark runs
 - OpenRouter usage tracking added:
   - local artifact summarization
   - key usage snapshots

@@ -29,6 +29,9 @@
 - OpenRouter API key can access:
   - key usage endpoint
   - credits endpoint
+- This ARM/Colima machine is suitable for harness development and synthetic validation.
+- This ARM/Colima machine is not a trustworthy source of final TB2 benchmark results for browser-sensitive x86 task images.
+- Score-bearing Harbor runs should be executed on the rented `x86_64` machine.
 
 ## Logging Guarantees
 Current adapters write detailed artifacts for debugging:
@@ -43,7 +46,16 @@ Harbor runner:
 - `agent/episodes/episode-N/request.json`
 - `agent/episodes/episode-N/response.json`
 - `agent/episodes/episode-N/tool-results.json`
+- `agent/persisted-tool-results/episode-N/tool-XX.txt`
+- `agent/compactions/compaction-XX.json`
 - trial config
 - Harbor job/trial logs
 
 This is sufficient to reconstruct prompt/context progression when the model fails, even without full ATIF trajectory emission.
+
+## Harbor Agent Behavior
+- Large tool outputs are now persisted and uploaded into the task container under `/tmp/ktb-agent-artifacts/...`.
+- Tool results now return a short preview plus a reread path when output is persisted.
+- Long conversations now compact older history through the same OpenRouter client using a cheaper summary model.
+- Default summary model: `anthropic/claude-3.5-haiku`
+- Model calls now use an explicit client timeout and reduced retries.

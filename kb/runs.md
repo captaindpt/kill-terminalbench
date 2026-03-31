@@ -99,7 +99,7 @@
 
 No official Harbor full-dataset TB2 run has been launched yet.
 
-## Current Active Debug Run
+## Latest Debug Run
 
 ### Harbor TB2 Diverse Subset
 
@@ -107,11 +107,23 @@ No official Harbor full-dataset TB2 run has been launched yet.
 - Mode: Harbor
 - Dataset: `terminal-bench@2.0`
 - Task set: `tb2-diverse-15`
-- Status: running
+- Status: stopped after task 1 investigation
 - Concurrency: `1`
 - First observed task: `break-filter-js-from-html`
 - Run command:
   - `python3 -m ktb.cli --runner harbor --task-set tb2-diverse-15 --n-concurrent 1`
+- Outcome:
+  - did not progress past task 1
+  - task exposed an ARM/qemu browser incompatibility rather than a trustworthy benchmark failure
+  - run was stopped so the harness could be patched before the x86_64 rerun
+- Key blocker from task logs:
+  - Chromium inside the task image reports missing `sse3` support under emulation
+  - Selenium then fails with `SessionNotCreatedException`
+- Follow-up harness changes made after this run:
+  - fail-fast infra blocker detection
+  - model-call timeout/retry limits
+  - output persistence with reread paths
+  - message compaction
 
 ### Aborted Run Record
 
