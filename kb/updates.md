@@ -30,3 +30,14 @@
   - key usage snapshots
   - credits snapshots
 - Knowledge base created under `kb/`.
+
+## 2026-04-01
+- Added a failure ledger covering all observed blockers to date:
+  - repo/auth launch issues
+  - Docker and Docker Compose readiness issues
+  - debug-run timeouts and aborted runs
+  - the verified `polyglot-c-py` single-file constraint miss on x86_64
+- Added an operational bucket plan for the TB2 task inventory.
+- Defined a new cross-bucket 24-task debug batch:
+  - `tb2-buckets-24`
+  - three representative tasks from each of eight planning buckets

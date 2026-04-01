@@ -1,0 +1,7 @@
+[
+  {
+    "type": "tool_result",
+    "tool_use_id": "toolu_bdrk_01QUST1Z3pgL9oyS7h8UswN4",
+    "content": "[exit_code=0]\n\n#!/bin/bash\n\nwhile read oldrev newrev refname; do\n    branch=$(echo \"$refname\" | sed 's|refs/heads/||')\n    \n    if [ \"$branch\" = \"main\" ]; then\n        GIT_WORK_TREE=/var/www/main git checkout -f main\n    fi\n    \n    if [ \"$branch\" = \"dev\" ]; then\n        GIT_WORK_TREE=/var/www/dev git checkout -f dev\n    fi\ndone"
+  }
+]

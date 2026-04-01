@@ -1,0 +1,41 @@
+{
+  "id": "gen-1775021767-o2eGyki2GnecTuXXjgK9",
+  "container": null,
+  "content": [
+    {
+      "id": "toolu_bdrk_01BbC4qeJUNLCaTgYBEkrQMx",
+      "caller": {
+        "type": "direct"
+      },
+      "input": {
+        "command": "# Verify SSH config allows password auth and git-shell is allowed\ngrep -i \"PermitRootLogin\\|PasswordAuthentication\\|ChallengeResponseAuth\\|UsePAM\" /etc/ssh/sshd_config | grep -v \"^#\"\n\n# Check if git-shell is in /etc/shells\ncat /etc/shells\necho \"---\"\ngrep git-shell /etc/shells || { echo \"/usr/bin/git-shell\" >> /etc/shells; echo \"Added git-shell to /etc/shells\"; }"
+      },
+      "name": "bash",
+      "type": "tool_use"
+    }
+  ],
+  "model": "anthropic/claude-4.6-opus-20260205",
+  "role": "assistant",
+  "stop_reason": "tool_use",
+  "stop_sequence": null,
+  "type": "message",
+  "usage": {
+    "cache_creation": null,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "inference_geo": null,
+    "input_tokens": 3026,
+    "output_tokens": 178,
+    "server_tool_use": null,
+    "service_tier": null,
+    "speed": "standard",
+    "cost": 0.01958,
+    "is_byok": false,
+    "cost_details": {
+      "upstream_inference_cost": 0.01958,
+      "upstream_inference_prompt_cost": 0.01513,
+      "upstream_inference_completions_cost": 0.00445
+    }
+  },
+  "provider": "Amazon Bedrock"
+}

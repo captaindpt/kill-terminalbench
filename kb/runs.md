@@ -36,6 +36,43 @@
 - Run command:
   - `python3 -m ktb.cli --runner harbor --task-set tb2-diverse-15 --n-concurrent 1`
 
+### `tb2-buckets-24`
+
+- Purpose: cross-bucket diagnostic batch for iterative benchmarking
+- Source: official `terminal-bench@2.0` dataset only
+- Size: `24`
+- Selection goals:
+  - choose three representative tasks from each operational bucket
+  - measure whether failures cluster by bucket rather than by individual task
+  - rerun one known x86_64 miss (`polyglot-c-py`) alongside known passes and fresh tasks
+- Tasks:
+  - `fix-permissions`
+  - `fix-pandas-version`
+  - `npm-conflict-resolution`
+  - `csv-to-parquet`
+  - `heterogeneous-dates`
+  - `jsonl-aggregator`
+  - `git-multibranch`
+  - `fix-git`
+  - `configure-git-webserver`
+  - `nginx-request-logging`
+  - `openssl-selfsigned-cert`
+  - `home-server-https`
+  - `broken-python`
+  - `classifier-debug`
+  - `mnist-learning-fix`
+  - `build-cython-ext`
+  - `polyglot-c-py`
+  - `cpp-compatibility`
+  - `fix-code-vulnerability`
+  - `vulnerable-secret`
+  - `sql-injection-attack`
+  - `solve-sudoku`
+  - `gomoku-planner`
+  - `countdown-game`
+- Run command:
+  - `python3 -m ktb.cli --runner harbor --task-set tb2-buckets-24 --n-concurrent 1`
+
 ## Debug Runs
 
 ### Official Local TB Harness Smoke

@@ -1,0 +1,63 @@
+{
+  "id": "gen-1774987003-abCHOtvxgFzdynDvu2nr",
+  "container": null,
+  "content": [
+    {
+      "id": "toolu_bdrk_01VGNrbqu5NLSPqNpha5X4uW",
+      "caller": {
+        "type": "direct"
+      },
+      "input": {
+        "command": "# Create deployment directories\nmkdir -p /var/www/main\nmkdir -p /var/www/dev\nchown -R git:git /var/www/main /var/www/dev\necho \"Deploy dirs created\""
+      },
+      "name": "bash",
+      "type": "tool_use"
+    },
+    {
+      "id": "toolu_bdrk_012UpxzAeshrT9JSFGAKQdDX",
+      "caller": {
+        "type": "direct"
+      },
+      "input": {
+        "command": "# Create the post-receive hook\ncat > /git/project/hooks/post-receive << 'EOF'\n#!/bin/bash\n\nwhile read oldrev newrev refname; do\n    branch=$(echo \"$refname\" | sed 's|refs/heads/||')\n    \n    if [ \"$branch\" = \"main\" ]; then\n        GIT_WORK_TREE=/var/www/main git checkout -f main\n    fi\n    \n    if [ \"$branch\" = \"dev\" ]; then\n        GIT_WORK_TREE=/var/www/dev git checkout -f dev\n    fi\ndone\nEOF\n\nchmod +x /git/project/hooks/post-receive\nchown git:git /git/project/hooks/post-receive\necho \"Post-receive hook created\""
+      },
+      "name": "bash",
+      "type": "tool_use"
+    },
+    {
+      "id": "toolu_bdrk_01JJCZ49xxNRo7fGNwfte4cN",
+      "caller": {
+        "type": "direct"
+      },
+      "input": {
+        "command": "# Generate self-signed SSL certificate\nmkdir -p /etc/nginx/ssl\nopenssl req -x509 -nodes -days 365 -newkey rsa:2048 \\\n    -keyout /etc/nginx/ssl/server.key \\\n    -out /etc/nginx/ssl/server.crt \\\n    -subj '/CN=localhost' 2>&1\necho \"SSL cert created\""
+      },
+      "name": "bash",
+      "type": "tool_use"
+    }
+  ],
+  "model": "anthropic/claude-4.6-opus-20260205",
+  "role": "assistant",
+  "stop_reason": "tool_use",
+  "stop_sequence": null,
+  "type": "message",
+  "usage": {
+    "cache_creation": null,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "inference_geo": null,
+    "input_tokens": 1957,
+    "output_tokens": 446,
+    "server_tool_use": null,
+    "service_tier": null,
+    "speed": "standard",
+    "cost": 0.020935,
+    "is_byok": false,
+    "cost_details": {
+      "upstream_inference_cost": 0.020935,
+      "upstream_inference_prompt_cost": 0.009785,
+      "upstream_inference_completions_cost": 0.01115
+    }
+  },
+  "provider": "Amazon Bedrock"
+}

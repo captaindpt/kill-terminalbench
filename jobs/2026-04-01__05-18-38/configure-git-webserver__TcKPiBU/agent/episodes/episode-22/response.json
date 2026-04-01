@@ -1,0 +1,41 @@
+{
+  "id": "gen-1775021002-UyugTagAO1iHoNZU0VEF",
+  "container": null,
+  "content": [
+    {
+      "id": "toolu_bdrk_01PhHzwbzwyjBJjg3u2WvPpX",
+      "caller": {
+        "type": "direct"
+      },
+      "input": {
+        "command": "# Update the hook to handle the case where the branch might be 'main' or 'master'\n# Also make it more robust by reading stdin\ncat > /git/server/hooks/post-receive << 'EOF'\n#!/bin/bash\nwhile read oldrev newrev refname; do\n    branch=$(git rev-parse --symbolic --abbrev-ref $refname)\n    GIT_WORK_TREE=/var/www/git-deploy git checkout -f \"$branch\"\ndone\nEOF\nchmod +x /git/server/hooks/post-receive\nchown user:user /git/server/hooks/post-receive"
+      },
+      "name": "bash",
+      "type": "tool_use"
+    }
+  ],
+  "model": "anthropic/claude-4.6-opus-20260205",
+  "role": "assistant",
+  "stop_reason": "tool_use",
+  "stop_sequence": null,
+  "type": "message",
+  "usage": {
+    "cache_creation": null,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "inference_geo": null,
+    "input_tokens": 1884,
+    "output_tokens": 194,
+    "server_tool_use": null,
+    "service_tier": null,
+    "speed": "standard",
+    "cost": 0.01427,
+    "is_byok": false,
+    "cost_details": {
+      "upstream_inference_cost": 0.01427,
+      "upstream_inference_prompt_cost": 0.00942,
+      "upstream_inference_completions_cost": 0.00485
+    }
+  },
+  "provider": "Amazon Bedrock"
+}

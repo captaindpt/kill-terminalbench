@@ -1,0 +1,35 @@
+{
+  "id": "gen-1774987763-0c9QEJbCkgnlYz66vdUN",
+  "container": null,
+  "content": [
+    {
+      "citations": null,
+      "text": "All tests pass. Here's how the polyglot works:\n\n- **Line 1: `#/*`** \u2014 Python sees `#` as a comment and ignores the rest. C sees the start of a `/* ... */` block comment.\n- **Python code block** \u2014 Python executes it normally. C skips it (inside `/* */` comment).\n- **`\"\"\"`** \u2014 Python opens a triple-quoted string (consuming everything until the matching `\"\"\"`). C sees `*/` which ends its comment, then processes the C code normally.\n- **C code block** \u2014 Python skips it (inside the triple-quoted string). C compiles it normally.\n- **End: `/* \"\"\" #*/`** \u2014 The `\"\"\"` closes Python's triple-quoted string. The `#*/` is a Python comment. For C, `/*` opens a comment and `*/` closes it, hiding the `\"\"\"`.",
+      "type": "text"
+    }
+  ],
+  "model": "anthropic/claude-4.6-opus-20260205",
+  "role": "assistant",
+  "stop_reason": "end_turn",
+  "stop_sequence": null,
+  "type": "message",
+  "usage": {
+    "cache_creation": null,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "inference_geo": null,
+    "input_tokens": 2418,
+    "output_tokens": 207,
+    "server_tool_use": null,
+    "service_tier": null,
+    "speed": "standard",
+    "cost": 0.017265,
+    "is_byok": false,
+    "cost_details": {
+      "upstream_inference_cost": 0.017265,
+      "upstream_inference_prompt_cost": 0.01209,
+      "upstream_inference_completions_cost": 0.005175
+    }
+  },
+  "provider": "Amazon Bedrock"
+}

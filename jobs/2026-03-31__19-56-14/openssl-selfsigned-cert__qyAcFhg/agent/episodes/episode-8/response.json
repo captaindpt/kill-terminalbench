@@ -1,0 +1,41 @@
+{
+  "id": "gen-1774988045-9aR3NdHIhuXSHipPOZ7o",
+  "container": null,
+  "content": [
+    {
+      "id": "toolu_bdrk_01RkbyUD8Whc5tTRpFBn9nkc",
+      "caller": {
+        "type": "direct"
+      },
+      "input": {
+        "command": "# Final verification of all files and permissions\necho \"=== Files ===\"\nls -la /app/ssl/\necho \"\"\necho \"=== Key Check ===\"\nopenssl rsa -in /app/ssl/server.key -check -noout 2>&1\necho \"\"\necho \"=== Certificate Details ===\"\nopenssl x509 -in /app/ssl/server.crt -noout -subject -issuer -dates\necho \"\"\necho \"=== PEM file contains both key and cert ===\"\ngrep -c \"BEGIN\" /app/ssl/server.pem\necho \"\"\necho \"=== Key bit length ===\"\nopenssl rsa -in /app/ssl/server.key -text -noout 2>&1 | head -1\necho \"\"\necho \"=== verification.txt ===\"\ncat /app/ssl/verification.txt\necho \"\"\necho \"=== Certificate matches key ===\"\nCERT_MD5=$(openssl x509 -noout -modulus -in /app/ssl/server.crt | openssl md5)\nKEY_MD5=$(openssl rsa -noout -modulus -in /app/ssl/server.key | openssl md5)\necho \"Cert modulus MD5: $CERT_MD5\"\necho \"Key modulus MD5:  $KEY_MD5\"\nif [ \"$CERT_MD5\" = \"$KEY_MD5\" ]; then echo \"MATCH: Certificate and key correspond\"; fi"
+      },
+      "name": "bash",
+      "type": "tool_use"
+    }
+  ],
+  "model": "anthropic/claude-4.6-opus-20260205",
+  "role": "assistant",
+  "stop_reason": "tool_use",
+  "stop_sequence": null,
+  "type": "message",
+  "usage": {
+    "cache_creation": null,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "inference_geo": null,
+    "input_tokens": 2819,
+    "output_tokens": 393,
+    "server_tool_use": null,
+    "service_tier": null,
+    "speed": "standard",
+    "cost": 0.02392,
+    "is_byok": false,
+    "cost_details": {
+      "upstream_inference_cost": 0.02392,
+      "upstream_inference_prompt_cost": 0.014095,
+      "upstream_inference_completions_cost": 0.009825
+    }
+  },
+  "provider": "Amazon Bedrock"
+}

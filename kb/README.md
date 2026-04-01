@@ -13,7 +13,9 @@ Suggested reading order:
 2. `benchmark-target.md`
 3. `infrastructure.md`
 4. `runs.md`
-5. `usage-and-cost.md`
+5. `failures.md`
+6. `task-buckets.md`
+7. `usage-and-cost.md`
 
 Conventions:
 - Prefer dated, factual entries over long narrative notes.

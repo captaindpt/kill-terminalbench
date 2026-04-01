@@ -1,0 +1,41 @@
+{
+  "id": "gen-1775024150-IltZ3VcqIyzyvdV8RypT",
+  "container": null,
+  "content": [
+    {
+      "id": "toolu_bdrk_018p6auobJm3khBsFv7XKqJy",
+      "caller": {
+        "type": "direct"
+      },
+      "input": {
+        "command": "# Step 5: Create verification.txt with certificate details\n\n# Get subject\nSUBJECT=$(openssl x509 -in /app/ssl/server.crt -noout -subject)\n\n# Get validity dates - extract and convert to YYYY-MM-DD\nNOT_BEFORE_RAW=$(openssl x509 -in /app/ssl/server.crt -noout -startdate | sed 's/notBefore=//')\nNOT_AFTER_RAW=$(openssl x509 -in /app/ssl/server.crt -noout -enddate | sed 's/notAfter=//')\n\nNOT_BEFORE=$(date -d \"$NOT_BEFORE_RAW\" +\"%Y-%m-%d\" 2>/dev/null || echo \"$NOT_BEFORE_RAW\")\nNOT_AFTER=$(date -d \"$NOT_AFTER_RAW\" +\"%Y-%m-%d\" 2>/dev/null || echo \"$NOT_AFTER_RAW\")\n\n# Get SHA-256 fingerprint\nFINGERPRINT=$(openssl x509 -in /app/ssl/server.crt -noout -fingerprint -sha256)\n\ncat > /app/ssl/verification.txt << EOF\n$SUBJECT\nNot Before: $NOT_BEFORE\nNot After: $NOT_AFTER\n$FINGERPRINT\nEOF\n\ncat /app/ssl/verification.txt"
+      },
+      "name": "bash",
+      "type": "tool_use"
+    }
+  ],
+  "model": "anthropic/claude-4.6-opus-20260205",
+  "role": "assistant",
+  "stop_reason": "tool_use",
+  "stop_sequence": null,
+  "type": "message",
+  "usage": {
+    "cache_creation": null,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "inference_geo": null,
+    "input_tokens": 1888,
+    "output_tokens": 368,
+    "server_tool_use": null,
+    "service_tier": null,
+    "speed": "standard",
+    "cost": 0.01864,
+    "is_byok": false,
+    "cost_details": {
+      "upstream_inference_cost": 0.01864,
+      "upstream_inference_prompt_cost": 0.00944,
+      "upstream_inference_completions_cost": 0.0092
+    }
+  },
+  "provider": "Amazon Bedrock"
+}

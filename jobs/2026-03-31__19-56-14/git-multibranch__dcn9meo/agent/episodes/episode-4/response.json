@@ -1,0 +1,41 @@
+{
+  "id": "gen-1774987016-yA70tUUQGdQE3ShaIPHV",
+  "container": null,
+  "content": [
+    {
+      "id": "toolu_bdrk_01SSJ1uTLQwJiiEAg4tc2rHL",
+      "caller": {
+        "type": "direct"
+      },
+      "input": {
+        "command": "# Configure SSH to allow password authentication\nsed -i 's/^#*PasswordAuthentication.*/PasswordAuthentication yes/' /etc/ssh/sshd_config\nsed -i 's/^#*ChallengeResponseAuthentication.*/ChallengeResponseAuthentication no/' /etc/ssh/sshd_config\n# Also check for any Include files that might override\ngrep -r \"PasswordAuthentication\" /etc/ssh/sshd_config.d/ 2>/dev/null || true\n# Make sure any override files also allow password auth\nfor f in /etc/ssh/sshd_config.d/*.conf; do\n    if [ -f \"$f\" ]; then\n        sed -i 's/^PasswordAuthentication no/PasswordAuthentication yes/' \"$f\"\n    fi\ndone\ngrep \"PasswordAuthentication\" /etc/ssh/sshd_config /etc/ssh/sshd_config.d/*.conf 2>/dev/null || true"
+      },
+      "name": "bash",
+      "type": "tool_use"
+    }
+  ],
+  "model": "anthropic/claude-4.6-opus-20260205",
+  "role": "assistant",
+  "stop_reason": "tool_use",
+  "stop_sequence": null,
+  "type": "message",
+  "usage": {
+    "cache_creation": null,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "inference_geo": null,
+    "input_tokens": 3131,
+    "output_tokens": 281,
+    "server_tool_use": null,
+    "service_tier": null,
+    "speed": "standard",
+    "cost": 0.02268,
+    "is_byok": false,
+    "cost_details": {
+      "upstream_inference_cost": 0.02268,
+      "upstream_inference_prompt_cost": 0.015655,
+      "upstream_inference_completions_cost": 0.007025
+    }
+  },
+  "provider": "Amazon Bedrock"
+}

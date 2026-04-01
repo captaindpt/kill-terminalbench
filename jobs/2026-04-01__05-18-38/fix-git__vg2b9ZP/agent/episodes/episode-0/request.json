@@ -1,0 +1,34 @@
+{
+  "system": "You are solving a task in a Linux environment.\n\nWork directly in the shell.\nInspect the environment before changing it.\nRead errors carefully and adapt.\nVerify your work before finishing.\nWhen the task is complete, respond briefly with no tool calls.\n",
+  "tools": [
+    {
+      "name": "bash",
+      "description": "Run a shell command and return stdout/stderr and the exit code.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "command": {
+            "type": "string",
+            "description": "Shell command to execute."
+          },
+          "timeout_sec": {
+            "type": "number",
+            "description": "Maximum time to wait for the command to finish.",
+            "default": 180
+          }
+        },
+        "required": [
+          "command"
+        ]
+      }
+    }
+  ],
+  "messages": [
+    {
+      "role": "user",
+      "content": "Task:\nI just made some changes to my personal site and checked out master, but now I can't find those changes. Please help me find them and merge them into master.\n"
+    }
+  ],
+  "model": "anthropic/claude-opus-4.6",
+  "temperature": 1.0
+}

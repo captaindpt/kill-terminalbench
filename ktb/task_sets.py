@@ -38,9 +38,44 @@ TB2_DIVERSE_15 = TaskSet(
     ),
 )
 
+TB2_BUCKETS_24 = TaskSet(
+    name="tb2-buckets-24",
+    description=(
+        "Twenty-four official TB2 tasks selected as a cross-bucket diagnostic"
+        " run: three representative tasks from each operational bucket."
+    ),
+    tasks=(
+        "fix-permissions",
+        "fix-pandas-version",
+        "npm-conflict-resolution",
+        "csv-to-parquet",
+        "heterogeneous-dates",
+        "jsonl-aggregator",
+        "git-multibranch",
+        "fix-git",
+        "configure-git-webserver",
+        "nginx-request-logging",
+        "openssl-selfsigned-cert",
+        "home-server-https",
+        "broken-python",
+        "classifier-debug",
+        "mnist-learning-fix",
+        "build-cython-ext",
+        "polyglot-c-py",
+        "cpp-compatibility",
+        "fix-code-vulnerability",
+        "vulnerable-secret",
+        "sql-injection-attack",
+        "solve-sudoku",
+        "gomoku-planner",
+        "countdown-game",
+    ),
+)
+
 
 TASK_SETS: dict[str, TaskSet] = {
     TB2_DIVERSE_15.name: TB2_DIVERSE_15,
+    TB2_BUCKETS_24.name: TB2_BUCKETS_24,
 }
 
 

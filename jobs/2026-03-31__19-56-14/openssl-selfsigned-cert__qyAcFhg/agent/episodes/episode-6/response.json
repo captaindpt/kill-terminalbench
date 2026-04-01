@@ -1,0 +1,41 @@
+{
+  "id": "gen-1774988024-LDJVYx1zfR6LhHMGp9An",
+  "container": null,
+  "content": [
+    {
+      "id": "toolu_bdrk_016VBW2cvPmyFHshr9Td6ngq",
+      "caller": {
+        "type": "direct"
+      },
+      "input": {
+        "command": "# Step 6: Create the Python check script\ncat > /app/check_cert.py << 'PYTHON_SCRIPT'\n#!/usr/bin/env python3\n\"\"\"Script to verify the self-signed TLS certificate.\"\"\"\n\nimport ssl\nimport datetime\nimport sys\nimport os\n\nCERT_PATH = \"/app/ssl/server.crt\"\nKEY_PATH = \"/app/ssl/server.key\"\n\ndef check_certificate():\n    # Check that files exist\n    if not os.path.exists(CERT_PATH):\n        print(f\"ERROR: Certificate file not found at {CERT_PATH}\")\n        sys.exit(1)\n    if not os.path.exists(KEY_PATH):\n        print(f\"ERROR: Key file not found at {KEY_PATH}\")\n        sys.exit(1)\n\n    # Load and parse the certificate\n    try:\n        cert_dict = ssl._ssl._test_decode_cert(CERT_PATH)\n    except Exception as e:\n        print(f\"ERROR: Failed to load certificate: {e}\")\n        sys.exit(1)\n\n    # Extract Common Name from subject\n    common_name = None\n    for rdn in cert_dict.get(\"subject\", ()):\n        for attr_type, attr_value in rdn:\n            if attr_type == \"commonName\":\n                common_name = attr_value\n\n    if common_name is None:\n        print(\"ERROR: Common Name not found in certificate\")\n        sys.exit(1)\n\n    print(f\"Common Name: {common_name}\")\n\n    # Extract and display expiration date\n    not_after_str = cert_dict.get(\"notAfter\", \"\")\n    # OpenSSL/Python returns dates like \"Mar 31 12:00:00 2027 GMT\"\n    try:\n        expiration = datetime.datetime.strptime(not_after_str, \"%b %d %H:%M:%S %Y %Z\")\n        print(f\"Expiration Date: {expiration.strftime('%Y-%m-%d')}\")\n    except ValueError:\n        print(f\"Expiration Date: {not_after_str}\")\n\n    # Print not before date as well\n    not_before_str = cert_dict.get(\"notBefore\", \"\")\n    try:\n        not_before = datetime.datetime.strptime(not_before_str, \"%b %d %H:%M:%S %Y %Z\")\n        print(f\"Valid From: {not_before.strftime('%Y-%m-%d')}\")\n    except ValueError:\n        print(f\"Valid From: {not_before_str}\")\n\n    # Verify CN matches expected value\n    expected_cn = \"dev-internal.company.local\"\n    if common_name != expected_cn:\n        print(f\"WARNING: Common Name '{common_name}' does not match expected '{expected_cn}'\")\n\n    print(\"Certificate verification successful\")\n\n\nif __name__ == \"__main__\":\n    check_certificate()\nPYTHON_SCRIPT\n\nchmod +x /app/check_cert.py"
+      },
+      "name": "bash",
+      "type": "tool_use"
+    }
+  ],
+  "model": "anthropic/claude-4.6-opus-20260205",
+  "role": "assistant",
+  "stop_reason": "tool_use",
+  "stop_sequence": null,
+  "type": "message",
+  "usage": {
+    "cache_creation": null,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "inference_geo": null,
+    "input_tokens": 2322,
+    "output_tokens": 770,
+    "server_tool_use": null,
+    "service_tier": null,
+    "speed": "standard",
+    "cost": 0.03086,
+    "is_byok": false,
+    "cost_details": {
+      "upstream_inference_cost": 0.03086,
+      "upstream_inference_prompt_cost": 0.01161,
+      "upstream_inference_completions_cost": 0.01925
+    }
+  },
+  "provider": "Amazon Bedrock"
+}
