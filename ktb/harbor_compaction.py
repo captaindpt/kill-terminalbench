@@ -12,17 +12,20 @@ from .openrouter_common import ensure_dir
 
 SUMMARY_SYSTEM_PROMPT = """You are compacting earlier task history for a coding agent.
 
-Summarize only what is already known.
-Focus on facts that will help continue the task efficiently:
-- confirmed environment facts
-- commands already tried and their outcomes
-- files created or modified
-- errors or blockers discovered
-- what still needs to be done next
+Summarize only what is already known. Use exactly two sections:
 
-Return plain markdown only.
-Keep it concise and action-oriented.
-Do not include speculative ideas unless they were explicitly tested.
+## COMPLETED
+What has been done and confirmed working. Include key commands, files modified, and verified outcomes.
+
+## PENDING
+What the agent still needs to DO (not verify or re-check). Only list items that have NOT been completed yet.
+If specific fix commands were identified but not yet executed, include the exact commands.
+Verification and testing are handled by a separate harness — never list "test", "verify", or "check" as pending.
+
+Rules:
+- Never list a completed item under PENDING.
+- If the task appears fully done, write PENDING as "Nothing — task is complete, agent should stop."
+- Keep it concise and factual. No speculation.
 """
 
 

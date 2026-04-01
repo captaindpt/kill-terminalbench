@@ -19,6 +19,23 @@ INFRA_BLOCKERS = (
     "sessionnotcreatedexception: message: session not created: chrome instance exited",
 )
 
+# Loop detection: track recent (command, output_hash) pairs.
+# If the same set of commands repeats 3 times, nudge the agent.
+LOOP_WINDOW = 3  # consecutive episodes to compare
+
+
+def _commands_signature(tool_results: list[ToolExecution]) -> tuple[tuple[str, int], ...]:
+    """Fingerprint an episode's commands by (command, return_code)."""
+    return tuple((t.command.strip(), t.return_code) for t in tool_results)
+
+
+def _detect_loop(history: list[tuple[tuple[str, int], ...]], window: int = LOOP_WINDOW) -> bool:
+    """True if the last `window` episodes have identical command signatures."""
+    if len(history) < window:
+        return False
+    recent = history[-window:]
+    return all(sig == recent[0] for sig in recent) and len(recent[0]) > 0
+
 
 def _is_infra_blocker(output: str) -> bool:
     lowered = output.lower()
@@ -36,7 +53,7 @@ class OpenRouterHarborAgent(BaseAgent):
         model_name: str | None = None,
         max_episodes: int = 75,
         command_timeout: int = 300,
-        temperature: float = 1.0,
+        temperature: float = 0.7,
         **kwargs,
     ):
         super().__init__(logs_dir=logs_dir, model_name=model_name, **kwargs)
@@ -92,6 +109,7 @@ class OpenRouterHarborAgent(BaseAgent):
                 "content": f"Task:\n{instruction}",
             }
         ]
+        episode_signatures: list[tuple[tuple[str, int], ...]] = []
 
         for episode in range(self._max_episodes):
             model_attempts = 0
@@ -252,6 +270,35 @@ class OpenRouterHarborAgent(BaseAgent):
                 json.dumps(persisted_tool_results, indent=2)
             )
             messages.append({"role": "user", "content": persisted_tool_results})
+
+            # --- Loop detection ---
+            episode_signatures.append(_commands_signature(tool_results))
+            if _detect_loop(episode_signatures):
+                messages.append({
+                    "role": "user",
+                    "content": (
+                        "[Harness] You have run the same commands 3 episodes in a row with identical results. "
+                        "Either take a different action to make progress, or if the task is already complete, "
+                        "respond with no tool calls to finish."
+                    ),
+                })
+
+            # --- Budget warnings ---
+            pct = (episode + 1) / self._max_episodes
+            if self._max_episodes >= 10:
+                if episode + 1 == self._max_episodes // 2:
+                    messages.append({
+                        "role": "user",
+                        "content": f"[Harness] 50% of episode budget used ({episode + 1}/{self._max_episodes}).",
+                    })
+                elif episode + 1 == (self._max_episodes * 3) // 4:
+                    messages.append({
+                        "role": "user",
+                        "content": (
+                            f"[Harness] 75% of episode budget used ({episode + 1}/{self._max_episodes}). "
+                            "Wrap up soon — if the task is done, stop with no tool calls."
+                        ),
+                    })
 
             if should_compact(total_input_tokens, messages):
                 messages = compact_messages(
