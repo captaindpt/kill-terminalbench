@@ -24,6 +24,13 @@ INFRA_BLOCKERS = (
 LOOP_WINDOW = 3  # consecutive episodes to compare
 
 
+def _usage_value(usage: Any, field: str) -> int | float:
+    if usage is None:
+        return 0
+    value = getattr(usage, field, 0)
+    return value or 0
+
+
 def _commands_signature(tool_results: list[ToolExecution]) -> tuple[tuple[str, int], ...]:
     """Fingerprint an episode's commands by (command, return_code)."""
     return tuple((t.command.strip(), t.return_code) for t in tool_results)
@@ -164,10 +171,10 @@ class OpenRouterHarborAgent(BaseAgent):
                     f"Model call failed at episode {episode}: {exc}"
                 ) from exc
 
-            usage = response.usage
-            total_input_tokens += usage.input_tokens
-            total_output_tokens += usage.output_tokens
-            total_cost += getattr(usage, "cost", 0.0) or 0.0
+            usage = getattr(response, "usage", None)
+            total_input_tokens += int(_usage_value(usage, "input_tokens"))
+            total_output_tokens += int(_usage_value(usage, "output_tokens"))
+            total_cost += float(_usage_value(usage, "cost"))
             if response.id:
                 generation_ids.append(response.id)
 

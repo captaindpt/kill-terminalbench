@@ -61,6 +61,30 @@ def is_prompt_too_long_error(exc: Exception) -> bool:
     return any(marker in message for marker in markers)
 
 
+def _message_has_tool_results(message: dict[str, Any]) -> bool:
+    content = message.get("content")
+    if not isinstance(content, list):
+        return False
+    return any(isinstance(item, dict) and item.get("type") == "tool_result" for item in content)
+
+
+def _safe_compaction_boundary(messages: list[dict[str, Any]], recent_count: int) -> int:
+    """Pick a compaction boundary that preserves tool_use/tool_result pairs.
+
+    Anthropic requires each user tool_result block to immediately follow an
+    assistant tool_use block in the retained transcript. If compaction starts at
+    a user tool_result message, the corresponding assistant tool_use may already
+    be summarized away, causing a 400 invalid_request_error.
+    """
+    prefix_end = len(messages) - recent_count
+    prefix_end = max(1, prefix_end)
+
+    while prefix_end > 1 and _message_has_tool_results(messages[prefix_end]):
+        prefix_end -= 1
+
+    return prefix_end
+
+
 def _serialize_content(content: Any) -> Any:
     if isinstance(content, str):
         return content
@@ -92,7 +116,7 @@ def compact_messages(
     compaction_index: int,
 ) -> list[dict[str, Any]]:
     recent_count = COMPACTION_RECENT_MESSAGES
-    prefix_end = len(messages) - recent_count
+    prefix_end = _safe_compaction_boundary(messages, recent_count)
     old_messages = messages[1:prefix_end]
     recent_messages = messages[prefix_end:]
 
