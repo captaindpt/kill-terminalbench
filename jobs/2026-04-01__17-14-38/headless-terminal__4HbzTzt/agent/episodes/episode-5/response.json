@@ -1,0 +1,46 @@
+{
+  "id": "gen-1775071816-RyEZPgsXHVC60HAf3JHl",
+  "container": null,
+  "content": [
+    {
+      "citations": null,
+      "text": "Now let me think about the design. I need a `HeadlessTerminal` that:\n\n1. Mimics a terminal with an interactive bash shell\n2. Supports interactive programs\n3. Supports modifier keys like `\\x03` (Ctrl+C)\n4. Sources startup files like `~/.bashrc`\n\nI'll use `pexpect` to spawn a bash login shell on a pseudo-terminal, which naturally supports all of these requirements.",
+      "type": "text"
+    },
+    {
+      "id": "toolu_vrtx_017NghXb1hLUtuUtQEXFEGYF",
+      "caller": {
+        "type": "direct"
+      },
+      "input": {
+        "command": "cat > /app/headless_terminal.py << 'PYTHON_EOF'\nimport os\nimport time\nimport pty\nimport select\nimport signal\nimport struct\nimport fcntl\nimport termios\n\nfrom base_terminal import BaseTerminal\n\n\nclass HeadlessTerminal(BaseTerminal):\n    \"\"\"\n    A headless terminal implementation that spawns an interactive bash shell\n    in a pseudo-terminal and allows sending keystrokes to it.\n\n    Supports:\n    - Interactive bash shell that sources startup files (~/.bashrc, etc.)\n    - Interactive programs (vim, less, top, etc.)\n    - Modifier/control keys (e.g. \\\\x03 for Ctrl+C, \\\\x04 for Ctrl+D)\n    \"\"\"\n\n    def __init__(self, rows: int = 24, cols: int = 80):\n        \"\"\"\n        Initialize the headless terminal.\n\n        Args:\n            rows: Number of rows for the terminal.\n            cols: Number of columns for the terminal.\n        \"\"\"\n        self._rows = rows\n        self._cols = cols\n\n        # Create a pseudo-terminal pair\n        self._master_fd, slave_fd = pty.openpty()\n\n        # Set the terminal window size\n        winsize = struct.pack(\"HHHH\", rows, cols, 0, 0)\n        fcntl.ioctl(slave_fd, termios.TIOSETWINSZ, winsize)\n\n        # Fork a child process running an interactive bash shell\n        self._pid = os.fork()\n        if self._pid == 0:\n            # Child process\n            os.close(self._master_fd)\n\n            # Create a new session and set the slave as the controlling terminal\n            os.setsid()\n            fcntl.ioctl(slave_fd, termios.TIOCSCTTY, 0)\n\n            # Redirect stdin/stdout/stderr to the slave PTY\n            os.dup2(slave_fd, 0)\n            os.dup2(slave_fd, 1)\n            os.dup2(slave_fd, 2)\n\n            if slave_fd > 2:\n                os.close(slave_fd)\n\n            # Set TERM so that applications behave properly\n            os.environ[\"TERM\"] = \"xterm-256color\"\n\n            # Exec an interactive login bash shell\n            # Using --login ensures it sources /etc/profile, ~/.bash_profile, etc.\n            # The -i flag ensures it's interactive and sources ~/.bashrc\n            os.execvp(\"bash\", [\"bash\", \"-i\"])\n        else:\n            # Parent process\n            os.close(slave_fd)\n\n            # Set master fd to non-blocking\n            flags = fcntl.fcntl(self._master_fd, fcntl.F_GETFL)\n            fcntl.fcntl(self._master_fd, fcntl.F_SETFL, flags | os.O_NONBLOCK)\n\n            # Wait briefly for the shell to initialize\n            time.sleep(0.2)\n            # Drain any initial output\n            self._drain()\n\n    def _drain(self) -> bytes:\n        \"\"\"Read and discard any available output from the terminal.\"\"\"\n        output = b\"\"\n        while True:\n            ready, _, _ = select.select([self._master_fd], [], [], 0.05)\n            if not ready:\n                break\n            try:\n                chunk = os.read(self._master_fd, 65536)\n                if not chunk:\n                    break\n                output += chunk\n            except OSError:\n                break\n        return output\n\n    def send_keystrokes(self, keystrokes: str, wait_sec: float = 0.0) -> None:\n        \"\"\"\n        Sends keystrokes to the terminal.\n\n        Args:\n            keystrokes: The keystrokes to send to the terminal. Can include\n                        control characters (e.g. '\\\\x03' for Ctrl+C,\n                        '\\\\r' or '\\\\n' for Enter).\n            wait_sec: The number of seconds to wait after sending the keystrokes.\n        \"\"\"\n        data = keystrokes.encode(\"utf-8\")\n        os.write(self._master_fd, data)\n\n        if wait_sec > 0:\n            time.sleep(wait_sec)\n\n    def read_output(self, timeout: float = 0.5) -> str:\n        \"\"\"\n        Read available output from the terminal.\n\n        Args:\n            timeout: Maximum time to wait for output in seconds.\n\n        Returns:\n            The output string from the terminal.\n        \"\"\"\n        output = b\"\"\n        deadline = time.monotonic() + timeout\n        while True:\n            remaining = deadline - time.monotonic()\n            if remaining <= 0:\n                break\n            ready, _, _ = select.select([self._master_fd], [], [], min(remaining, 0.05))\n            if ready:\n                try:\n                    chunk = os.read(self._master_fd, 65536)\n                    if not chunk:\n                        break\n                    output += chunk\n                    # Reset deadline slightly to catch more output that may follow\n                except OSError:\n                    break\n            else:\n                # No more data available within the timeout\n                if output:\n                    break\n        return output.decode(\"utf-8\", errors=\"replace\")\n\n    def close(self) -> None:\n        \"\"\"Close the terminal and clean up resources.\"\"\"\n        try:\n            os.close(self._master_fd)\n        except OSError:\n            pass\n        try:\n            os.kill(self._pid, signal.SIGTERM)\n            os.waitpid(self._pid, 0)\n        except (OSError, ChildProcessError):\n            pass\n\n    def __del__(self):\n        self.close()\n\n    def __enter__(self):\n        return self\n\n    def __exit__(self, exc_type, exc_val, exc_tb):\n        self.close()\n        return False\nPYTHON_EOF"
+      },
+      "name": "bash",
+      "type": "tool_use"
+    }
+  ],
+  "model": "anthropic/claude-4.6-opus-20260205",
+  "role": "assistant",
+  "stop_reason": "tool_use",
+  "stop_sequence": null,
+  "type": "message",
+  "usage": {
+    "cache_creation": null,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "inference_geo": null,
+    "input_tokens": 2068,
+    "output_tokens": 1581,
+    "server_tool_use": null,
+    "service_tier": null,
+    "speed": "standard",
+    "cost": 0.049865,
+    "is_byok": false,
+    "cost_details": {
+      "upstream_inference_cost": 0.049865,
+      "upstream_inference_prompt_cost": 0.01034,
+      "upstream_inference_completions_cost": 0.039525
+    }
+  },
+  "provider": "Google"
+}

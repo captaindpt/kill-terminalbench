@@ -1,0 +1,41 @@
+{
+  "id": "gen-1775052144-bv1xeTnZaoaNzv0W1yMb",
+  "container": null,
+  "content": [
+    {
+      "id": "toolu_bdrk_019nP91Qbpz2k3rQkQV2YkxK",
+      "caller": {
+        "type": "direct"
+      },
+      "input": {
+        "command": "# The post-receive hook references 'master' but git might default to 'main'. \n# Let's update the hook to handle both cases and also ensure it works properly.\ncat > /git/server/hooks/post-receive << 'HOOK'\n#!/bin/bash\nwhile read oldrev newrev refname; do\n    branch=$(git rev-parse --symbolic --abbrev-ref $refname)\n    GIT_WORK_TREE=/var/www/git-deploy git checkout -f $branch\ndone\nHOOK\nchmod +x /git/server/hooks/post-receive\nchown user:user /git/server/hooks/post-receive\n\n# Set default branch to master in the bare repo\ngit -C /git/server symbolic-ref HEAD refs/heads/master\n\n# Also make sure the web server will restart on reboot - add to rc.local or similar\n# For now, let's also ensure the python server persists by writing a startup script\ncat > /usr/local/bin/start-git-web.sh << 'EOF'\n#!/bin/bash\ncd /var/www/git-deploy\nexec python3 -m http.server 8080\nEOF\nchmod +x /usr/local/bin/start-git-web.sh\n\necho \"Done configuring\""
+      },
+      "name": "bash",
+      "type": "tool_use"
+    }
+  ],
+  "model": "anthropic/claude-4.6-opus-20260205",
+  "role": "assistant",
+  "stop_reason": "tool_use",
+  "stop_sequence": null,
+  "type": "message",
+  "usage": {
+    "cache_creation": null,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "inference_geo": null,
+    "input_tokens": 2418,
+    "output_tokens": 347,
+    "server_tool_use": null,
+    "service_tier": null,
+    "speed": "standard",
+    "cost": 0.020765,
+    "is_byok": false,
+    "cost_details": {
+      "upstream_inference_cost": 0.020765,
+      "upstream_inference_prompt_cost": 0.01209,
+      "upstream_inference_completions_cost": 0.008675
+    }
+  },
+  "provider": "Amazon Bedrock"
+}

@@ -1,0 +1,41 @@
+{
+  "id": "gen-1775053865-2533TlxE8o3wy9p0jaVW",
+  "container": null,
+  "content": [
+    {
+      "id": "toolu_bdrk_01SXUJhW4qFxwdoFsgxJjTae",
+      "caller": {
+        "type": "direct"
+      },
+      "input": {
+        "command": "# Create the web root directory\nmkdir -p /var/www/git-deploy\n\n# Create the post-receive hook that deploys to the web root\ncat > /git/server/hooks/post-receive << 'EOF'\n#!/bin/bash\nGIT_WORK_TREE=/var/www/git-deploy git checkout -f master\nEOF\n\nchmod +x /git/server/hooks/post-receive\nchown -R user:user /git /var/www/git-deploy"
+      },
+      "name": "bash",
+      "type": "tool_use"
+    }
+  ],
+  "model": "anthropic/claude-4.6-opus-20260205",
+  "role": "assistant",
+  "stop_reason": "tool_use",
+  "stop_sequence": null,
+  "type": "message",
+  "usage": {
+    "cache_creation": null,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "inference_geo": null,
+    "input_tokens": 1892,
+    "output_tokens": 162,
+    "server_tool_use": null,
+    "service_tier": null,
+    "speed": "standard",
+    "cost": 0.01351,
+    "is_byok": false,
+    "cost_details": {
+      "upstream_inference_cost": 0.01351,
+      "upstream_inference_prompt_cost": 0.00946,
+      "upstream_inference_completions_cost": 0.00405
+    }
+  },
+  "provider": "Amazon Bedrock"
+}

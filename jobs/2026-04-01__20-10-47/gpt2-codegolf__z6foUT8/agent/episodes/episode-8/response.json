@@ -1,0 +1,41 @@
+{
+  "id": "gen-1775074545-9xorGCeQJJeENOAPRz20",
+  "container": null,
+  "content": [
+    {
+      "id": "toolu_bdrk_01VEKkn74MYTPSqJdktzTpZe",
+      "caller": {
+        "type": "direct"
+      },
+      "input": {
+        "command": "perl -e '\nmy $n_vocab = 50257;\nmy $n_embd = 768;\nmy $n_ctx = 1024;\nmy $n_layer = 12;\n\nmy $wte = $n_vocab*$n_embd;\nmy $wpe = $n_ctx*$n_embd;\nmy $per_layer = 768 + 768 + 768*2304 + 2304 + 768*768 + 768 + 768 + 768 + 768*3072 + 3072 + 3072*768 + 768;\nmy $total = $wte + $wpe + $n_layer*$per_layer + 768 + 768;\nprint \"wte: $wte\\n\";\nprint \"wpe: $wpe\\n\";\nprint \"per_layer: $per_layer\\n\";\nprint \"total: $total\\n\";\nmy $file_floats = 497759232/4;\nprint \"file_floats: $file_floats\\n\";\n'"
+      },
+      "name": "bash",
+      "type": "tool_use"
+    }
+  ],
+  "model": "anthropic/claude-4.6-opus-20260205",
+  "role": "assistant",
+  "stop_reason": "tool_use",
+  "stop_sequence": null,
+  "type": "message",
+  "usage": {
+    "cache_creation": null,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "inference_geo": null,
+    "input_tokens": 3532,
+    "output_tokens": 309,
+    "server_tool_use": null,
+    "service_tier": null,
+    "speed": "standard",
+    "cost": 0.025385,
+    "is_byok": false,
+    "cost_details": {
+      "upstream_inference_cost": 0.025385,
+      "upstream_inference_prompt_cost": 0.01766,
+      "upstream_inference_completions_cost": 0.007725
+    }
+  },
+  "provider": "Amazon Bedrock"
+}

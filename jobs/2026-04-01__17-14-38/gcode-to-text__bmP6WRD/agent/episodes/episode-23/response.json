@@ -1,0 +1,41 @@
+{
+  "id": "gen-1775072691-WKyQWbMKEcTNmfhFz8Ud",
+  "container": null,
+  "content": [
+    {
+      "id": "toolu_bdrk_015GZwL5pCvvFYaZLy2sJE8k",
+      "caller": {
+        "type": "direct"
+      },
+      "input": {
+        "command": "# No comments at all. Let me try full rendering combining all layers and save as image\npython3 << 'PYTHON'\nimport re\nimport numpy as np\nimport math\nfrom PIL import Image\n\nwith open('/app/text.gcode', 'r') as f:\n    lines = f.readlines()\n\ncurrent_object = None\nsegments = []\nx, y, z = 0, 0, 0\n\nfor line in lines:\n    line = line.strip()\n    \n    m486 = re.match(r'M486 S(-?\\d+)', line)\n    if m486:\n        current_object = int(m486.group(1))\n        continue\n    \n    if current_object != 0:\n        if line.startswith('G0') or line.startswith('G1'):\n            x_match = re.search(r'X([\\d.]+)', line)\n            y_match = re.search(r'Y([\\d.]+)', line)\n            z_match = re.search(r'Z([\\d.]+)', line)\n            if x_match: x = float(x_match.group(1))\n            if y_match: y = float(y_match.group(1))\n            if z_match: z = float(z_match.group(1))\n        continue\n    \n    if line.startswith('G0') or line.startswith('G1'):\n        old_x, old_y = x, y\n        x_match = re.search(r'X([\\d.]+)', line)\n        y_match = re.search(r'Y([\\d.]+)', line)\n        z_match = re.search(r'Z([\\d.]+)', line)\n        e_match = re.search(r'E([\\d.]+)', line)\n        \n        if x_match: x = float(x_match.group(1))\n        if y_match: y = float(y_match.group(1))\n        if z_match: z = float(z_match.group(1))\n        \n        if e_match and float(e_match.group(1)) > 0:\n            segments.append((old_x, old_y, x, y))\n\nprint(f\"Total segments: {len(segments)}\")\n\n# Rotate\nangle_rad = math.radians(22.0)\ncx = (55.5 + 204.4) / 2\ncy = (79.7 + 146.9) / 2\ncos_a = math.cos(-angle_rad)\nsin_a = math.sin(-angle_rad)\n\nrotated = []\nfor seg in segments:\n    x1, y1, x2, y2 = seg\n    rx1 = cos_a * (x1 - cx) - sin_a * (y1 - cy)\n    ry1 = sin_a * (x1 - cx) + cos_a * (y1 - cy)\n    rx2 = cos_a * (x2 - cx) - sin_a * (y2 - cy)\n    ry2 = sin_a * (x2 - cx) + cos_a * (y2 - cy)\n    rotated.append((rx1, ry1, rx2, ry2))\n\nmin_x = min(min(s[0], s[2]) for s in rotated)\nmax_x = max(max(s[0], s[2]) for s in rotated)\nmin_y = min(min(s[1], s[3]) for s in rotated)\nmax_y = max(max(s[1], s[3]) for s in rotated)\n\nprint(f\"Bounds: X[{min_x:.1f}, {max_x:.1f}] Y[{min_y:.1f}, {max_y:.1f}]\")\nprint(f\"Size: {max_x-min_x:.1f} x {max_y-min_y:.1f} mm\")\n\n# Render at 0.05mm resolution\nres = 0.05\nw = int((max_x - min_x) / res) + 1\nh = int((max_y - min_y) / res) + 1\nprint(f\"Grid: {w}x{h}\")\n\ngrid = np.zeros((h, w), dtype=np.uint8)\n\nfor seg in rotated:\n    x1, y1, x2, y2 = seg\n    gx1 = (x1 - min_x) / res\n    gy1 = (y1 - min_y) / res\n    gx2 = (x2 - min_x) / res\n    gy2 = (y2 - min_y) / res\n    \n    steps = int(max(abs(gx2 - gx1), abs(gy2 - gy1), 1))\n    for i in range(steps + 1):\n        t = i / steps if steps > 0 else 0\n        px = int(gx1 + t * (gx2 - gx1))\n        py = int(gy1 + t * (gy2 - gy1))\n        # Draw with line width ~0.4mm = 8 pixels\n        for dx in range(-4, 5):\n            for dy in range(-4, 5):\n                if dx*dx + dy*dy <= 16:\n                    npx, npy = px + dx, py + dy\n                    if 0 <= npx < w and 0 <= npy < h:\n                        grid[npy][npx] = 255\n\n# Flip Y for image\nimg = Image.fromarray(grid[::-1, :], mode='L')\nimg.save('/app/text_render.png')\nprint(f\"Saved to /app/text_render.png ({img.width}x{img.height})\")\n\n# Also make ASCII art at coarser resolution\nblock_w = 6\nblock_h = 10\ndw = w // block_w\ndh = h // block_h\n\nprint(f\"\\nASCII ({dw}x{dh}):\")\nfor dy in range(dh - 1, -1, -1):\n    row = \"\"\n    for dx in range(dw):\n        block = grid[dy*block_h:(dy+1)*block_h, dx*block_w:(dx+1)*block_w]\n        density = np.sum(block > 0) / block.size\n        if density > 0.4:\n            row += \"#\"\n        elif density > 0.15:\n            row += \".\"\n        else:\n            row += \" \"\n    print(row)\n\nPYTHON"
+      },
+      "name": "bash",
+      "type": "tool_use"
+    }
+  ],
+  "model": "anthropic/claude-4.6-opus-20260205",
+  "role": "assistant",
+  "stop_reason": "tool_use",
+  "stop_sequence": null,
+  "type": "message",
+  "usage": {
+    "cache_creation": null,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "inference_geo": null,
+    "input_tokens": 9671,
+    "output_tokens": 1677,
+    "server_tool_use": null,
+    "service_tier": null,
+    "speed": "standard",
+    "cost": 0.09028,
+    "is_byok": false,
+    "cost_details": {
+      "upstream_inference_cost": 0.09028,
+      "upstream_inference_prompt_cost": 0.048355,
+      "upstream_inference_completions_cost": 0.041925
+    }
+  },
+  "provider": "Amazon Bedrock"
+}

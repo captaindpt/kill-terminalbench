@@ -47,6 +47,7 @@ class ToolExecution:
     return_code: int
     stdout: str | None
     stderr: str | None
+    timeout_sec: int | None = None
 
 
 @dataclass
@@ -102,11 +103,20 @@ def _preview_text(text: str, limit: int = TOOL_PREVIEW_CHARS) -> str:
     )
 
 
-def format_exec_output(stdout: str | None, stderr: str | None, return_code: int, command: str) -> str:
+def format_exec_output(
+    stdout: str | None,
+    stderr: str | None,
+    return_code: int,
+    command: str,
+    timeout_sec: int | None = None,
+) -> str:
     note = _exit_code_note(command, return_code)
     header = f"[exit_code={return_code}]"
     if note:
         header = f"[exit_code={return_code}; note={note}]"
+    if return_code == 143 and timeout_sec:
+        timeout_note = f"command timed out after {timeout_sec}s"
+        header = f"[exit_code={return_code}; note={timeout_note}]"
 
     parts = [header]
     if stdout:
@@ -172,6 +182,7 @@ async def prepare_tool_results(
             stderr=execution.stderr,
             return_code=execution.return_code,
             command=execution.command,
+            timeout_sec=execution.timeout_sec,
         )
         prepared = PreparedToolResult(
             tool_use_id=execution.tool_use_id,

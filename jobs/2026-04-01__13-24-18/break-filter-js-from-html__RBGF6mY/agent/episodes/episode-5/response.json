@@ -1,0 +1,46 @@
+{
+  "id": "gen-1775050039-DYFPcR62qaPbmB0Ra6kh",
+  "container": null,
+  "content": [
+    {
+      "citations": null,
+      "text": "This is a parser differential. BeautifulSoup's `html.parser` parses `<!--><script>alert(1)//-->` as a single HTML comment containing `><script>alert(1)//`. So it finds no `<script>` tags. But the output is `<!--><script>alert(1)//-->`.\n\nIn a browser, `<!-->` is parsed as a valid empty comment (per HTML5 spec), and then `<script>alert(1)//--></script>` is parsed as a script tag. But wait, we lost the closing `</script>` tag...\n\nLet me test how browsers handle this:",
+      "type": "text"
+    },
+    {
+      "id": "toolu_bdrk_01U8NYHDcWwFCPoZYS4v4dAF",
+      "caller": {
+        "type": "direct"
+      },
+      "input": {
+        "command": "# The output is: <!--><script>alert(1)//-->\n# In a browser:\n# <!-->  -> parsed as empty comment (HTML5)\n# <script>alert(1)//--> -> script tag, but it needs closing\n# Without </script>, the script might consume everything till end...\n# But alert(1) followed by //--> would work since // comments out the -->\n# The script won't execute without a closing </script> tag though\n\n# Let me try adding a closing tag after\necho '<!--><script>alert(1)//--></script><p>test</p>' > /tmp/test11.html\npython /app/filter.py /tmp/test11.html\ncat /tmp/test11.html\necho \"---\""
+      },
+      "name": "bash",
+      "type": "tool_use"
+    }
+  ],
+  "model": "anthropic/claude-4.6-opus-20260205",
+  "role": "assistant",
+  "stop_reason": "tool_use",
+  "stop_sequence": null,
+  "type": "message",
+  "usage": {
+    "cache_creation": null,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "inference_geo": null,
+    "input_tokens": 2888,
+    "output_tokens": 367,
+    "server_tool_use": null,
+    "service_tier": null,
+    "speed": "standard",
+    "cost": 0.023615,
+    "is_byok": false,
+    "cost_details": {
+      "upstream_inference_cost": 0.023615,
+      "upstream_inference_prompt_cost": 0.01444,
+      "upstream_inference_completions_cost": 0.009175
+    }
+  },
+  "provider": "Amazon Bedrock"
+}

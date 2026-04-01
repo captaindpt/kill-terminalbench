@@ -1,0 +1,41 @@
+{
+  "id": "gen-1775072058-e5kqhYkz8n1Zt5TJtvvb",
+  "container": null,
+  "content": [
+    {
+      "id": "toolu_bdrk_01QhabBQMDCbu2FkBgCWUszW",
+      "caller": {
+        "type": "direct"
+      },
+      "input": {
+        "command": "# Let me extract all the X,Y coordinates when the printer is extruding for the text object\n# First, let me understand the object switching - M486 S0 = Embossed text, M486 S1 = Shape-Box\n# I need to extract moves only when S0 (text) is active\n\npython3 << 'PYTHON'\nimport re\n\nwith open('/app/text.gcode', 'r') as f:\n    lines = f.readlines()\n\n# Track which object is active\ncurrent_object = None\ntext_moves = []\nx, y, z = 0, 0, 0\nextruding = False\n\nfor line in lines:\n    line = line.strip()\n    \n    # Track object selection\n    m486 = re.match(r'M486 S(-?\\d+)', line)\n    if m486:\n        current_object = int(m486.group(1))\n        continue\n    \n    # Track Z changes\n    z_match = re.search(r'Z([\\d.]+)', line)\n    if z_match and (line.startswith('G0') or line.startswith('G1')):\n        z = float(z_match.group(1))\n    \n    # Only care about text object (S0)\n    if current_object != 0:\n        continue\n    \n    # Parse G1 moves with extrusion\n    if line.startswith('G1'):\n        x_match = re.search(r'X([\\d.]+)', line)\n        y_match = re.search(r'Y([\\d.]+)', line)\n        e_match = re.search(r'E([\\d.]+)', line)\n        \n        if x_match:\n            x = float(x_match.group(1))\n        if y_match:\n            y = float(y_match.group(1))\n        \n        if e_match and float(e_match.group(1)) > 0:\n            text_moves.append((x, y, z))\n\n# Find bounding box\nif text_moves:\n    xs = [m[0] for m in text_moves]\n    ys = [m[1] for m in text_moves]\n    zs = [m[2] for m in text_moves]\n    print(f\"Text moves: {len(text_moves)}\")\n    print(f\"X range: {min(xs):.3f} to {max(xs):.3f}\")\n    print(f\"Y range: {min(ys):.3f} to {max(ys):.3f}\")\n    print(f\"Z range: {min(zs):.3f} to {max(zs):.3f}\")\n    \n    # Print unique Z layers\n    unique_z = sorted(set(zs))\n    print(f\"Unique Z values: {unique_z[:20]}\")\nPYTHON"
+      },
+      "name": "bash",
+      "type": "tool_use"
+    }
+  ],
+  "model": "anthropic/claude-4.6-opus-20260205",
+  "role": "assistant",
+  "stop_reason": "tool_use",
+  "stop_sequence": null,
+  "type": "message",
+  "usage": {
+    "cache_creation": null,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "inference_geo": null,
+    "input_tokens": 4735,
+    "output_tokens": 747,
+    "server_tool_use": null,
+    "service_tier": null,
+    "speed": "standard",
+    "cost": 0.04235,
+    "is_byok": false,
+    "cost_details": {
+      "upstream_inference_cost": 0.04235,
+      "upstream_inference_prompt_cost": 0.023675,
+      "upstream_inference_completions_cost": 0.018675
+    }
+  },
+  "provider": "Amazon Bedrock"
+}

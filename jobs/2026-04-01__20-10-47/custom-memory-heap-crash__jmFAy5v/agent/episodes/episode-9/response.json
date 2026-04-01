@@ -1,0 +1,46 @@
+{
+  "id": "gen-1775079889-yHxpWsK0dz15yZeFuNZh",
+  "container": null,
+  "content": [
+    {
+      "citations": null,
+      "text": "Now I can see the issue. In the release build (`NDEBUG` defined), the `_Fac_tidy_reg_t` destructor uses `::operator delete(nodeptr)` to free facet nodes. But the custom `operator delete` in main.cpp routes through `g_custom_heap`, which has already been destroyed by that point (during Application's destructor). In debug mode, it uses `std::free()` which works fine.\n\nLet me trace what happens with the facets:",
+      "type": "text"
+    },
+    {
+      "id": "toolu_bdrk_01BcimEQwsVY2Lf6kRhFuaJM",
+      "caller": {
+        "type": "direct"
+      },
+      "input": {
+        "command": "grep -n \"_Fac_node\\|_Facet_Register\\|_Fac_head\" /build/gcc-13.2.0/libstdc++-v3/src/c++98/locale_init.cc | head -60"
+      },
+      "name": "bash",
+      "type": "tool_use"
+    }
+  ],
+  "model": "anthropic/claude-4.6-opus-20260205",
+  "role": "assistant",
+  "stop_reason": "tool_use",
+  "stop_sequence": null,
+  "type": "message",
+  "usage": {
+    "cache_creation": null,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "inference_geo": null,
+    "input_tokens": 6648,
+    "output_tokens": 224,
+    "server_tool_use": null,
+    "service_tier": null,
+    "speed": "standard",
+    "cost": 0.03884,
+    "is_byok": false,
+    "cost_details": {
+      "upstream_inference_cost": 0.03884,
+      "upstream_inference_prompt_cost": 0.03324,
+      "upstream_inference_completions_cost": 0.0056
+    }
+  },
+  "provider": "Amazon Bedrock"
+}

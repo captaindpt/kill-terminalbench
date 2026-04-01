@@ -1,0 +1,41 @@
+{
+  "id": "gen-1775063132-mTyOSc5Gjs2ZhZywyUCN",
+  "container": null,
+  "content": [
+    {
+      "id": "toolu_bdrk_01Y5th8bVLPRUuGmbnw9EwGf",
+      "caller": {
+        "type": "direct"
+      },
+      "input": {
+        "command": "cat > /app/decompress.py << 'PYTHON_SCRIPT'\n#!/usr/bin/env python3\n\"\"\"\nDecompress/revert a resharded directory back to its original structure in-place.\n\"\"\"\n\nimport json\nimport os\nimport sys\nimport tarfile\nimport shutil\nimport tempfile\n\n\ndef main():\n    if len(sys.argv) != 2:\n        print(f\"Usage: {sys.argv[0]} <resharded_dir>\", file=sys.stderr)\n        sys.exit(1)\n    \n    resharded_dir = sys.argv[1]\n    \n    if not os.path.isdir(resharded_dir):\n        print(f\"Error: Directory '{resharded_dir}' does not exist\", file=sys.stderr)\n        sys.exit(1)\n    \n    manifest_path = os.path.join(resharded_dir, \"manifest.json\")\n    if not os.path.isfile(manifest_path):\n        print(f\"Error: Manifest file not found at '{manifest_path}'\", file=sys.stderr)\n        sys.exit(1)\n    \n    # Read manifest\n    with open(manifest_path, 'r') as f:\n        manifest = json.load(f)\n    \n    bundles = manifest[\"bundles\"]\n    print(f\"Found {len(bundles)} bundles in manifest\")\n    \n    if not bundles:\n        # Clean up manifest\n        os.remove(manifest_path)\n        print(\"Done (empty dataset)\")\n        return\n    \n    # Extract all bundles to a temp directory first, then move files\n    # This avoids conflicts with the existing directory structure\n    temp_dir = tempfile.mkdtemp(dir=resharded_dir, prefix=\".decompress_tmp_\")\n    \n    try:\n        # Extract all bundles\n        for i, bundle_info in enumerate(bundles):\n            bundle_rel_path = bundle_info[\"path\"]\n            bundle_full_path = os.path.join(resharded_dir, bundle_rel_path)\n            \n            if not os.path.isfile(bundle_full_path):\n                print(f\"Error: Bundle file not found: {bundle_full_path}\", file=sys.stderr)\n                sys.exit(1)\n            \n            with tarfile.open(bundle_full_path, 'r:gz') as tar:\n                tar.extractall(path=temp_dir)\n            \n            if (i + 1) % 10 == 0 or i == len(bundles) - 1:\n                print(f\"  Extracted bundle {i + 1}/{len(bundles)}\")\n        \n        # Remove all existing content (bundles, subdirs, manifest)\n        print(\"Removing resharded structure...\")\n        for item in os.listdir(resharded_dir):\n            item_path = os.path.join(resharded_dir, item)\n            if item_path == temp_dir:\n                continue\n            if os.path.isdir(item_path):\n                shutil.rmtree(item_path)\n            else:\n                os.remove(item_path)\n        \n        # Move extracted files from temp to resharded_dir\n        print(\"Restoring original structure...\")\n        for item in os.listdir(temp_dir):\n            src = os.path.join(temp_dir, item)\n            dst = os.path.join(resharded_dir, item)\n            if os.path.isdir(src):\n                shutil.copytree(src, dst)\n            else:\n                shutil.move(src, dst)\n        \n    finally:\n        # Clean up temp directory\n        if os.path.exists(temp_dir):\n            shutil.rmtree(temp_dir)\n    \n    print(\"Done!\")\n\n\nif __name__ == \"__main__\":\n    main()\nPYTHON_SCRIPT\nchmod +x /app/decompress.py"
+      },
+      "name": "bash",
+      "type": "tool_use"
+    }
+  ],
+  "model": "anthropic/claude-4.6-opus-20260205",
+  "role": "assistant",
+  "stop_reason": "tool_use",
+  "stop_sequence": null,
+  "type": "message",
+  "usage": {
+    "cache_creation": null,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "inference_geo": null,
+    "input_tokens": 9931,
+    "output_tokens": 992,
+    "server_tool_use": null,
+    "service_tier": null,
+    "speed": "standard",
+    "cost": 0.074455,
+    "is_byok": false,
+    "cost_details": {
+      "upstream_inference_cost": 0.074455,
+      "upstream_inference_prompt_cost": 0.049655,
+      "upstream_inference_completions_cost": 0.0248
+    }
+  },
+  "provider": "Amazon Bedrock"
+}

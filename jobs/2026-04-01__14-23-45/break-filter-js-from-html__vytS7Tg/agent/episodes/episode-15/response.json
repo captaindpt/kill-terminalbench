@@ -1,0 +1,46 @@
+{
+  "id": "gen-1775053728-GUXLay3i4ZNkPSquauzT",
+  "container": null,
+  "content": [
+    {
+      "citations": null,
+      "text": "Same filter. Let me test the CDATA approach - in Chrome, `<![CDATA[>` in an HTML context is parsed as a bogus comment. The `>` after CDATA[ ends the bogus comment, and then the rest is parsed as real HTML. Let me verify:",
+      "type": "text"
+    },
+    {
+      "id": "toolu_bdrk_01XFQkNBEEAFvR5T1oeMpcXM",
+      "caller": {
+        "type": "direct"
+      },
+      "input": {
+        "command": "# Test: what does CDATA look like after filtering?\npython3 -c \"\nfrom bs4 import BeautifulSoup\n\n# Chrome HTML parser: <![CDATA[ starts a bogus comment, ended by >\n# So <![CDATA[> is a comment, and then <img src=x onerror=alert(1)> is real HTML\n# But ]]> would just be text\n# The key: BeautifulSoup sees no tags, so nothing is filtered\n\nhtml = '<![CDATA[><img src=x onerror=alert(1)>]]>'\nsoup = BeautifulSoup(html, 'html.parser')\nresult = str(soup)\nprint('After filter:', repr(result))\nprint('Tags found:', soup.find_all(True))\n\"\n"
+      },
+      "name": "bash",
+      "type": "tool_use"
+    }
+  ],
+  "model": "anthropic/claude-4.6-opus-20260205",
+  "role": "assistant",
+  "stop_reason": "tool_use",
+  "stop_sequence": null,
+  "type": "message",
+  "usage": {
+    "cache_creation": null,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "inference_geo": null,
+    "input_tokens": 4476,
+    "output_tokens": 305,
+    "server_tool_use": null,
+    "service_tier": null,
+    "speed": "standard",
+    "cost": 0.030005,
+    "is_byok": false,
+    "cost_details": {
+      "upstream_inference_cost": 0.030005,
+      "upstream_inference_prompt_cost": 0.02238,
+      "upstream_inference_completions_cost": 0.007625
+    }
+  },
+  "provider": "Amazon Bedrock"
+}

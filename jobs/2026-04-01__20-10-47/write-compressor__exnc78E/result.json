@@ -1,0 +1,132 @@
+{
+    "id": "cf5c7584-526f-49f2-86a3-6d9e0cd88f55",
+    "task_name": "write-compressor",
+    "trial_name": "write-compressor__exnc78E",
+    "trial_uri": "file:///root/kill-terminalbench/jobs/2026-04-01__20-10-47/write-compressor__exnc78E",
+    "task_id": {
+        "git_url": "https://github.com/laude-institute/terminal-bench-2.git",
+        "git_commit_id": "69671fbaac6d67a7ef0dfec016cc38a64ef7a77c",
+        "path": "write-compressor"
+    },
+    "source": "terminal-bench",
+    "task_checksum": "1b2f5f4e1df7950c0bfc0f9e1c2cc75072a0d6fe22b74755469d87bfeb3a57c0",
+    "config": {
+        "task": {
+            "path": "write-compressor",
+            "git_url": "https://github.com/laude-institute/terminal-bench-2.git",
+            "git_commit_id": "69671fbaac6d67a7ef0dfec016cc38a64ef7a77c",
+            "name": null,
+            "ref": null,
+            "overwrite": false,
+            "download_dir": null,
+            "source": "terminal-bench"
+        },
+        "trial_name": "write-compressor__exnc78E",
+        "trials_dir": "jobs/2026-04-01__20-10-47",
+        "timeout_multiplier": 1.0,
+        "agent_timeout_multiplier": null,
+        "verifier_timeout_multiplier": null,
+        "agent_setup_timeout_multiplier": null,
+        "environment_build_timeout_multiplier": null,
+        "agent": {
+            "name": null,
+            "import_path": "ktb.harbor_agent:OpenRouterHarborAgent",
+            "model_name": "anthropic/claude-opus-4.6",
+            "override_timeout_sec": null,
+            "override_setup_timeout_sec": null,
+            "max_timeout_sec": null,
+            "kwargs": {
+                "max_episodes": 75,
+                "temperature": 1.0,
+                "command_timeout": 300
+            },
+            "env": {}
+        },
+        "environment": {
+            "type": "docker",
+            "import_path": null,
+            "force_build": false,
+            "delete": true,
+            "override_cpus": null,
+            "override_memory_mb": null,
+            "override_storage_mb": null,
+            "override_gpus": null,
+            "suppress_override_warnings": false,
+            "mounts_json": null,
+            "env": {},
+            "kwargs": {}
+        },
+        "verifier": {
+            "override_timeout_sec": null,
+            "max_timeout_sec": null,
+            "disable": false
+        },
+        "artifacts": [],
+        "job_id": "ac97d53e-ea88-4647-942c-bdd637fd231e"
+    },
+    "agent_info": {
+        "name": "ktb-openrouter",
+        "version": "0.1.0",
+        "model_info": {
+            "name": "claude-opus-4.6",
+            "provider": "anthropic"
+        }
+    },
+    "agent_result": {
+        "n_input_tokens": 176692,
+        "n_cache_tokens": null,
+        "n_output_tokens": 14991,
+        "cost_usd": 1.258235,
+        "rollout_details": null,
+        "metadata": {
+            "generation_ids": [
+                "gen-1775075332-XtcAmmLl3TtuxMD0Saju",
+                "gen-1775075337-YJOvH8HD0ifwmXriIlOF",
+                "gen-1775075390-0Pu3wavAjSCN1gkWrk7z",
+                "gen-1775075429-TbvAjRpaL50n3OT3s03O",
+                "gen-1775075436-f3ik6BJ9TBbVTz3oDdzm",
+                "gen-1775075920-l9tqdwOJzdpjGhjPBq78",
+                "gen-1775076015-PPQOGFweSbAHXuHes4ZR",
+                "gen-1775076018-WhUTvyDsIk29dRcnEAEn",
+                "gen-1775076027-WYdTVMK10bAJ6bOs4ZDR",
+                "gen-1775076035-J0uscdC5YdONjgNDUx9e",
+                "gen-1775076048-fcQobKWrmMQBD6joequF",
+                "gen-1775076109-FE4VUhoVMxIiEtPp5caO",
+                "gen-1775076114-3aegRqdqRSVxjSE6aZfI",
+                "gen-1775076123-uFtMVF7bjrU7GJ3f1vaS",
+                "gen-1775076133-yAGi6bikZE3K6gNDKszE",
+                "gen-1775076139-74JBnag9QdMQuk93LqpY"
+            ],
+            "episodes": 16
+        }
+    },
+    "verifier_result": {
+        "rewards": {
+            "reward": 0.0
+        }
+    },
+    "exception_info": {
+        "exception_type": "AgentTimeoutError",
+        "exception_message": "Agent execution timed out after 900.0 seconds",
+        "exception_traceback": "Traceback (most recent call last):\n  File \"/usr/lib/python3.12/asyncio/tasks.py\", line 520, in wait_for\n    return await fut\n           ^^^^^^^^^\n  File \"/root/kill-terminalbench/ktb/harbor_agent.py\", line 256, in run\n    result = await environment.exec(command, timeout_sec=timeout_sec)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/root/kill-terminalbench/.venv/lib/python3.12/site-packages/harbor/environments/docker/docker.py\", line 485, in exec\n    return await self._run_docker_compose_command(\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/root/kill-terminalbench/.venv/lib/python3.12/site-packages/harbor/environments/docker/docker.py\", line 282, in _run_docker_compose_command\n    process = await asyncio.create_subprocess_exec(\n              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/lib/python3.12/asyncio/subprocess.py\", line 224, in create_subprocess_exec\n    transport, protocol = await loop.subprocess_exec(\n                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/lib/python3.12/asyncio/base_events.py\", line 1744, in subprocess_exec\n    transport = await self._make_subprocess_transport(\n                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/lib/python3.12/asyncio/unix_events.py\", line 218, in _make_subprocess_transport\n    await waiter\nasyncio.exceptions.CancelledError\n\nThe above exception was the direct cause of the following exception:\n\nTraceback (most recent call last):\n  File \"/root/kill-terminalbench/.venv/lib/python3.12/site-packages/harbor/trial/trial.py\", line 285, in _execute_agent\n    await asyncio.wait_for(\n  File \"/usr/lib/python3.12/asyncio/tasks.py\", line 519, in wait_for\n    async with timeouts.timeout(timeout):\n  File \"/usr/lib/python3.12/asyncio/timeouts.py\", line 115, in __aexit__\n    raise TimeoutError from exc_val\nTimeoutError\n\nThe above exception was the direct cause of the following exception:\n\nTraceback (most recent call last):\n  File \"/root/kill-terminalbench/.venv/lib/python3.12/site-packages/harbor/trial/trial.py\", line 538, in run\n    await self._execute_agent()\n  File \"/root/kill-terminalbench/.venv/lib/python3.12/site-packages/harbor/trial/trial.py\", line 294, in _execute_agent\n    raise AgentTimeoutError(\nharbor.trial.trial.AgentTimeoutError: Agent execution timed out after 900.0 seconds\n",
+        "occurred_at": "2026-04-01T20:45:09.999995"
+    },
+    "started_at": "2026-04-01T20:28:42.860140Z",
+    "finished_at": "2026-04-01T20:45:32.841467Z",
+    "environment_setup": {
+        "started_at": "2026-04-01T20:28:42.860774Z",
+        "finished_at": "2026-04-01T20:28:52.206971Z"
+    },
+    "agent_setup": {
+        "started_at": "2026-04-01T20:28:52.206984Z",
+        "finished_at": "2026-04-01T20:28:52.286021Z"
+    },
+    "agent_execution": {
+        "started_at": "2026-04-01T20:28:52.286097Z",
+        "finished_at": "2026-04-01T20:45:09.999374Z"
+    },
+    "verifier": {
+        "started_at": "2026-04-01T20:45:10.000645Z",
+        "finished_at": "2026-04-01T20:45:18.060430Z"
+    }
+}

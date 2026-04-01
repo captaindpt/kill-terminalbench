@@ -1,0 +1,46 @@
+{
+  "id": "gen-1775082748-jLvBkvf9aRF63evjZK4s",
+  "container": null,
+  "content": [
+    {
+      "citations": null,
+      "text": "Now let me implement the `HeadlessTerminal` class using `pexpect` which provides a proper PTY-based approach for interacting with a headless terminal:",
+      "type": "text"
+    },
+    {
+      "id": "toolu_bdrk_01NLp9jVfzJEY6VNSYMH1KQg",
+      "caller": {
+        "type": "direct"
+      },
+      "input": {
+        "command": "cat > /app/headless_terminal.py << 'PYTHON_EOF'\nimport os\nimport time\nimport pty\nimport select\nimport signal\nimport struct\nimport fcntl\nimport termios\n\nfrom base_terminal import BaseTerminal\n\n\nclass HeadlessTerminal(BaseTerminal):\n    \"\"\"\n    A headless terminal implementation that spawns an interactive bash shell\n    in a PTY and allows sending keystrokes to it.\n    \"\"\"\n\n    def __init__(self, rows: int = 24, cols: int = 80):\n        \"\"\"\n        Initialize the headless terminal.\n\n        Args:\n            rows: Number of rows for the terminal.\n            cols: Number of columns for the terminal.\n        \"\"\"\n        self._rows = rows\n        self._cols = cols\n        self._master_fd: int | None = None\n        self._pid: int | None = None\n        self._start_shell()\n\n    def _start_shell(self) -> None:\n        \"\"\"Spawn an interactive bash shell in a new PTY.\"\"\"\n        pid, master_fd = pty.fork()\n\n        if pid == 0:\n            # Child process: exec an interactive login bash shell\n            # that sources startup files like ~/.bashrc\n            env = os.environ.copy()\n            env[\"TERM\"] = \"xterm-256color\"\n            env[\"COLUMNS\"] = str(self._cols)\n            env[\"LINES\"] = str(self._rows)\n            os.execvpe(\n                \"/usr/bin/bash\",\n                [\"/usr/bin/bash\", \"-i\"],\n                env,\n            )\n        else:\n            # Parent process\n            self._pid = pid\n            self._master_fd = master_fd\n\n            # Set the terminal window size\n            winsize = struct.pack(\"HHHH\", self._rows, self._cols, 0, 0)\n            fcntl.ioctl(self._master_fd, termios.TIOCSWINSZ, winsize)\n\n            # Give the shell a moment to start up\n            time.sleep(0.1)\n            # Drain any initial output\n            self._drain_output()\n\n    def _drain_output(self, timeout: float = 0.1) -> str:\n        \"\"\"\n        Read and return all available output from the terminal.\n\n        Args:\n            timeout: How long to wait for output (seconds).\n\n        Returns:\n            The output read from the terminal.\n        \"\"\"\n        output = []\n        if self._master_fd is None:\n            return \"\"\n        while True:\n            ready, _, _ = select.select([self._master_fd], [], [], timeout)\n            if ready:\n                try:\n                    data = os.read(self._master_fd, 4096)\n                    if data:\n                        output.append(data.decode(\"utf-8\", errors=\"replace\"))\n                    else:\n                        break\n                except OSError:\n                    break\n            else:\n                break\n        return \"\".join(output)\n\n    def send_keystrokes(self, keystrokes: str, wait_sec: float = 0.0) -> None:\n        \"\"\"\n        Sends keystrokes to the terminal.\n\n        Args:\n            keystrokes: The keystrokes to send to the terminal.\n                        Supports special characters like '\\\\x03' for Ctrl+C,\n                        '\\\\n' or '\\\\r' for Enter, etc.\n            wait_sec: The number of seconds to wait after sending the keystrokes.\n        \"\"\"\n        if self._master_fd is None:\n            raise RuntimeError(\"Terminal is not running\")\n\n        data = keystrokes.encode(\"utf-8\")\n        os.write(self._master_fd, data)\n\n        if wait_sec > 0:\n            time.sleep(wait_sec)\n\n    def close(self) -> None:\n        \"\"\"Close the terminal and clean up resources.\"\"\"\n        if self._master_fd is not None:\n            try:\n                os.close(self._master_fd)\n            except OSError:\n                pass\n            self._master_fd = None\n\n        if self._pid is not None:\n            try:\n                os.kill(self._pid, signal.SIGTERM)\n            except ProcessLookupError:\n                pass\n            try:\n                os.waitpid(self._pid, 0)\n            except ChildProcessError:\n                pass\n            self._pid = None\n\n    def __del__(self) -> None:\n        self.close()\n\n    def __enter__(self):\n        return self\n\n    def __exit__(self, exc_type, exc_val, exc_tb):\n        self.close()\n        return False\nPYTHON_EOF"
+      },
+      "name": "bash",
+      "type": "tool_use"
+    }
+  ],
+  "model": "anthropic/claude-4.6-opus-20260205",
+  "role": "assistant",
+  "stop_reason": "tool_use",
+  "stop_sequence": null,
+  "type": "message",
+  "usage": {
+    "cache_creation": null,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "inference_geo": null,
+    "input_tokens": 2411,
+    "output_tokens": 1197,
+    "server_tool_use": null,
+    "service_tier": null,
+    "speed": "standard",
+    "cost": 0.04198,
+    "is_byok": false,
+    "cost_details": {
+      "upstream_inference_cost": 0.04198,
+      "upstream_inference_prompt_cost": 0.012055,
+      "upstream_inference_completions_cost": 0.029925
+    }
+  },
+  "provider": "Amazon Bedrock"
+}

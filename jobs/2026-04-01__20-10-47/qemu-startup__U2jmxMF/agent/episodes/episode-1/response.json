@@ -1,0 +1,46 @@
+{
+  "id": "gen-1775082941-76XvIt8EYV0QtGSMBbpf",
+  "container": null,
+  "content": [
+    {
+      "citations": null,
+      "text": "Good. QEMU and the ISO are available. Now I'll launch the VM with the serial console exposed as a telnet server on port 6665.",
+      "type": "text"
+    },
+    {
+      "id": "toolu_bdrk_01Ft2kvfeyfHRD9XKkpzksW9",
+      "caller": {
+        "type": "direct"
+      },
+      "input": {
+        "command": "setsid qemu-system-x86_64 \\\n  -m 512 \\\n  -cdrom /app/alpine.iso \\\n  -boot d \\\n  -nographic \\\n  -serial telnet:127.0.0.1:6665,server,nowait \\\n  -no-reboot \\\n  -enable-kvm \\\n  </dev/null >/tmp/qemu.log 2>&1 &\necho \"QEMU PID: $!\"\nsleep 1\ncat /tmp/qemu.log"
+      },
+      "name": "bash",
+      "type": "tool_use"
+    }
+  ],
+  "model": "anthropic/claude-4.6-opus-20260205",
+  "role": "assistant",
+  "stop_reason": "tool_use",
+  "stop_sequence": null,
+  "type": "message",
+  "usage": {
+    "cache_creation": null,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "inference_geo": null,
+    "input_tokens": 1630,
+    "output_tokens": 213,
+    "server_tool_use": null,
+    "service_tier": null,
+    "speed": "standard",
+    "cost": 0.013475,
+    "is_byok": false,
+    "cost_details": {
+      "upstream_inference_cost": 0.013475,
+      "upstream_inference_prompt_cost": 0.00815,
+      "upstream_inference_completions_cost": 0.005325
+    }
+  },
+  "provider": "Amazon Bedrock"
+}

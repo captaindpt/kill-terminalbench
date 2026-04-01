@@ -1,0 +1,46 @@
+{
+  "id": "gen-1775082795-RBYjLPhcx5k2ZXVrjqEW",
+  "container": null,
+  "content": [
+    {
+      "citations": null,
+      "text": "Now let me test the implementation:",
+      "type": "text"
+    },
+    {
+      "id": "toolu_bdrk_014kg6JivYAQhhiy8rjRQyjp",
+      "caller": {
+        "type": "direct"
+      },
+      "input": {
+        "command": "cd /app && python3 -c \"\nfrom headless_terminal import HeadlessTerminal\nimport time\n\n# Test basic functionality\nt = HeadlessTerminal()\n\n# Test sending a command\nt.send_keystrokes('echo hello_world\\n', wait_sec=0.5)\n\n# Read output\noutput = t._drain_output(timeout=0.5)\nprint('Output after echo:', repr(output))\nassert 'hello_world' in output, f'Expected hello_world in output, got: {output}'\n\n# Test Ctrl+C\nt.send_keystrokes('sleep 999\\n', wait_sec=0.3)\nt.send_keystrokes('\\x03', wait_sec=0.3)\noutput = t._drain_output(timeout=0.5)\nprint('Output after Ctrl+C:', repr(output))\n\n# Test that the shell is still alive after Ctrl+C\nt.send_keystrokes('echo still_alive\\n', wait_sec=0.5)\noutput = t._drain_output(timeout=0.5)\nprint('Output after still_alive:', repr(output))\nassert 'still_alive' in output, f'Expected still_alive in output, got: {output}'\n\nt.close()\nprint('All tests passed!')\n\"\n"
+      },
+      "name": "bash",
+      "type": "tool_use"
+    }
+  ],
+  "model": "anthropic/claude-4.6-opus-20260205",
+  "role": "assistant",
+  "stop_reason": "tool_use",
+  "stop_sequence": null,
+  "type": "message",
+  "usage": {
+    "cache_creation": null,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "inference_geo": null,
+    "input_tokens": 3626,
+    "output_tokens": 367,
+    "server_tool_use": null,
+    "service_tier": null,
+    "speed": "standard",
+    "cost": 0.027305,
+    "is_byok": false,
+    "cost_details": {
+      "upstream_inference_cost": 0.027305,
+      "upstream_inference_prompt_cost": 0.01813,
+      "upstream_inference_completions_cost": 0.009175
+    }
+  },
+  "provider": "Amazon Bedrock"
+}

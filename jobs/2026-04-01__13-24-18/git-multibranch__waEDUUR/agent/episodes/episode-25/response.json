@@ -1,0 +1,41 @@
+{
+  "id": "gen-1775051514-bAvtcEuaUcpcQTULp3up",
+  "container": null,
+  "content": [
+    {
+      "id": "toolu_bdrk_01Y8Gb64zfJATRfW156AqZGs",
+      "caller": {
+        "type": "direct"
+      },
+      "input": {
+        "command": "# Quick end-to-end test\ncd /tmp\nrm -rf test_repo\nexport GIT_SSH_COMMAND=\"ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null\"\n\n# Clone via SSH\nsshpass -p password git clone git@localhost:/git/project /tmp/test_repo 2>&1\n\ncd /tmp/test_repo\ngit config user.email \"test@test.com\"\ngit config user.name \"Test\"\n\n# Create main branch\ngit checkout -b main 2>&1\necho \"main branch content\" > index.html\ngit add index.html\ngit commit -m \"main\" 2>&1\n\n# Create dev branch\ngit checkout -b dev 2>&1\necho \"dev branch content\" > index.html\ngit add index.html\ngit commit -m \"dev\" 2>&1\n\n# Push both\ngit push origin main dev 2>&1"
+      },
+      "name": "bash",
+      "type": "tool_use"
+    }
+  ],
+  "model": "anthropic/claude-4.6-opus-20260205",
+  "role": "assistant",
+  "stop_reason": "tool_use",
+  "stop_sequence": null,
+  "type": "message",
+  "usage": {
+    "cache_creation": null,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "inference_geo": null,
+    "input_tokens": 2013,
+    "output_tokens": 267,
+    "server_tool_use": null,
+    "service_tier": null,
+    "speed": "standard",
+    "cost": 0.01674,
+    "is_byok": false,
+    "cost_details": {
+      "upstream_inference_cost": 0.01674,
+      "upstream_inference_prompt_cost": 0.010065,
+      "upstream_inference_completions_cost": 0.006675
+    }
+  },
+  "provider": "Amazon Bedrock"
+}

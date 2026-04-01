@@ -1,0 +1,41 @@
+{
+  "id": "gen-1775082804-w07qarW3zgt9nhObknxI",
+  "container": null,
+  "content": [
+    {
+      "id": "toolu_bdrk_0173MaSPkgGbSJpkBLpHFjKx",
+      "caller": {
+        "type": "direct"
+      },
+      "input": {
+        "command": "cd /app && python3 -c \"\nfrom headless_terminal import HeadlessTerminal\nimport time\n\n# Test interactive program (python REPL)\nt = HeadlessTerminal()\n\nt.send_keystrokes('python3\\n', wait_sec=0.5)\noutput = t._drain_output(timeout=0.5)\nprint('Python start:', repr(output[:200]))\n\nt.send_keystrokes('print(42 + 58)\\n', wait_sec=0.5)\noutput = t._drain_output(timeout=0.5)\nprint('Python output:', repr(output))\nassert '100' in output\n\n# Exit python with Ctrl+D\nt.send_keystrokes('\\x04', wait_sec=0.3)\noutput = t._drain_output(timeout=0.5)\nprint('After exit:', repr(output[:200]))\n\nt.close()\nprint('Interactive program test passed!')\n\"\n"
+      },
+      "name": "bash",
+      "type": "tool_use"
+    }
+  ],
+  "model": "anthropic/claude-4.6-opus-20260205",
+  "role": "assistant",
+  "stop_reason": "tool_use",
+  "stop_sequence": null,
+  "type": "message",
+  "usage": {
+    "cache_creation": null,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "inference_geo": null,
+    "input_tokens": 4178,
+    "output_tokens": 275,
+    "server_tool_use": null,
+    "service_tier": null,
+    "speed": "standard",
+    "cost": 0.027765,
+    "is_byok": false,
+    "cost_details": {
+      "upstream_inference_cost": 0.027765,
+      "upstream_inference_prompt_cost": 0.02089,
+      "upstream_inference_completions_cost": 0.006875
+    }
+  },
+  "provider": "Amazon Bedrock"
+}

@@ -113,6 +113,13 @@ def main():
     parser.add_argument("--tasks-dir", type=Path, default=TASKS_DIR, help="Path to tasks directory")
     parser.add_argument("--model", default=os.environ.get("OPENROUTER_MODEL", "anthropic/claude-opus-4.6"), help="Model to use")
     parser.add_argument("--max-turns", type=int, default=75, help="Max agent turns per task")
+    parser.add_argument(
+        "--n-attempts",
+        "-k",
+        type=int,
+        default=1,
+        help="Number of attempts per task/trial for Harbor runs (use 5 for leaderboard-comparable TB2 runs)",
+    )
     parser.add_argument("--output", type=Path, default=None, help="Output JSON file for results")
     parser.add_argument("--single", type=str, default=None, help="Run a single task by ID")
     parser.add_argument("--no-rebuild", action="store_true", help="Skip rebuilding task containers")
@@ -147,6 +154,8 @@ def main():
     if named_task_set:
         print(f"Task set: {named_task_set.name}")
     print(f"Max turns: {config.max_turns}")
+    if args.runner == "harbor":
+        print(f"Attempts per task: {args.n_attempts}")
     print()
 
     if args.runner in {"tb", "harbor"} and config.backend != "openrouter":
@@ -161,6 +170,7 @@ def main():
             dataset=args.dataset,
             task_names=task_ids,
             n_concurrent_trials=args.n_concurrent,
+            n_attempts=args.n_attempts,
         )
         print(f"Job saved to {job_dir}")
         return

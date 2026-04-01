@@ -1,0 +1,41 @@
+{
+  "id": "gen-1775082829-WOtx2nJjG5QpPflzwnt5",
+  "container": null,
+  "content": [
+    {
+      "id": "toolu_bdrk_01933QzRGUcYLdvYDpdX3gZB",
+      "caller": {
+        "type": "direct"
+      },
+      "input": {
+        "command": "cd /app && python3 -c \"\nfrom headless_terminal import HeadlessTerminal\n\n# Test that .bashrc is sourced - add a marker to bashrc and check\nimport os\nwith open(os.path.expanduser('~/.bashrc'), 'a') as f:\n    f.write('\\nexport HEADLESS_TEST_VAR=bashrc_sourced\\n')\n\nt = HeadlessTerminal()\nt.send_keystrokes('echo \\$HEADLESS_TEST_VAR\\n', wait_sec=0.5)\noutput = t._drain_output(timeout=0.5)\nprint('Bashrc test output:', repr(output))\nassert 'bashrc_sourced' in output, f'bashrc was not sourced: {output}'\nt.close()\n\n# Clean up the test marker\nimport subprocess\nsubprocess.run(['sed', '-i', '/HEADLESS_TEST_VAR/d', os.path.expanduser('~/.bashrc')])\nprint('Bashrc sourcing test passed!')\n\"\n"
+      },
+      "name": "bash",
+      "type": "tool_use"
+    }
+  ],
+  "model": "anthropic/claude-4.6-opus-20260205",
+  "role": "assistant",
+  "stop_reason": "tool_use",
+  "stop_sequence": null,
+  "type": "message",
+  "usage": {
+    "cache_creation": null,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "inference_geo": null,
+    "input_tokens": 5722,
+    "output_tokens": 299,
+    "server_tool_use": null,
+    "service_tier": null,
+    "speed": "standard",
+    "cost": 0.036085,
+    "is_byok": false,
+    "cost_details": {
+      "upstream_inference_cost": 0.036085,
+      "upstream_inference_prompt_cost": 0.02861,
+      "upstream_inference_completions_cost": 0.007475
+    }
+  },
+  "provider": "Amazon Bedrock"
+}

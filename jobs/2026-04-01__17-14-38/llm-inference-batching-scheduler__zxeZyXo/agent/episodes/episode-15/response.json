@@ -1,0 +1,41 @@
+{
+  "id": "gen-1775064201-69nquelXlAHoGpZV9PQp",
+  "container": null,
+  "content": [
+    {
+      "id": "toolu_vrtx_01FKCQFd1tV71FvbwbN4pTgt",
+      "caller": {
+        "type": "direct"
+      },
+      "input": {
+        "command": "cd /app/task_file && python3 << 'EOF'\nimport json\nimport sys\nsys.path.insert(0, 'scripts')\nfrom cost_model import CostModel, CostConsts, align, HEADS, HIDDEN\nfrom collections import defaultdict\nimport math\n\ncm = CostModel(64)\n\n# Since shape doesn't affect batch cost (only compile cost which is minor),\n# the real question is: how to batch requests optimally?\n\n# Constraints:\n# - All requests appear exactly once\n# - Identical shapes within each batch_id (but the shape just needs seq_align >= max aligned prompt in batch)\n# - Max 8 unique shapes across both buckets\n\n# Key: \"identical shapes within each batch_id\" means within a batch, all requests share the same shape\n# And shape.seq_align >= ceil(prompt_len/64)*64 for each request\n# So shape.seq_align >= max(ceil(prompt_len/64)*64) across all requests in the batch\n# This means shape.seq_align >= S_max of the batch\n\n# So effectively: shape.seq_align = some multiple of 64 >= S_max\n\n# The compile cost depends on the shape value, so we want shapes to be as small as possible\n# \u2192 set shape.seq_align = S_max for each batch\n\n# But we're limited to 8 unique shapes!\n# So we need all batches to use one of 8 chosen seq_align values\n\n# Since shape = S_max (or larger), and different batches can have different S_max,\n# we need at most 8 distinct S_max values across all batches\n\n# This means: we need to group requests such that there are at most 8 distinct\n# \"max aligned prompt\" values across ALL batches in BOTH buckets\n\n# Wait, we could also just set shape larger than S_max. E.g., if S_max=320 but\n# we use shape=384, that's fine (just adds compile cost for 384 shape if not already used)\n\n# So strategy:\n# 1. Pick 8 seq_align \"levels\" \n# 2. Assign each request to a level >= its aligned prompt\n# 3. Within each level, group by gen_len into batches\n# 4. Set batch shape = level\n\n# The batch's S_max will be <= level (since all prompts in the batch have aligned <= level)\n# Actually S_max could be = level (some request has aligned prompt = level)\n# Or < level if all requests happen to have aligned prompt < level\n\n# But wait - S_max in cost model is computed from actual aligned prompts, not the shape!\n# So if a level is 640 but all requests in a batch have aligned prompt <= 576,\n# then S_max = 576, not 640. The shape being 640 only adds to compile cost.\n\n# So the shape assignment is somewhat independent of batching!\n# We just need: for each batch, shape.seq_align >= S_max of that batch\n# And at most 8 unique shapes\n\n# Optimal approach:\n# 1. Batch requests optimally (minimize cost + seq_time)\n# 2. Then find 8 shapes that cover all batch S_max values\n\n# For step 1, the optimal batching groups requests with same aligned prompt\n# and same gen_len into one batch. But that could create too many batches.\n# We can merge batches if the cost increase from higher G_max is offset by\n# reduced sequential time and batch overhead.\n\n# Let me first try: batch by (aligned_prompt, gen_len_bucket) where gen_len\n# is bucketed into ranges, and see what costs we get.\n\nfor fname, label in [('input_data/requests_bucket_1.jsonl', 'B1'), ('input_data/requests_bucket_2.jsonl', 'B2')]:\n    reqs = []\n    with open(fname) as f:\n        for line in f:\n            reqs.append(json.loads(line))\n    \n    # Sort by aligned prompt, then gen_len\n    for r in reqs:\n        r['aligned'] = align(r['prompt_len'], 64)\n    \n    reqs.sort(key=lambda r: (r['aligned'], r['gen_len']))\n    \n    # Group by aligned prompt\n    by_prompt = defaultdict(list)\n    for r in reqs:\n        by_prompt[r['aligned']].append(r)\n    \n    # For each prompt group, sort by gen_len and batch with max batch size\n    # Let's try individual batching (one request per batch) first\n    batches = []\n    for s in sorted(by_prompt.keys()):\n        group = by_prompt[s]\n        group.sort(key=lambda r: r['gen_len'])\n        # Each request is its own batch\n        for r in group:\n            batches.append([r])\n    \n    # Compute metrics\n    total_cost = 0\n    total_pad = 0\n    total_real = 0\n    lats = []\n    for batch in batches:\n        m = cm.batch_metrics(batch)\n        total_cost += m['cost']\n        total_pad += m['pad_tokens']\n        total_real += m['real_tokens']\n        lats.extend(m['latencies'])\n    \n    # Add batch overhead\n    total_cost += 10_000_000 * len(batches)\n    lats = [l + 8.0 for l in lats]\n    lats.sort()\n    p95 = lats[int(0.95*len(lats))-1]\n    seq_time = sum(lats)  # each batch has 1 request\n    \n    pad_ratio = total_pad / max(1, total_real)\n    \n    print(f'{label}: {len(batches)} individual batches')\n    print(f'  Cost: {total_cost:.4e} (excl compile)')\n    print(f'  Pad ratio: {pad_ratio:.4f}')\n    print(f'  P95 latency: {p95:.4e}')\n    print(f'  Seq time: {seq_time:.4e}')\n    \n    # Unique S_max values\n    s_maxes = set()\n    for batch in batches:\n        s_max = max(align(r['prompt_len'], 64) for r in batch)\n        s_maxes.add(s_max)\n    print(f'  Unique S_max: {len(s_maxes)}')\n    print()\n\nEOF\n"
+      },
+      "name": "bash",
+      "type": "tool_use"
+    }
+  ],
+  "model": "anthropic/claude-4.6-opus-20260205",
+  "role": "assistant",
+  "stop_reason": "tool_use",
+  "stop_sequence": null,
+  "type": "message",
+  "usage": {
+    "cache_creation": null,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "inference_geo": null,
+    "input_tokens": 14324,
+    "output_tokens": 1624,
+    "server_tool_use": null,
+    "service_tier": null,
+    "speed": "standard",
+    "cost": 0.11222,
+    "is_byok": false,
+    "cost_details": {
+      "upstream_inference_cost": 0.11222,
+      "upstream_inference_prompt_cost": 0.07162,
+      "upstream_inference_completions_cost": 0.0406
+    }
+  },
+  "provider": "Google"
+}

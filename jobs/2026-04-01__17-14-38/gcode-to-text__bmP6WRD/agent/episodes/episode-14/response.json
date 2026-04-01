@@ -1,0 +1,41 @@
+{
+  "id": "gen-1775072227-q1DWMU9W7znEBCIjmqWd",
+  "container": null,
+  "content": [
+    {
+      "id": "toolu_bdrk_017zKgEczztU2aHDP1VqfY94",
+      "caller": {
+        "type": "direct"
+      },
+      "input": {
+        "command": "# I can see text emerging! Let me refine the rotation and rendering\n# I'll try a slightly different angle and better resolution\n\npython3 << 'PYTHON'\nimport re\nimport numpy as np\nimport math\n\nwith open('/app/text.gcode', 'r') as f:\n    lines = f.readlines()\n\ncurrent_object = None\nsegments = []\nx, y, z = 0, 0, 0\n\nfor line in lines:\n    line = line.strip()\n    \n    m486 = re.match(r'M486 S(-?\\d+)', line)\n    if m486:\n        current_object = int(m486.group(1))\n        continue\n    \n    if current_object != 0:\n        if line.startswith('G0') or line.startswith('G1'):\n            x_match = re.search(r'X([\\d.]+)', line)\n            y_match = re.search(r'Y([\\d.]+)', line)\n            z_match = re.search(r'Z([\\d.]+)', line)\n            if x_match: x = float(x_match.group(1))\n            if y_match: y = float(y_match.group(1))\n            if z_match: z = float(z_match.group(1))\n        continue\n    \n    if line.startswith('G0') or line.startswith('G1'):\n        old_x, old_y = x, y\n        x_match = re.search(r'X([\\d.]+)', line)\n        y_match = re.search(r'Y([\\d.]+)', line)\n        z_match = re.search(r'Z([\\d.]+)', line)\n        e_match = re.search(r'E([\\d.]+)', line)\n        \n        if x_match: x = float(x_match.group(1))\n        if y_match: y = float(y_match.group(1))\n        if z_match: z = float(z_match.group(1))\n        \n        if e_match and float(e_match.group(1)) > 0:\n            segments.append((old_x, old_y, x, y))\n\n# Try different angles to find the best one\ncx = (55.5 + 204.4) / 2\ncy = (79.7 + 146.9) / 2\n\nbest_angle = None\nbest_ratio = 0\n\nfor angle_deg in np.arange(20, 30, 0.5):\n    angle_rad = math.radians(angle_deg)\n    cos_a = math.cos(-angle_rad)\n    sin_a = math.sin(-angle_rad)\n    \n    ys = []\n    for seg in segments:\n        for xi, yi in [(seg[0], seg[1]), (seg[2], seg[3])]:\n            ry = sin_a * (xi - cx) + cos_a * (yi - cy) + cy\n            ys.append(ry)\n    \n    y_range = max(ys) - min(ys)\n    \n    xs = []\n    for seg in segments:\n        for xi, yi in [(seg[0], seg[1]), (seg[2], seg[3])]:\n            rx = cos_a * (xi - cx) - sin_a * (yi - cy) + cx\n            xs.append(rx)\n    \n    x_range = max(xs) - min(xs)\n    ratio = x_range / y_range if y_range > 0 else 0\n    \n    if ratio > best_ratio:\n        best_ratio = ratio\n        best_angle = angle_deg\n\nprint(f\"Best angle: {best_angle}\u00b0 (ratio: {best_ratio:.1f})\")\n\n# Use best angle\nangle_rad = math.radians(best_angle)\ncos_a = math.cos(-angle_rad)\nsin_a = math.sin(-angle_rad)\n\nrotated_segments = []\nfor seg in segments:\n    x1, y1, x2, y2 = seg\n    rx1 = cos_a * (x1 - cx) - sin_a * (y1 - cy) + cx\n    ry1 = sin_a * (x1 - cx) + cos_a * (y1 - cy) + cy\n    rx2 = cos_a * (x2 - cx) - sin_a * (y2 - cy) + cx\n    ry2 = sin_a * (x2 - cx) + cos_a * (y2 - cy) + cy\n    rotated_segments.append((rx1, ry1, rx2, ry2))\n\nmin_x = min(min(s[0], s[2]) for s in rotated_segments)\nmax_x = max(max(s[0], s[2]) for s in rotated_segments)\nmin_y = min(min(s[1], s[3]) for s in rotated_segments)\nmax_y = max(max(s[1], s[3]) for s in rotated_segments)\n\nprint(f\"Rotated X: {min_x:.1f} to {max_x:.1f} ({max_x-min_x:.1f}mm)\")\nprint(f\"Rotated Y: {min_y:.1f} to {max_y:.1f} ({max_y-min_y:.1f}mm)\")\n\nres = 0.15\nw = int((max_x - min_x) / res) + 1\nh = int((max_y - min_y) / res) + 1\n\ngrid = np.zeros((h, w), dtype=bool)\n\ndef draw_line(x1, y1, x2, y2):\n    gx1 = int((x1 - min_x) / res)\n    gy1 = int((y1 - min_y) / res)\n    gx2 = int((x2 - min_x) / res)\n    gy2 = int((y2 - min_y) / res)\n    \n    steps = max(abs(gx2 - gx1), abs(gy2 - gy1), 1)\n    for i in range(steps + 1):\n        t = i / steps\n        px = int(gx1 + t * (gx2 - gx1))\n        py = int(gy1 + t * (gy2 - gy1))\n        if 0 <= px < w and 0 <= py < h:\n            grid[py][px] = True\n\nfor seg in rotated_segments:\n    draw_line(*seg)\n\n# Downsample - using wider blocks for x to account for char aspect ratio\nblock_w = 5\nblock_h = 8\ndw = w // block_w\ndh = h // block_h\n\nprint(f\"Output: {dw}x{dh}\")\nprint()\n\nfor dy in range(dh - 1, -1, -1):\n    row = \"\"\n    for dx in range(dw):\n        block = grid[dy*block_h:(dy+1)*block_h, dx*block_w:(dx+1)*block_w]\n        if block.any():\n            row += \"#\"\n        else:\n            row += \" \"\n    print(row)\n\nPYTHON"
+      },
+      "name": "bash",
+      "type": "tool_use"
+    }
+  ],
+  "model": "anthropic/claude-4.6-opus-20260205",
+  "role": "assistant",
+  "stop_reason": "tool_use",
+  "stop_sequence": null,
+  "type": "message",
+  "usage": {
+    "cache_creation": null,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "inference_geo": null,
+    "input_tokens": 16434,
+    "output_tokens": 1844,
+    "server_tool_use": null,
+    "service_tier": null,
+    "speed": "standard",
+    "cost": 0.12827,
+    "is_byok": false,
+    "cost_details": {
+      "upstream_inference_cost": 0.12827,
+      "upstream_inference_prompt_cost": 0.08217,
+      "upstream_inference_completions_cost": 0.0461
+    }
+  },
+  "provider": "Amazon Bedrock"
+}

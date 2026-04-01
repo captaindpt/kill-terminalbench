@@ -1,0 +1,46 @@
+{
+  "id": "gen-1775074634-fLdtgRJEbadv9emYyigl",
+  "container": null,
+  "content": [
+    {
+      "citations": null,
+      "text": "The compile cost for s=2048 is 2.11e9, which is significant. Let me see if I can optimize the shapes to reduce both compile costs and padding.",
+      "type": "text"
+    },
+    {
+      "id": "toolu_bdrk_01Nt8KcJUJmdvHVeh2XXwAPb",
+      "caller": {
+        "type": "direct"
+      },
+      "input": {
+        "command": "cd /app/task_file && python3 << 'PYEOF'\nimport sys, json, math\nfrom collections import defaultdict\nsys.path.insert(0, 'scripts')\nfrom cost_model import CostModel, CostConsts, align, HEADS, HIDDEN\n\ncm = CostModel(64)\n\ndef load_requests(path):\n    reqs = []\n    with open(path) as f:\n        for line in f:\n            reqs.append(json.loads(line))\n    return reqs\n\nreqs1 = load_requests('input_data/requests_bucket_1.jsonl')\nreqs2 = load_requests('input_data/requests_bucket_2.jsonl')\n\n# All unique aligned seqs needed\nall_aligned = set()\nfor r in reqs1 + reqs2:\n    all_aligned.add(align(r['prompt_len'], 64))\nall_aligned = sorted(all_aligned)\nprint(f\"All unique aligned seqs: {all_aligned}\")\nprint(f\"Total unique: {len(all_aligned)}\")\n\n# We need max_val >= max aligned seq\nmax_aligned = max(all_aligned)\nprint(f\"Max aligned: {max_aligned}\")\n\n# The shapes must include at least max_aligned (or larger)\n# We need shapes that cover all aligned seqs with <=8 shapes\n\n# For each request, the seq_align of its batch must be >= its aligned prompt_len\n# But making seq_align larger increases both prefill cost and decode cost\n\n# Let me try to optimize shape selection\n# For each candidate set of 8 shapes, compute total cost\n\ndef evaluate_shapes(reqs1, reqs2, shapes, spread):\n    def build_plan(reqs, shapes, spread, bid_start=0):\n        shape_groups = defaultdict(list)\n        for r in reqs:\n            s = align(r['prompt_len'], 64)\n            assigned = None\n            for sh in shapes:\n                if sh >= s:\n                    assigned = sh\n                    break\n            if assigned is None:\n                return None, bid_start  # invalid\n            shape_groups[assigned].append(r)\n        \n        plan = []\n        bid_counter = bid_start\n        \n        for sh in sorted(shape_groups.keys()):\n            group = shape_groups[sh]\n            group.sort(key=lambda r: r['gen_len'])\n            \n            batch_start = 0\n            while batch_start < len(group):\n                batch_end = batch_start + 1\n                g_min = group[batch_start]['gen_len']\n                \n                while batch_end < len(group):\n                    g_max = group[batch_end]['gen_len']\n                    if g_max - g_min > spread:\n                        break\n                    batch_end += 1\n                \n                batch = group[batch_start:batch_end]\n                bid_counter += 1\n                batch_id = f\"b-{bid_counter:04d}\"\n                for r in batch:\n                    plan.append({\n                        'request_id': r['request_id'],\n                        'batch_id': batch_id,\n                        'shape': {\n                            'seq_align': sh,\n                            'heads_align': HEADS,\n                            'hidden_align': HIDDEN,\n                        }\n                    })\n                batch_start = batch_end\n        \n        return plan, bid_counter\n    \n    plan1, next_bid = build_plan(reqs1, shapes, spread, 0)\n    plan2, _ = build_plan(reqs2, shapes, spread, next_bid)\n    \n    if plan1 is None or plan2 is None:\n        return None, None\n    \n    req_dict1 = {r['request_id']: r for r in reqs1}\n    req_dict2 = {r['request_id']: r for r in reqs2}\n    \n    m1 = cm.plan_metrics(req_dict1, plan1)\n    m2 = cm.plan_metrics(req_dict2, plan2)\n    \n    return m1, m2\n\n# Try different shape sets\n# Must cover max=2048 for B1 and max=704 for B2\n# B2 max is 704, B1 max is 2048\n\n# Key shapes needed:\n# 64 (lots of requests), 128 (lots), \n# For B2: 192 (121 req), 256 (82), 320 (107), and small ones up to 704\n# For B1: 320-640, 1088-2048\n\n# Try various combinations\nimport itertools\n\n# Must include 2048 (or some >= 2048)\n# Must include something <= 64\n\n# Let me try a greedy approach: start with fixed endpoints and try middle values\nbest_cost_sum = float('inf')\nbest_shapes = None\n\n# Fixed: 64 must be first (or 128 to save a shape but waste for 64-aligned)\n# Must have >= 2048\n\n# Let me enumerate promising shape sets\ncandidates_low = [64, 128]  # definitely want both\ncandidates_mid_b2 = [192, 256, 320]  # for B2\ncandidates_mid = [384, 448, 512, 576, 640, 704]  # mid range\ncandidates_high = [1024, 1088, 1152, 1216, 1280, 1344, 1408, 1472, 1536, 1600, 1664, 1728, 1792, 1856, 1920, 1984, 2048]\n\n# We need 8 shapes total\n# Fix: 64, 128, 2048\n# Need 5 more from the remaining\n# The 5 should ideally be: 1-2 for B2 mid, 1-2 for B1 mid, 1 for B1 high\n\n# Let me try some specific combos\nshape_options = [\n    [64, 128, 192, 320, 640, 704, 1408, 2048],\n    [64, 128, 192, 320, 640, 1024, 1408, 2048],\n    [64, 128, 192, 320, 640, 1024, 1536, 2048],\n    [64, 128, 192, 320, 704, 1024, 1536, 2048],\n    [64, 128, 192, 320, 640, 704, 1024, 2048],\n    [64, 128, 192, 320, 640, 704, 1280, 2048],\n    [64, 128, 192, 320, 576, 704, 1408, 2048],\n    [64, 128, 320, 640, 704, 1024, 1408, 2048],\n    [64, 128, 192, 320, 640, 1408, 1920, 2048],\n    [64, 128, 320, 448, 640, 704, 1408, 2048],\n    [64, 128, 192, 320, 640, 704, 1536, 2048],\n    [64, 128, 192, 384, 640, 704, 1408, 2048],\n    [64, 128, 192, 320, 704, 1408, 1920, 2048],\n]\n\nfor shapes in shape_options:\n    for spread in [3, 5, 7]:\n        m1, m2 = evaluate_shapes(reqs1, reqs2, shapes, spread)\n        if m1 is None:\n            continue\n        total = m1['cost'] + m2['cost']\n        # Check all constraints\n        ok1 = m1['cost'] < 3e11 and m1['pad_ratio'] < 0.055 and m1['p95_latency_ms'] < 2.1e6 and m1['sequential_timecost'] < 2.7e8\n        ok2 = m2['cost'] < 4.8e10 and m2['pad_ratio'] < 0.15 and m2['p95_latency_ms'] < 2.1e5 and m2['sequential_timecost'] < 3.2e7\n        if ok1 and ok2:\n            print(f\"PASS shapes={shapes} spread={spread}\")\n            print(f\"  B1: cost={m1['cost']:.2e}, pad={m1['pad_ratio']:.4f}, p95={m1['p95_latency_ms']:.2e}, seq={m1['sequential_timecost']:.2e}\")\n            print(f\"  B2: cost={m2['cost']:.2e}, pad={m2['pad_ratio']:.4f}, p95={m2['p95_latency_ms']:.2e}, seq={m2['sequential_timecost']:.2e}\")\n\nPYEOF\n"
+      },
+      "name": "bash",
+      "type": "tool_use"
+    }
+  ],
+  "model": "anthropic/claude-4.6-opus-20260205",
+  "role": "assistant",
+  "stop_reason": "tool_use",
+  "stop_sequence": null,
+  "type": "message",
+  "usage": {
+    "cache_creation": null,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "inference_geo": null,
+    "input_tokens": 19744,
+    "output_tokens": 2306,
+    "server_tool_use": null,
+    "service_tier": null,
+    "speed": "standard",
+    "cost": 0.15637,
+    "is_byok": false,
+    "cost_details": {
+      "upstream_inference_cost": 0.15637,
+      "upstream_inference_prompt_cost": 0.09872,
+      "upstream_inference_completions_cost": 0.05765
+    }
+  },
+  "provider": "Amazon Bedrock"
+}

@@ -1,0 +1,41 @@
+{
+  "id": "gen-1775066701-9k4O2YNW6uZvhbWNPguB",
+  "container": null,
+  "content": [
+    {
+      "id": "toolu_bdrk_01LMWfiL2biRe21xFPaedqEj",
+      "caller": {
+        "type": "direct"
+      },
+      "input": {
+        "command": "# cksum uses a different CRC algorithm. Let me use perl to compute CRC32\nperl -e '\nuse Digest::CRC;\nopen(my $fh, \"<\", \"/tmp/test_pwd.txt\") or die;\nmy $data = do { local $/; <$fh> };\nmy $ctx = Digest::CRC->new(type => \"crc32\");\n$ctx->add($data);\nprintf(\"CRC32: 0x%08x\\n\", $ctx->digest);\nprint \"Expected: 0xb0725dc4\\n\";\nprintf(\"Match: %s\\n\", $ctx->digest == 0xb0725dc4 ? \"YES\" : \"NO\");\n' 2>/dev/null || echo \"Digest::CRC not available\""
+      },
+      "name": "bash",
+      "type": "tool_use"
+    }
+  ],
+  "model": "anthropic/claude-4.6-opus-20260205",
+  "role": "assistant",
+  "stop_reason": "tool_use",
+  "stop_sequence": null,
+  "type": "message",
+  "usage": {
+    "cache_creation": null,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "inference_geo": null,
+    "input_tokens": 2938,
+    "output_tokens": 238,
+    "server_tool_use": null,
+    "service_tier": null,
+    "speed": "standard",
+    "cost": 0.02064,
+    "is_byok": false,
+    "cost_details": {
+      "upstream_inference_cost": 0.02064,
+      "upstream_inference_prompt_cost": 0.01469,
+      "upstream_inference_completions_cost": 0.00595
+    }
+  },
+  "provider": "Amazon Bedrock"
+}

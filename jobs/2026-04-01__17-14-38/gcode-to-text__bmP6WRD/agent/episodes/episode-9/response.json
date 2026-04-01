@@ -1,0 +1,41 @@
+{
+  "id": "gen-1775072102-hZV0g1zhyhq42zD0s8x4",
+  "container": null,
+  "content": [
+    {
+      "id": "toolu_bdrk_01W3zP33Q4672Xo71Ce7rx8E",
+      "caller": {
+        "type": "direct"
+      },
+      "input": {
+        "command": "# This looks like it might be diagonal text. Let me try to look at just one layer to get clearer picture\n# Also, let me try rendering with a wider aspect ratio correction\n\npython3 << 'PYTHON'\nimport re\nimport numpy as np\n\nwith open('/app/text.gcode', 'r') as f:\n    lines = f.readlines()\n\ncurrent_object = None\nsegments = []\nx, y, z = 0, 0, 0\n\nfor line in lines:\n    line = line.strip()\n    \n    m486 = re.match(r'M486 S(-?\\d+)', line)\n    if m486:\n        current_object = int(m486.group(1))\n        continue\n    \n    if current_object != 0:\n        if line.startswith('G0') or line.startswith('G1'):\n            x_match = re.search(r'X([\\d.]+)', line)\n            y_match = re.search(r'Y([\\d.]+)', line)\n            z_match = re.search(r'Z([\\d.]+)', line)\n            if x_match: x = float(x_match.group(1))\n            if y_match: y = float(y_match.group(1))\n            if z_match: z = float(z_match.group(1))\n        continue\n    \n    if line.startswith('G0') or line.startswith('G1'):\n        old_x, old_y = x, y\n        x_match = re.search(r'X([\\d.]+)', line)\n        y_match = re.search(r'Y([\\d.]+)', line)\n        z_match = re.search(r'Z([\\d.]+)', line)\n        e_match = re.search(r'E([\\d.]+)', line)\n        \n        if x_match: x = float(x_match.group(1))\n        if y_match: y = float(y_match.group(1))\n        if z_match: z = float(z_match.group(1))\n        \n        if e_match and float(e_match.group(1)) > 0:\n            segments.append((old_x, old_y, x, y, z))\n\n# Let's use only segments from the first few layers (z <= 1.0) to get clear text\nfiltered = [s for s in segments if s[4] <= 1.0]\nprint(f\"Segments at z<=1.0: {len(filtered)}\")\n\nmin_x = min(min(s[0], s[2]) for s in filtered)\nmax_x = max(max(s[0], s[2]) for s in filtered)\nmin_y = min(min(s[1], s[3]) for s in filtered)\nmax_y = max(max(s[1], s[3]) for s in filtered)\n\nprint(f\"X: {min_x:.1f} to {max_x:.1f}\")\nprint(f\"Y: {min_y:.1f} to {max_y:.1f}\")\n\n# Use a higher resolution bitmap with numpy\nres = 0.2  # mm per pixel\nw = int((max_x - min_x) / res) + 1\nh = int((max_y - min_y) / res) + 1\nprint(f\"Grid: {w}x{h}\")\n\ngrid = np.zeros((h, w), dtype=bool)\n\ndef draw_line(x1, y1, x2, y2):\n    gx1 = int((x1 - min_x) / res)\n    gy1 = int((y1 - min_y) / res)\n    gx2 = int((x2 - min_x) / res)\n    gy2 = int((y2 - min_y) / res)\n    \n    steps = max(abs(gx2 - gx1), abs(gy2 - gy1), 1)\n    for i in range(steps + 1):\n        t = i / steps\n        px = int(gx1 + t * (gx2 - gx1))\n        py = int(gy1 + t * (gy2 - gy1))\n        if 0 <= px < w and 0 <= py < h:\n            grid[py][px] = True\n\nfor seg in filtered:\n    draw_line(seg[0], seg[1], seg[2], seg[3])\n\n# Downsample for display - use blocks of pixels\nblock_w = 4\nblock_h = 6  # taller blocks since chars are taller than wide\ndw = w // block_w\ndh = h // block_h\n\nfor dy in range(dh - 1, -1, -1):\n    row = \"\"\n    for dx in range(dw):\n        block = grid[dy*block_h:(dy+1)*block_h, dx*block_w:(dx+1)*block_w]\n        if block.any():\n            row += \"#\"\n        else:\n            row += \" \"\n    print(row)\n\nPYTHON"
+      },
+      "name": "bash",
+      "type": "tool_use"
+    }
+  ],
+  "model": "anthropic/claude-4.6-opus-20260205",
+  "role": "assistant",
+  "stop_reason": "tool_use",
+  "stop_sequence": null,
+  "type": "message",
+  "usage": {
+    "cache_creation": null,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "inference_geo": null,
+    "input_tokens": 9432,
+    "output_tokens": 1294,
+    "server_tool_use": null,
+    "service_tier": null,
+    "speed": "standard",
+    "cost": 0.07951,
+    "is_byok": false,
+    "cost_details": {
+      "upstream_inference_cost": 0.07951,
+      "upstream_inference_prompt_cost": 0.04716,
+      "upstream_inference_completions_cost": 0.03235
+    }
+  },
+  "provider": "Amazon Bedrock"
+}

@@ -1,0 +1,34 @@
+{
+  "system": "You are solving a task in a Linux environment.\n\nWork directly in the shell.\nInspect the environment before changing it.\nRead errors carefully and adapt.\nBefore finishing, remove any temp files or build artifacts you created that aren't part of the deliverable.\nA separate verifier tests your work automatically \u2014 once setup is done, stop immediately.\nWhen the task is complete, respond briefly with no tool calls.\n",
+  "tools": [
+    {
+      "name": "bash",
+      "description": "Run a shell command and return stdout/stderr and the exit code.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "command": {
+            "type": "string",
+            "description": "Shell command to execute."
+          },
+          "timeout_sec": {
+            "type": "number",
+            "description": "Maximum time to wait for the command to finish.",
+            "default": 180
+          }
+        },
+        "required": [
+          "command"
+        ]
+      }
+    }
+  ],
+  "messages": [
+    {
+      "role": "user",
+      "content": "Task:\nYou're given an image of a pseudocode snippet at `/app/code.png`. Implement the intended logic of that snippet in any language and produce the same final value it would print. Write the result to `/app/output.txt`.\n - Hint:\n   - For helping you make sure your solution is correct, the correct answer starts with `bee26a`\n"
+    }
+  ],
+  "model": "anthropic/claude-opus-4.6",
+  "temperature": 1.0
+}

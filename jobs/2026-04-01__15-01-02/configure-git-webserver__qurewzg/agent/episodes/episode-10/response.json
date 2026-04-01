@@ -1,0 +1,46 @@
+{
+  "id": "gen-1775056080-2gvI6pnbxQ94poOrgTDK",
+  "container": null,
+  "content": [
+    {
+      "citations": null,
+      "text": "It works. Now let me clean up the test artifacts:",
+      "type": "text"
+    },
+    {
+      "id": "toolu_bdrk_01K98AGK7NpdTRU2C3HpSkg5",
+      "caller": {
+        "type": "direct"
+      },
+      "input": {
+        "command": "# Clean up test artifacts\nrm -rf /tmp/test-clone\nrm -f /root/.ssh/id_test /root/.ssh/id_test.pub\nrm -f /home/user/.ssh/authorized_keys\nrm -f /var/www/html/hello.html\n\n# Reset the git repo to be empty again (remove the test commit)\ncd /git/server\ngit update-ref -d refs/heads/master 2>/dev/null || true\n\necho \"Cleanup done\""
+      },
+      "name": "bash",
+      "type": "tool_use"
+    }
+  ],
+  "model": "anthropic/claude-4.6-opus-20260205",
+  "role": "assistant",
+  "stop_reason": "tool_use",
+  "stop_sequence": null,
+  "type": "message",
+  "usage": {
+    "cache_creation": null,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "inference_geo": null,
+    "input_tokens": 4129,
+    "output_tokens": 177,
+    "server_tool_use": null,
+    "service_tier": null,
+    "speed": "standard",
+    "cost": 0.02507,
+    "is_byok": false,
+    "cost_details": {
+      "upstream_inference_cost": 0.02507,
+      "upstream_inference_prompt_cost": 0.020645,
+      "upstream_inference_completions_cost": 0.004425
+    }
+  },
+  "provider": "Amazon Bedrock"
+}

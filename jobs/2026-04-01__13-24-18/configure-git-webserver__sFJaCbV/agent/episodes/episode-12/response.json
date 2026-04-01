@@ -1,0 +1,41 @@
+{
+  "id": "gen-1775050313-tFLmYuANjdUgotuGsI6d",
+  "container": null,
+  "content": [
+    {
+      "id": "toolu_bdrk_01WBKPb6sJ7RPccC8yFC5XmX",
+      "caller": {
+        "type": "direct"
+      },
+      "input": {
+        "command": "# Clean up the test clone and reset the repo for the verifier\nrm -rf /tmp/test-clone\n\n# Reset the bare repo to empty state - remove the test commit\ncd /git/server\ngit update-ref -d refs/heads/master\nrm -rf /var/www/git-deploy/*\n\n# Verify clean state\nls /var/www/git-deploy/\necho \"Deploy dir empty: $?\"\ngit -C /git/server log 2>&1 || echo \"Repo is empty (expected)\""
+      },
+      "name": "bash",
+      "type": "tool_use"
+    }
+  ],
+  "model": "anthropic/claude-4.6-opus-20260205",
+  "role": "assistant",
+  "stop_reason": "tool_use",
+  "stop_sequence": null,
+  "type": "message",
+  "usage": {
+    "cache_creation": null,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "inference_geo": null,
+    "input_tokens": 2681,
+    "output_tokens": 169,
+    "server_tool_use": null,
+    "service_tier": null,
+    "speed": "standard",
+    "cost": 0.01763,
+    "is_byok": false,
+    "cost_details": {
+      "upstream_inference_cost": 0.01763,
+      "upstream_inference_prompt_cost": 0.013405,
+      "upstream_inference_completions_cost": 0.004225
+    }
+  },
+  "provider": "Amazon Bedrock"
+}

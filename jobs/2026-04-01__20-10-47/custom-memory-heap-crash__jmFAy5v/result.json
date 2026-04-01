@@ -1,0 +1,128 @@
+{
+    "id": "15c18e9e-c83f-46f5-8ec0-aadc74a527d7",
+    "task_name": "custom-memory-heap-crash",
+    "trial_name": "custom-memory-heap-crash__jmFAy5v",
+    "trial_uri": "file:///root/kill-terminalbench/jobs/2026-04-01__20-10-47/custom-memory-heap-crash__jmFAy5v",
+    "task_id": {
+        "git_url": "https://github.com/laude-institute/terminal-bench-2.git",
+        "git_commit_id": "69671fbaac6d67a7ef0dfec016cc38a64ef7a77c",
+        "path": "custom-memory-heap-crash"
+    },
+    "source": "terminal-bench",
+    "task_checksum": "fba0e3be977223b1f8c182da8411663258f83b3563dd5dcd12beae87762ccabf",
+    "config": {
+        "task": {
+            "path": "custom-memory-heap-crash",
+            "git_url": "https://github.com/laude-institute/terminal-bench-2.git",
+            "git_commit_id": "69671fbaac6d67a7ef0dfec016cc38a64ef7a77c",
+            "name": null,
+            "ref": null,
+            "overwrite": false,
+            "download_dir": null,
+            "source": "terminal-bench"
+        },
+        "trial_name": "custom-memory-heap-crash__jmFAy5v",
+        "trials_dir": "jobs/2026-04-01__20-10-47",
+        "timeout_multiplier": 1.0,
+        "agent_timeout_multiplier": null,
+        "verifier_timeout_multiplier": null,
+        "agent_setup_timeout_multiplier": null,
+        "environment_build_timeout_multiplier": null,
+        "agent": {
+            "name": null,
+            "import_path": "ktb.harbor_agent:OpenRouterHarborAgent",
+            "model_name": "anthropic/claude-opus-4.6",
+            "override_timeout_sec": null,
+            "override_setup_timeout_sec": null,
+            "max_timeout_sec": null,
+            "kwargs": {
+                "max_episodes": 75,
+                "temperature": 1.0,
+                "command_timeout": 300
+            },
+            "env": {}
+        },
+        "environment": {
+            "type": "docker",
+            "import_path": null,
+            "force_build": false,
+            "delete": true,
+            "override_cpus": null,
+            "override_memory_mb": null,
+            "override_storage_mb": null,
+            "override_gpus": null,
+            "suppress_override_warnings": false,
+            "mounts_json": null,
+            "env": {},
+            "kwargs": {}
+        },
+        "verifier": {
+            "override_timeout_sec": null,
+            "max_timeout_sec": null,
+            "disable": false
+        },
+        "artifacts": [],
+        "job_id": "ac97d53e-ea88-4647-942c-bdd637fd231e"
+    },
+    "agent_info": {
+        "name": "ktb-openrouter",
+        "version": "0.1.0",
+        "model_info": {
+            "name": "claude-opus-4.6",
+            "provider": "anthropic"
+        }
+    },
+    "agent_result": {
+        "n_input_tokens": 124889,
+        "n_cache_tokens": null,
+        "n_output_tokens": 3180,
+        "cost_usd": 0.703945,
+        "rollout_details": null,
+        "metadata": {
+            "generation_ids": [
+                "gen-1775079777-skjbf8rb5PqCzvg4NeUt",
+                "gen-1775079799-SOeIJTcjpTG0sztigUut",
+                "gen-1775079813-t9zBF2CyjK11cfua365E",
+                "gen-1775079835-LInWU9LRZXBE32PweY2c",
+                "gen-1775079838-hQ4zegxTysRkMjAtkTPB",
+                "gen-1775079842-fgk7pZxUWnfL7zo7vKP5",
+                "gen-1775079847-Mz265Du9vEr1phRHyizi",
+                "gen-1775079865-5Fw7Lv1hYJQeuub1cbdD",
+                "gen-1775079886-1WbFffXYA88a7gNOmy2N",
+                "gen-1775079889-yHxpWsK0dz15yZeFuNZh",
+                "gen-1775079895-C63SKiKFdXqhvkMfWlbD",
+                "gen-1775079907-0yKk6sQYQOaJ5sKbc3NX",
+                "gen-1775079913-n1sB2NnWDzg10y0WEHQA",
+                "gen-1775079916-5XNPGHIRfB3pwrCD3qgk",
+                "gen-1775079958-B67rppCfGbC9smWiUHFe",
+                "gen-1775079965-LZjVJoN2CBG0aTOXLtRJ",
+                "gen-1775080219-3dNMB4fC8y4HjcCqcScU",
+                "gen-1775080231-wqg1NZWxkDIuTPObvTev",
+                "gen-1775080242-GeMAIiW7PoBUazFeuChI"
+            ],
+            "episodes": 19
+        }
+    },
+    "verifier_result": null,
+    "exception_info": {
+        "exception_type": "RuntimeError",
+        "exception_message": "Command timed out after 300 seconds",
+        "exception_traceback": "Traceback (most recent call last):\n  File \"/usr/lib/python3.12/asyncio/tasks.py\", line 520, in wait_for\n    return await fut\n           ^^^^^^^^^\n  File \"/usr/lib/python3.12/asyncio/subprocess.py\", line 201, in communicate\n    stdin, stdout, stderr = await tasks.gather(stdin, stdout, stderr)\n                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/lib/python3.12/asyncio/subprocess.py\", line 181, in _read_stream\n    output = await stream.read()\n             ^^^^^^^^^^^^^^^^^^^\n  File \"/usr/lib/python3.12/asyncio/streams.py\", line 706, in read\n    block = await self.read(self._limit)\n            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/lib/python3.12/asyncio/streams.py\", line 713, in read\n    await self._wait_for_data('read')\n  File \"/usr/lib/python3.12/asyncio/streams.py\", line 545, in _wait_for_data\n    await self._waiter\nasyncio.exceptions.CancelledError\n\nThe above exception was the direct cause of the following exception:\n\nTraceback (most recent call last):\n  File \"/root/kill-terminalbench/.venv/lib/python3.12/site-packages/harbor/environments/docker/docker.py\", line 292, in _run_docker_compose_command\n    stdout_bytes, stderr_bytes = await asyncio.wait_for(\n                                 ^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/lib/python3.12/asyncio/tasks.py\", line 519, in wait_for\n    async with timeouts.timeout(timeout):\n  File \"/usr/lib/python3.12/asyncio/timeouts.py\", line 115, in __aexit__\n    raise TimeoutError from exc_val\nTimeoutError\n\nDuring handling of the above exception, another exception occurred:\n\nTraceback (most recent call last):\n  File \"/root/kill-terminalbench/.venv/lib/python3.12/site-packages/harbor/trial/trial.py\", line 538, in run\n    await self._execute_agent()\n  File \"/root/kill-terminalbench/.venv/lib/python3.12/site-packages/harbor/trial/trial.py\", line 285, in _execute_agent\n    await asyncio.wait_for(\n  File \"/usr/lib/python3.12/asyncio/tasks.py\", line 520, in wait_for\n    return await fut\n           ^^^^^^^^^\n  File \"/root/kill-terminalbench/ktb/harbor_agent.py\", line 256, in run\n    result = await environment.exec(command, timeout_sec=timeout_sec)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/root/kill-terminalbench/.venv/lib/python3.12/site-packages/harbor/environments/docker/docker.py\", line 485, in exec\n    return await self._run_docker_compose_command(\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/root/kill-terminalbench/.venv/lib/python3.12/site-packages/harbor/environments/docker/docker.py\", line 306, in _run_docker_compose_command\n    raise RuntimeError(f\"Command timed out after {timeout_sec} seconds\")\nRuntimeError: Command timed out after 300 seconds\n",
+        "occurred_at": "2026-04-01T21:56:14.175854"
+    },
+    "started_at": "2026-04-01T21:41:39.990320Z",
+    "finished_at": "2026-04-01T22:01:34.772914Z",
+    "environment_setup": {
+        "started_at": "2026-04-01T21:41:39.990981Z",
+        "finished_at": "2026-04-01T21:42:40.412543Z"
+    },
+    "agent_setup": {
+        "started_at": "2026-04-01T21:42:40.412557Z",
+        "finished_at": "2026-04-01T21:42:57.857028Z"
+    },
+    "agent_execution": {
+        "started_at": "2026-04-01T21:42:57.857092Z",
+        "finished_at": "2026-04-01T21:56:14.175037Z"
+    },
+    "verifier": null
+}

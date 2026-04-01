@@ -1,0 +1,41 @@
+{
+  "id": "gen-1775065139-iI4BowT09FqPg4Br3RDM",
+  "container": null,
+  "content": [
+    {
+      "id": "toolu_bdrk_01VHaRYhNmHYX2vrHvXCm93i",
+      "caller": {
+        "type": "direct"
+      },
+      "input": {
+        "command": "cd /app/task_file && python3 << 'EOF'\n# B1 PASSES all thresholds! Let's do B2 now.\n\nimport json\nimport sys\nsys.path.insert(0, 'scripts')\nfrom cost_model import CostModel, CostConsts, align, HEADS, HIDDEN\nfrom collections import defaultdict\nimport os\n\ncm = CostModel(64)\n\nreqs_list = []\nwith open('input_data/requests_bucket_2.jsonl') as f:\n    for line in f:\n        reqs_list.append(json.loads(line))\n\nfor r in reqs_list:\n    r['aligned'] = align(r['prompt_len'], 64)\n\nrequests_dict = {r['request_id']: r for r in reqs_list}\n\n# Compute individual metrics\nfor r in reqs_list:\n    m = cm.batch_metrics([r])\n    r['indiv_cost'] = m['cost']\n    r['indiv_lat'] = max(l + 8.0 for l in m['latencies'])\n\n# Distribution analysis\naligned_vals = sorted(set(r['aligned'] for r in reqs_list))\nprint(f\"B2 aligned values: {aligned_vals}\")\nprint(f\"B2 total individual seq_time: {sum(r['indiv_lat'] for r in reqs_list):.4e}\")\nbase_cost = sum(r['indiv_cost'] for r in reqs_list) + 10_000_000 * 800\nprint(f\"B2 base cost (indiv + overhead): {base_cost:.4e}\")\n\n# Current shapes from B1 plan\nb1_shapes = {64, 128, 320, 640, 704, 1088, 1536, 2048}\n# B2 aligned values - check which need coverage\nfor a in aligned_vals:\n    covered = False\n    for s in b1_shapes:\n        if s >= a:\n            covered = True\n            break\n    if not covered:\n        print(f\"  NEED NEW SHAPE for aligned={a}\")\n\n# All B2 aligned values should be <= 704, so covered by existing shapes\n# But let me check pad_ratio impact of mapping to B1 shapes\n\n# What shapes from shapes8 cover B2?\nshapes8 = [64, 128, 320, 640, 704, 1088, 1536, 2048]\nb2_aligned_map = {}\nfor a in aligned_vals:\n    for s in shapes8:\n        if s >= a:\n            b2_aligned_map[a] = s\n            break\nprint(f\"\\nB2 aligned -> shape mapping: {b2_aligned_map}\")\n\n# Compile cost for shapes used by B2 (subset of shapes8)\nb2_shapes_used = set(b2_aligned_map.values())\nprint(f\"B2 shapes used: {b2_shapes_used}\")\ncompile_b2 = sum(500*s**2 + 2*s*4096 for s in b2_shapes_used)\nprint(f\"B2 compile cost: {compile_b2:.4e}\")\n\n# But compile cost is shared across both buckets, so we should use the same shape set\n# Already have 7 shapes from B1 plan. Check if B2 needs any that aren't in those 7.\n\n# From B1 plan, the 7 shapes used were: let me check\n# shapes8 = [64, 128, 320, 640, 704, 1088, 1536, 2048]\n# B1 aligned values were up to 2048, some might not have been used\n# Actually I defined shapes8 but not all may have been used as seq_align\n# The unique shapes from B1 were 7 (from the output above)\n# Let me just focus on B2 and use same shapes8 (8 max total)\n\n# Budget for B2\ncompile_cost_8 = sum(500*s**2 + 2*s*4096 for s in shapes8)\n# B2 target: cost < 4.8e10\n# B2 base = sum(indiv_cost) + 10M * 800\n# Actually for B2, compile cost is only for B2's shapes? No, compile cost is global.\n# Wait, the problem says \"Max 8 unique shapes across both buckets\"\n# So cost model per-plan includes shapes from THAT plan only\n# But verification might evaluate each plan separately\n\n# Let me just compute: if B2 uses shapes8, its compile cost is\n# sum over all 8 shapes... or only the shapes actually appearing in B2 plan?\n# plan_metrics counts unique shapes FROM the plan entries\n\n# So for B2, I should use as few shapes as possible from the overall 8\n# to minimize compile cost\n\n# B2 needs: 64, 128, 192, 256, 320, 384, 448, 512, 576, 640, 704\n# Mapped to shapes8: 64, 128, 320, 320, 320, 640, 640, 640, 640, 640, 704\n# Wait that's wrong. Let me redo:\nfor a in aligned_vals:\n    best = None\n    for s in shapes8:\n        if s >= a:\n            best = s\n            break\n    print(f\"  aligned {a} -> shape {best}\")\n\n# Hmm, 192 -> 320, 256 -> 320, 384 -> 640, 448 -> 640, 512 -> 640, 576 -> 640\n# That gives a lot of padding. Let me check pad_ratio for B2 with these shapes.\n# Actually pad_ratio depends on actual aligned prompts vs shapes? No!\n# pad_ratio = pad_tokens / real_tokens where pad_tokens = sum(shape.seq_align - actual_aligned_prompt)\n# Wait no, from cost_model, pad_tokens is based on the shape. Let me re-check.\n\n# Actually from the summary: \"pad_ratio is computed as padded tokens divided by real tokens\"\n# From batch_metrics: pad_tokens and real_tokens are computed...\n# Let me look at what pad_tokens means in the code.\n\nEOF\n"
+      },
+      "name": "bash",
+      "type": "tool_use"
+    }
+  ],
+  "model": "anthropic/claude-4.6-opus-20260205",
+  "role": "assistant",
+  "stop_reason": "tool_use",
+  "stop_sequence": null,
+  "type": "message",
+  "usage": {
+    "cache_creation": null,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "inference_geo": null,
+    "input_tokens": 14656,
+    "output_tokens": 1564,
+    "server_tool_use": null,
+    "service_tier": null,
+    "speed": "standard",
+    "cost": 0.11238,
+    "is_byok": false,
+    "cost_details": {
+      "upstream_inference_cost": 0.11238,
+      "upstream_inference_prompt_cost": 0.07328,
+      "upstream_inference_completions_cost": 0.0391
+    }
+  },
+  "provider": "Amazon Bedrock"
+}

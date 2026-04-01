@@ -1,0 +1,41 @@
+{
+  "id": "gen-1775064103-JzTf6n8XKBA6VA0XvYlR",
+  "container": null,
+  "content": [
+    {
+      "id": "toolu_bdrk_012KGeTudfSxavaqSfkjjykY",
+      "caller": {
+        "type": "direct"
+      },
+      "input": {
+        "command": "# Let me compute using C\ncat > /tmp/check.c << 'EOF'\n#include <stdio.h>\n#include <stdlib.h>\nint main() {\n    long V=50257, E=768, C=1024, H=12, L=12;\n    long wte = V*E;\n    long wpe = C*E;\n    // per layer: ln1_g(E) + ln1_b(E) + attn_w(E*3E) + attn_b(3E) + proj_w(E*E) + proj_b(E) + ln2_g(E) + ln2_b(E) + fc_w(E*4E) + fc_b(4E) + proj2_w(4E*E) + proj2_b(E)\n    long per_layer = E + E + E*3*E + 3*E + E*E + E + E + E + E*4*E + 4*E + 4*E*E + E;\n    long ln_f = E + E;\n    long total = wte + wpe + L*per_layer + ln_f;\n    printf(\"wte=%ld wpe=%ld per_layer=%ld ln_f=%ld total=%ld bytes=%ld\\n\", wte, wpe, per_layer, ln_f, total, total*4);\n    \n    FILE *f = fopen(\"/app/gpt2-124M.ckpt\", \"rb\");\n    fseek(f, 0, SEEK_END);\n    long fsize = ftell(f);\n    printf(\"file size: %ld, floats: %ld\\n\", fsize, fsize/4);\n    printf(\"diff: %ld\\n\", fsize/4 - total);\n    fclose(f);\n    return 0;\n}\nEOF\ngcc -o /tmp/check /tmp/check.c && /tmp/check\n"
+      },
+      "name": "bash",
+      "type": "tool_use"
+    }
+  ],
+  "model": "anthropic/claude-4.6-opus-20260205",
+  "role": "assistant",
+  "stop_reason": "tool_use",
+  "stop_sequence": null,
+  "type": "message",
+  "usage": {
+    "cache_creation": null,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "inference_geo": null,
+    "input_tokens": 8402,
+    "output_tokens": 526,
+    "server_tool_use": null,
+    "service_tier": null,
+    "speed": "standard",
+    "cost": 0.05516,
+    "is_byok": false,
+    "cost_details": {
+      "upstream_inference_cost": 0.05516,
+      "upstream_inference_prompt_cost": 0.04201,
+      "upstream_inference_completions_cost": 0.01315
+    }
+  },
+  "provider": "Amazon Bedrock"
+}

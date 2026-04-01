@@ -1,0 +1,41 @@
+{
+  "id": "gen-1775051610-w2kFJeY3ojqjDSbKSg3W",
+  "container": null,
+  "content": [
+    {
+      "id": "toolu_bdrk_01DMmNwWj4MR6zJjDkmxr6RF",
+      "caller": {
+        "type": "direct"
+      },
+      "input": {
+        "command": "# Clean up test artifacts\nrm -rf /tmp/test_repo\n\n# Let's also verify the key components are in place\necho \"=== Post-receive hook ===\"\ncat /git/project.git/hooks/post-receive\necho \"\"\necho \"=== Nginx config ===\"\nnginx -T 2>&1 | grep -A 50 \"server {\"\necho \"\"\necho \"=== Services ===\"\nservice ssh status 2>&1 | head -3\nservice nginx status 2>&1 | head -3"
+      },
+      "name": "bash",
+      "type": "tool_use"
+    }
+  ],
+  "model": "anthropic/claude-4.6-opus-20260205",
+  "role": "assistant",
+  "stop_reason": "tool_use",
+  "stop_sequence": null,
+  "type": "message",
+  "usage": {
+    "cache_creation": null,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "inference_geo": null,
+    "input_tokens": 2149,
+    "output_tokens": 171,
+    "server_tool_use": null,
+    "service_tier": null,
+    "speed": "standard",
+    "cost": 0.01502,
+    "is_byok": false,
+    "cost_details": {
+      "upstream_inference_cost": 0.01502,
+      "upstream_inference_prompt_cost": 0.010745,
+      "upstream_inference_completions_cost": 0.004275
+    }
+  },
+  "provider": "Amazon Bedrock"
+}

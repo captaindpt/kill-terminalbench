@@ -1,0 +1,41 @@
+{
+  "id": "gen-1775044621-Xa13j6PGRjoPY82LlaLe",
+  "container": null,
+  "content": [
+    {
+      "id": "toolu_vrtx_013SRtKaYdBxZhg8JHBJ1bP2",
+      "caller": {
+        "type": "direct"
+      },
+      "input": {
+        "command": "# CDATA sections pass through! But will they work in browsers?\n# In HTML5, CDATA sections are treated as comments in HTML context\n# but in SVG/MathML foreign content, they might work differently\n\n# Actually wait - let me check: the CDATA content wasn't parsed by BS4\n# So the onerror attribute survived! Let me verify more carefully\n\npython3 -c \"\nfrom bs4 import BeautifulSoup\n\nhtml = '<![CDATA[<img src=x onerror=alert(1)>]]>'\nsoup = BeautifulSoup(html, 'html.parser')\n\n# Check what BS4 sees\nprint('Types:', [(type(e).__name__, repr(str(e))[:60]) for e in soup.contents])\n\nfor script in soup('script'):\n    script.decompose()\nfor tag in soup.find_all(True):\n    for attr in list(tag.attrs):\n        if attr.startswith('on'):\n            del tag.attrs[attr]\n\nresult = str(soup)\nprint('Result:', repr(result))\n\"\n"
+      },
+      "name": "bash",
+      "type": "tool_use"
+    }
+  ],
+  "model": "anthropic/claude-4.6-opus-20260205",
+  "role": "assistant",
+  "stop_reason": "tool_use",
+  "stop_sequence": null,
+  "type": "message",
+  "usage": {
+    "cache_creation": null,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "inference_geo": null,
+    "input_tokens": 3574,
+    "output_tokens": 306,
+    "server_tool_use": null,
+    "service_tier": null,
+    "speed": "standard",
+    "cost": 0.02552,
+    "is_byok": false,
+    "cost_details": {
+      "upstream_inference_cost": 0.02552,
+      "upstream_inference_prompt_cost": 0.01787,
+      "upstream_inference_completions_cost": 0.00765
+    }
+  },
+  "provider": "Google"
+}

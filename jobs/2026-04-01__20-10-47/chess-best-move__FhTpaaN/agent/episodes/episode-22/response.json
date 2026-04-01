@@ -1,0 +1,41 @@
+{
+  "id": "gen-1775082007-ZIZzDkqtQwU0Re4mHbH9",
+  "container": null,
+  "content": [
+    {
+      "id": "toolu_bdrk_01W5cA6avzaa8RmJVb2seHaL",
+      "caller": {
+        "type": "direct"
+      },
+      "input": {
+        "command": "python3 << 'EOF'\nimport chess\nimport chess.engine\nimport sys\n\nfen = \"r1bk1r2/1p3pp1/p1q1p3/3qPnbP/8/P1N5/1P2QPP1/R1B1K2R w KQ - 0 1\"\nboard = chess.Board(fen)\n\nengine = chess.engine.SimpleEngine.popen_uci(\"stockfish\")\nengine.configure({\"Threads\": 1, \"Hash\": 128})\n\n# Get the best move with analysis\nresult = engine.analyse(board, chess.engine.Limit(depth=25), multipv=5)\n\nfor i, info in enumerate(result):\n    move = info[\"pv\"][0]\n    score = info[\"score\"]\n    pv = \" \".join([m.uci() for m in info[\"pv\"][:8]])\n    print(f\"#{i+1}: {move.uci()} score={score.white()} pv={pv}\")\n\nengine.quit()\nEOF"
+      },
+      "name": "bash",
+      "type": "tool_use"
+    }
+  ],
+  "model": "anthropic/claude-4.6-opus-20260205",
+  "role": "assistant",
+  "stop_reason": "tool_use",
+  "stop_sequence": null,
+  "type": "message",
+  "usage": {
+    "cache_creation": null,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "inference_geo": null,
+    "input_tokens": 5250,
+    "output_tokens": 304,
+    "server_tool_use": null,
+    "service_tier": null,
+    "speed": "standard",
+    "cost": 0.03385,
+    "is_byok": false,
+    "cost_details": {
+      "upstream_inference_cost": 0.03385,
+      "upstream_inference_prompt_cost": 0.02625,
+      "upstream_inference_completions_cost": 0.0076
+    }
+  },
+  "provider": "Amazon Bedrock"
+}

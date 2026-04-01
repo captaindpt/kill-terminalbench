@@ -1,0 +1,41 @@
+{
+  "id": "gen-1775066127-vCJO2QB9h61EFAfNRYXI",
+  "container": null,
+  "content": [
+    {
+      "id": "toolu_bdrk_0126p2xTjqXwV9V2fSdnb7rg",
+      "caller": {
+        "type": "direct"
+      },
+      "input": {
+        "command": "python3 -c \"\nimport torch\nstate = torch.load('/app/model.pth', map_location='cpu')\nprint(type(state))\nif isinstance(state, dict):\n    for k, v in state.items():\n        print(k, v.shape, v.dtype)\n\""
+      },
+      "name": "bash",
+      "type": "tool_use"
+    }
+  ],
+  "model": "anthropic/claude-4.6-opus-20260205",
+  "role": "assistant",
+  "stop_reason": "tool_use",
+  "stop_sequence": null,
+  "type": "message",
+  "usage": {
+    "cache_creation": null,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "inference_geo": null,
+    "input_tokens": 1961,
+    "output_tokens": 121,
+    "server_tool_use": null,
+    "service_tier": null,
+    "speed": "standard",
+    "cost": 0.01283,
+    "is_byok": false,
+    "cost_details": {
+      "upstream_inference_cost": 0.01283,
+      "upstream_inference_prompt_cost": 0.009805,
+      "upstream_inference_completions_cost": 0.003025
+    }
+  },
+  "provider": "Amazon Bedrock"
+}

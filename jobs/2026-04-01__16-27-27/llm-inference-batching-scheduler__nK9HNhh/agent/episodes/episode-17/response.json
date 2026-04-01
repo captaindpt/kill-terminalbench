@@ -1,0 +1,46 @@
+{
+  "id": "gen-1775062506-rYO2D6UxhuGQJPbvg5tL",
+  "container": null,
+  "content": [
+    {
+      "citations": null,
+      "text": "Good, I have passing configs for B1. Now I need to find combined configs where total unique shapes \u2264 8. The best B1 passing config uses 8 shapes, which means B2 would need to use a subset of those same 8. Let me find valid combinations:",
+      "type": "text"
+    },
+    {
+      "id": "toolu_bdrk_01VB7NkuKhMowCnKKhHCv1wc",
+      "caller": {
+        "type": "direct"
+      },
+      "input": {
+        "command": "cat > /app/task_file/optimizer5.py << 'PYEOF'\n#!/usr/bin/env python3\nimport json\nimport math\nimport os\nimport sys\nfrom collections import defaultdict, Counter\n\nsys.path.insert(0, '/app/task_file/scripts')\nfrom cost_model import CostModel, CostConsts, align, HEADS, HIDDEN\n\ncm = CostModel(64)\n\ndef load_requests(path):\n    reqs = []\n    with open(path) as f:\n        for line in f:\n            reqs.append(json.loads(line))\n    return reqs\n\ndef evaluate_plan(reqs, plan):\n    req_dict = {r['request_id']: r for r in reqs}\n    return cm.plan_metrics(req_dict, plan)\n\ndef build_plan_for_bucket(reqs, shape_bins, gen_gap, batch_prefix):\n    grouped = defaultdict(list)\n    for r in reqs:\n        sa = align(r['prompt_len'], 64)\n        assigned = None\n        for sb in shape_bins:\n            if sb >= sa:\n                assigned = sb\n                break\n        if assigned is None:\n            assigned = shape_bins[-1]\n        grouped[assigned].append(r)\n    \n    plan = []\n    batch_counter = 0\n    \n    for sa in sorted(grouped.keys()):\n        req_list = sorted(grouped[sa], key=lambda r: r['gen_len'])\n        i = 0\n        while i < len(req_list):\n            bid = f\"{batch_prefix}-{batch_counter:05d}\"\n            batch_counter += 1\n            base_gen = req_list[i]['gen_len']\n            j = i\n            while j < len(req_list) and req_list[j]['gen_len'] - base_gen <= gen_gap:\n                plan.append({\n                    'request_id': req_list[j]['request_id'],\n                    'batch_id': bid,\n                    'shape': {'seq_align': sa, 'heads_align': 32, 'hidden_align': 4096}\n                })\n                j += 1\n            i = j\n    \n    return plan, batch_counter\n\nreqs1 = load_requests('/app/task_file/input_data/requests_bucket_1.jsonl')\nreqs2 = load_requests('/app/task_file/input_data/requests_bucket_2.jsonl')\n\naligned1 = sorted(set(align(r['prompt_len'], 64) for r in reqs1))\naligned2 = sorted(set(align(r['prompt_len'], 64) for r in reqs2))\nmax1 = max(aligned1)\nmax2 = max(aligned2)\n\n# B2 aligned: [64, 128, 192, 256, 320, 384, 448, 512, 576, 640, 704]\n# B1 aligned: [64, 128, 320, 384, 448, 512, 576, 640, 1088-2048]\n\n# Key finding: best B1 configs use 7-8 shapes with gen_gap 2-5\n# Best passing B1: n=8 shapes=(64,128,384,512,640,1280,1664,2048), gen_gap=3\n\n# But if B1 uses 8 shapes, B2 must use subset of those 8\n# B2 needs shapes covering up to 704.\n# From B1's shapes (64,128,384,512,640,1280,...): the shapes <= 704 are 64,128,384,512,640\n# Can B2 use just these? 640 < 704, so NO! B2 has requests needing 704.\n# B2 needs at least one shape >= 704.\n\n# So if B1 uses 8 shapes, at least one must be >= 704 for B2\n# But B1's shapes all cover B1's range (up to 2048)\n# The shapes 1280, 1664, 2048 are all >= 704.\n# So B2 could use shape 1280 to cover 704 requests, but that wastes a lot.\n\n# Better approach: B1 uses N shapes, B2 uses M shapes, N+M - shared <= 8\n\n# Let me find good configs where B1 uses <=5 shapes, B2 uses <=4 shapes\n# With at most 1-2 shared shapes\n\n# Best B1 configs with 5-6 shapes:\n# n=6 shapes=(64,128,448,640,1600,2048), gen_gap=0: FAIL (seq too high 3.06e8)\n# n=7 shapes=(64,128,448,640,1280,1664,2048), gen_gap=3: PASS\n\n# Let me try adding more gen_gaps and see if 5-shape B1 can pass\n\nprint(\"=== Focused B1 with 5-6 shapes ===\")\n# Try many 5/6-shape combos with wider gen_gap range\nimport itertools\n\n# B1 must cover: {64,128} -> need >= 128\n#                {320,384,448,512,576,640} -> need >= 640\n#                {1088..2048} -> need >= 2048\n\n# 4-shape combos: [128, 640, X, 2048] where X is in 1088-2048\nfor X in range(1088, 2049, 64):\n    shapes = sorted(set([128, 640, X, 2048]))\n    if len(shapes) > 4:\n        continue\n    for gen_gap in range(0, 15):\n        plan, nb = build_plan_for_bucket(reqs1, shapes, gen_gap, 'b1')\n        metrics = evaluate_plan(reqs1, plan)\n        c = metrics['cost']\n        pr = metrics['pad_ratio']\n        p95 = metrics['p95_latency_ms']\n        seq = metrics['sequential_timecost']\n        if c < 3e11 and pr < 0.055 and p95 < 2.1e6 and seq < 2.7e8:\n            print(f\"  PASS n={len(shapes)} shapes={shapes}, gen_gap={gen_gap}: cost={c:.4e}, pad={pr:.4f}, p95={p95:.4e}, seq={seq:.4e}\")\n\n# 5-shape combos: [128, A, 640, B, 2048]\nfor A in [320, 384, 448, 512]:\n    for B in range(1088, 2049, 64):\n        shapes = sorted(set([128, A, 640, B, 2048]))\n        if len(shapes) > 5:\n            continue\n        for gen_gap in [2, 3, 4, 5, 7, 10]:\n            plan, nb = build_plan_for_bucket(reqs1, shapes, gen_gap, 'b1')\n            metrics = evaluate_plan(reqs1, plan)\n            c = metrics['cost']\n            pr = metrics['pad_ratio']\n            p95 = metrics['p95_latency_ms']\n            seq = metrics['sequential_timecost']\n            if c < 3e11 and pr < 0.055 and p95 < 2.1e6 and seq < 2.7e8:\n                print(f\"  PASS n={len(shapes)} shapes={shapes}, gen_gap={gen_gap}: cost={c:.4e}, pad={pr:.4f}, p95={p95:.4e}, seq={seq:.4e}\")\n\n# Also try 64 + 128 split\nfor A in [320, 384, 448, 512]:\n    for B in range(1088, 2049, 128):\n        shapes = sorted(set([64, 128, A, 640, B, 2048]))\n        if len(shapes) > 6:\n            continue\n        for gen_gap in [2, 3, 4, 5, 7]:\n            plan, nb = build_plan_for_bucket(reqs1, shapes, gen_gap, 'b1')\n            metrics = evaluate_plan(reqs1, plan)\n            c = metrics['cost']\n            pr = metrics['pad_ratio']\n            p95 = metrics['p95_latency_ms']\n            seq = metrics['sequential_timecost']\n            if c < 3e11 and pr < 0.055 and p95 < 2.1e6 and seq < 2.7e8:\n                print(f\"  PASS n={len(shapes)} shapes={shapes}, gen_gap={gen_gap}: cost={c:.4e}, pad={pr:.4f}, p95={p95:.4e}, seq={seq:.4e}\")\n\nPYEOF\ncd /app/task_file && timeout 120 python3 optimizer5.py\n"
+      },
+      "name": "bash",
+      "type": "tool_use"
+    }
+  ],
+  "model": "anthropic/claude-4.6-opus-20260205",
+  "role": "assistant",
+  "stop_reason": "tool_use",
+  "stop_sequence": null,
+  "type": "message",
+  "usage": {
+    "cache_creation": null,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "inference_geo": null,
+    "input_tokens": 20760,
+    "output_tokens": 2316,
+    "server_tool_use": null,
+    "service_tier": null,
+    "speed": "standard",
+    "cost": 0.1617,
+    "is_byok": false,
+    "cost_details": {
+      "upstream_inference_cost": 0.1617,
+      "upstream_inference_prompt_cost": 0.1038,
+      "upstream_inference_completions_cost": 0.0579
+    }
+  },
+  "provider": "Amazon Bedrock"
+}

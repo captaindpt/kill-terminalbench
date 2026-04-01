@@ -1,0 +1,41 @@
+{
+  "id": "gen-1775064585-m961f2zgSwSzhylLY6Ol",
+  "container": null,
+  "content": [
+    {
+      "id": "toolu_bdrk_01Uj3v5Q2uQVwpGKEfAiEbyh",
+      "caller": {
+        "type": "direct"
+      },
+      "input": {
+        "command": "cd /app/task_file && python3 << 'EOF'\n# B1 with batch_size=2: Cost=3.17e11 > 3e11 \u2717 (too high)\n# B1 with batch_size=1: Cost=2.87e11 \u2713, SeqT=3.35e8 \u2717\n\n# The problem: batching increases cost because G_max goes up\n# But we need to reduce sequential time\n\n# Wait, the targets say seq_time for B1 is 2.7e8\n# But individual batching gives 3.35e8\n# That's 800 batches. To get 2.7e8, we need ~20% reduction\n\n# What if we only batch requests where gen_len is very close?\n# And keep others as individual batches?\n\n# Actually let me look at sequential_timecost more carefully.\n# It includes compile time for first batch of each shape!\n# Let me use the full plan_metrics\n\nimport json\nimport sys\nsys.path.insert(0, 'scripts')\nfrom cost_model import CostModel, CostConsts, align, HEADS, HIDDEN\nfrom collections import defaultdict\n\ncm = CostModel(64)\n\n# Let me create a plan with individual batching and compute full metrics\n\nfor fname, label, outname in [\n    ('input_data/requests_bucket_1.jsonl', 'B1', 'plan_b1'),\n    ('input_data/requests_bucket_2.jsonl', 'B2', 'plan_b2')\n]:\n    reqs = []\n    with open(fname) as f:\n        for line in f:\n            reqs.append(json.loads(line))\n    \n    requests_dict = {r['request_id']: r for r in reqs}\n    \n    # Individual batching\n    plan = []\n    for i, r in enumerate(reqs):\n        s = align(r['prompt_len'], 64)\n        plan.append({\n            'request_id': r['request_id'],\n            'batch_id': f'b-{i:04d}',\n            'shape': {'seq_align': s, 'heads_align': 32, 'hidden_align': 4096}\n        })\n    \n    m = cm.plan_metrics(requests_dict, plan)\n    print(f'{label} individual batching (full plan_metrics):')\n    print(f'  Cost: {m[\"cost\"]:.4e}')\n    print(f'  Pad ratio: {m[\"pad_ratio\"]:.4f}')\n    print(f'  P95 latency: {m[\"p95_latency_ms\"]:.4e}')\n    print(f'  Seq timecost: {m[\"sequential_timecost\"]:.4e}')\n    print(f'  Unique shapes: {len(set((p[\"shape\"][\"seq_align\"],) for p in plan))}')\n    print()\n\nEOF\n"
+      },
+      "name": "bash",
+      "type": "tool_use"
+    }
+  ],
+  "model": "anthropic/claude-4.6-opus-20260205",
+  "role": "assistant",
+  "stop_reason": "tool_use",
+  "stop_sequence": null,
+  "type": "message",
+  "usage": {
+    "cache_creation": null,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "inference_geo": null,
+    "input_tokens": 19911,
+    "output_tokens": 766,
+    "server_tool_use": null,
+    "service_tier": null,
+    "speed": "standard",
+    "cost": 0.118705,
+    "is_byok": false,
+    "cost_details": {
+      "upstream_inference_cost": 0.118705,
+      "upstream_inference_prompt_cost": 0.099555,
+      "upstream_inference_completions_cost": 0.01915
+    }
+  },
+  "provider": "Amazon Bedrock"
+}

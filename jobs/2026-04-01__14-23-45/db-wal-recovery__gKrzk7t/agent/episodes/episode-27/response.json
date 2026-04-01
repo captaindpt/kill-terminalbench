@@ -1,0 +1,41 @@
+{
+  "id": "gen-1775054780-3n3SISoAKUPrtci6o2PV",
+  "container": null,
+  "content": [
+    {
+      "id": "toolu_bdrk_01WLGNT4jR6bo2k3R4vunmWD",
+      "caller": {
+        "type": "direct"
+      },
+      "input": {
+        "command": "# Let me see the actual structure of messages in compaction-00\npython3 -c \"\nimport json\nwith open('/logs/agent/compactions/compaction-00.json') as f:\n    data = json.load(f)\n\nreq = data.get('request', {})\nmsgs = req.get('messages', [])\nprint(f'Number of messages: {len(msgs)}')\nfor j, msg in enumerate(msgs):\n    role = msg.get('role', 'unknown')\n    content = msg.get('content', '')\n    if isinstance(content, str):\n        print(f'  msg[{j}] role={role}, type=str, len={len(content)}, preview={content[:100]}')\n    elif isinstance(content, list):\n        print(f'  msg[{j}] role={role}, type=list, len={len(content)}')\n        for k, block in enumerate(content):\n            if isinstance(block, dict):\n                print(f'    block[{k}] type={block.get(\\\"type\\\",\\\"?\\\")} keys={list(block.keys())}')\n                if block.get('type') == 'text':\n                    print(f'      text preview: {str(block.get(\\\"text\\\",\\\"\\\"))[:200]}')\n            else:\n                print(f'    block[{k}] = {str(block)[:100]}')\n    else:\n        print(f'  msg[{j}] role={role}, type={type(content).__name__}')\n\" 2>/dev/null"
+      },
+      "name": "bash",
+      "type": "tool_use"
+    }
+  ],
+  "model": "anthropic/claude-4.6-opus-20260205",
+  "role": "assistant",
+  "stop_reason": "tool_use",
+  "stop_sequence": null,
+  "type": "message",
+  "usage": {
+    "cache_creation": null,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "inference_geo": null,
+    "input_tokens": 4765,
+    "output_tokens": 424,
+    "server_tool_use": null,
+    "service_tier": null,
+    "speed": "standard",
+    "cost": 0.034425,
+    "is_byok": false,
+    "cost_details": {
+      "upstream_inference_cost": 0.034425,
+      "upstream_inference_prompt_cost": 0.023825,
+      "upstream_inference_completions_cost": 0.0106
+    }
+  },
+  "provider": "Amazon Bedrock"
+}

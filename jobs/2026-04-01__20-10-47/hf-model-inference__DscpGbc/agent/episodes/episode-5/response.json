@@ -1,0 +1,46 @@
+{
+  "id": "gen-1775082342-PH4KlNLHinJiocdGW7Hw",
+  "container": null,
+  "content": [
+    {
+      "citations": null,
+      "text": "Now create the Flask API:",
+      "type": "text"
+    },
+    {
+      "id": "toolu_bdrk_01EkMWpjNoC6Adm2xSQwnSo7",
+      "caller": {
+        "type": "direct"
+      },
+      "input": {
+        "command": "cat > /app/app.py << 'EOF'\nfrom flask import Flask, request, jsonify\nfrom transformers import AutoTokenizer, AutoModelForSequenceClassification\nimport torch\n\napp = Flask(__name__)\n\nMODEL_PATH = \"/app/model_cache/sentiment_model\"\n\n# Load model and tokenizer at startup\ntokenizer = AutoTokenizer.from_pretrained(MODEL_PATH)\nmodel = AutoModelForSequenceClassification.from_pretrained(MODEL_PATH)\nmodel.eval()\n\n\n@app.route(\"/sentiment\", methods=[\"POST\"])\ndef sentiment():\n    data = request.get_json(silent=True)\n\n    if data is None or \"text\" not in data:\n        return jsonify({\"error\": \"Request must include JSON with a 'text' field.\"}), 400\n\n    text = data[\"text\"]\n\n    if not isinstance(text, str) or len(text.strip()) == 0:\n        return jsonify({\"error\": \"The 'text' field must be a non-empty string.\"}), 400\n\n    try:\n        inputs = tokenizer(text, return_tensors=\"pt\", truncation=True, max_length=512)\n        with torch.no_grad():\n            outputs = model(**inputs)\n        logits = outputs.logits\n        probs = torch.softmax(logits, dim=-1)[0]\n\n        # Model labels: 0 -> NEGATIVE, 1 -> POSITIVE\n        negative_score = probs[0].item()\n        positive_score = probs[1].item()\n\n        sentiment_label = \"positive\" if positive_score >= negative_score else \"negative\"\n\n        return jsonify({\n            \"sentiment\": sentiment_label,\n            \"confidence\": {\n                \"positive\": round(positive_score, 4),\n                \"negative\": round(negative_score, 4),\n            }\n        })\n    except Exception as e:\n        return jsonify({\"error\": str(e)}), 400\n\n\nif __name__ == \"__main__\":\n    app.run(host=\"0.0.0.0\", port=5000)\nEOF"
+      },
+      "name": "bash",
+      "type": "tool_use"
+    }
+  ],
+  "model": "anthropic/claude-4.6-opus-20260205",
+  "role": "assistant",
+  "stop_reason": "tool_use",
+  "stop_sequence": null,
+  "type": "message",
+  "usage": {
+    "cache_creation": null,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "inference_geo": null,
+    "input_tokens": 2275,
+    "output_tokens": 554,
+    "server_tool_use": null,
+    "service_tier": null,
+    "speed": "standard",
+    "cost": 0.025225,
+    "is_byok": false,
+    "cost_details": {
+      "upstream_inference_cost": 0.025225,
+      "upstream_inference_prompt_cost": 0.011375,
+      "upstream_inference_completions_cost": 0.01385
+    }
+  },
+  "provider": "Amazon Bedrock"
+}

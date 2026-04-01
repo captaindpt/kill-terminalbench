@@ -1,0 +1,41 @@
+{
+  "id": "gen-1775075393-Aj6KWTHgDZ6D1zatXh7o",
+  "container": null,
+  "content": [
+    {
+      "id": "toolu_bdrk_0165Ee8tLookRX2UHC2ArL5q",
+      "caller": {
+        "type": "direct"
+      },
+      "input": {
+        "command": "cat > /app/decompress.py << 'PYEOF'\n#!/usr/bin/env python3\n\"\"\"\nDecompress/revert a resharded directory back to the original file structure in-place.\n\"\"\"\nimport sys\nimport os\nimport tarfile\nimport json\n\n\ndef decompress(resharded_dir):\n    resharded_dir = os.path.abspath(resharded_dir)\n\n    manifest_path = os.path.join(resharded_dir, \"manifest.json\")\n    if not os.path.exists(manifest_path):\n        print(f\"Error: manifest.json not found in {resharded_dir}\")\n        sys.exit(1)\n\n    with open(manifest_path, 'r') as f:\n        manifest = json.load(f)\n\n    # Group files by tar archive\n    tar_to_files = {}\n    for entry in manifest:\n        tar_rel = entry[\"tar\"]\n        if tar_rel not in tar_to_files:\n            tar_to_files[tar_rel] = []\n        tar_to_files[tar_rel].append(entry[\"file\"])\n\n    # Extract all tar archives\n    for tar_rel in tar_to_files:\n        tar_path = os.path.join(resharded_dir, tar_rel)\n        if not os.path.exists(tar_path):\n            print(f\"Error: tar file not found: {tar_path}\")\n            sys.exit(1)\n\n        with tarfile.open(tar_path, 'r') as tf:\n            tf.extractall(path=resharded_dir)\n\n    # Remove tar files and manifest\n    for tar_rel in tar_to_files:\n        tar_path = os.path.join(resharded_dir, tar_rel)\n        os.remove(tar_path)\n\n    # Remove manifest\n    os.remove(manifest_path)\n\n    # Remove empty subdirectories (from the tree structure)\n    for root, dirs, files in os.walk(resharded_dir, topdown=False):\n        if root != resharded_dir and not os.listdir(root):\n            os.rmdir(root)\n\n\nif __name__ == \"__main__\":\n    if len(sys.argv) != 2:\n        print(f\"Usage: {sys.argv[0]} <resharded_dir>\")\n        sys.exit(1)\n    decompress(sys.argv[1])\nPYEOF"
+      },
+      "name": "bash",
+      "type": "tool_use"
+    }
+  ],
+  "model": "anthropic/claude-4.6-opus-20260205",
+  "role": "assistant",
+  "stop_reason": "tool_use",
+  "stop_sequence": null,
+  "type": "message",
+  "usage": {
+    "cache_creation": null,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "inference_geo": null,
+    "input_tokens": 8541,
+    "output_tokens": 625,
+    "server_tool_use": null,
+    "service_tier": null,
+    "speed": "standard",
+    "cost": 0.05833,
+    "is_byok": false,
+    "cost_details": {
+      "upstream_inference_cost": 0.05833,
+      "upstream_inference_prompt_cost": 0.042705,
+      "upstream_inference_completions_cost": 0.015625
+    }
+  },
+  "provider": "Amazon Bedrock"
+}

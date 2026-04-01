@@ -1,0 +1,41 @@
+{
+  "id": "gen-1775046578-gdtZQzkXW3jGpj9vgbLA",
+  "container": null,
+  "content": [
+    {
+      "id": "toolu_bdrk_01YZLF85Enq2RhJN7eC25vW4",
+      "caller": {
+        "type": "direct"
+      },
+      "input": {
+        "command": "# Start QEMU with expect to automate interaction\n# Use -nographic with serial console so we can interact via expect\n\ncat > /tmp/setup_vm.expect << 'EXPECTEOF'\n#!/usr/bin/expect -f\n\nset timeout 120\n\n# Start QEMU\nspawn qemu-system-x86_64 \\\n    -m 256 \\\n    -cdrom /app/alpine.iso \\\n    -drive file=/app/alpine-disk.qcow2,format=qcow2 \\\n    -netdev user,id=net0,hostfwd=tcp::2222-:22 \\\n    -device e1000,netdev=net0 \\\n    -nographic \\\n    -serial mon:stdio\n\n# Wait for login prompt\nexpect {\n    \"localhost login:\" {}\n    \"login:\" {}\n    timeout { puts \"TIMEOUT waiting for login\"; exit 1 }\n}\n\n# Login as root\nsend \"root\\r\"\n\n# Wait for shell prompt\nexpect {\n    \"#\" {}\n    \"~#\" {}\n    timeout { puts \"TIMEOUT waiting for shell\"; exit 1 }\n}\n\n# Small delay\nsleep 2\n\n# Set root password\nsend \"echo 'root:password123' | chpasswd\\r\"\nexpect \"#\"\nsleep 1\n\n# Setup networking\nsend \"ifconfig eth0 up\\r\"\nexpect \"#\"\nsleep 1\n\nsend \"udhcpc -i eth0\\r\"\nexpect {\n    \"obtained\" {}\n    \"#\" {}\n    timeout { puts \"TIMEOUT on DHCP\"; }\n}\nsleep 2\n\n# Install openssh\nsend \"apk add openssh\\r\"\nexpect {\n    \"OK:\" { }\n    \"#\" {}\n    timeout { puts \"TIMEOUT installing openssh\"; exit 1 }\n}\nsleep 2\nexpect \"#\"\n\n# Configure sshd\nsend \"sed -i 's/#PermitRootLogin.*/PermitRootLogin yes/' /etc/ssh/sshd_config\\r\"\nexpect \"#\"\n\nsend \"sed -i 's/PermitRootLogin prohibit-password/PermitRootLogin yes/' /etc/ssh/sshd_config\\r\"\nexpect \"#\"\n\nsend \"sed -i 's/#PasswordAuthentication.*/PasswordAuthentication yes/' /etc/ssh/sshd_config\\r\"\nexpect \"#\"\n\n# Generate host keys\nsend \"ssh-keygen -A\\r\"\nexpect \"#\"\nsleep 2\n\n# Start sshd\nsend \"/usr/sbin/sshd\\r\"\nexpect \"#\"\nsleep 1\n\n# Verify sshd is running\nsend \"ps aux | grep sshd\\r\"\nexpect \"#\"\n\nsend \"netstat -tlnp | grep 22\\r\"\nexpect \"#\"\n\n# Detach from console - send Ctrl-A then C to get QEMU monitor, then detach\n# Actually we just leave QEMU running in background\nputs \"\\n\\nSETUP COMPLETE - SSH should be accessible on port 2222\\n\"\n\n# Keep the process running - detach expect but keep qemu alive\n# We need to not exit, otherwise qemu gets killed\n# Let's just wait indefinitely\nset timeout -1\nexpect eof\nEXPECTEOF\n\nchmod +x /tmp/setup_vm.expect\necho \"Expect script created\""
+      },
+      "name": "bash",
+      "type": "tool_use"
+    }
+  ],
+  "model": "anthropic/claude-4.6-opus-20260205",
+  "role": "assistant",
+  "stop_reason": "tool_use",
+  "stop_sequence": null,
+  "type": "message",
+  "usage": {
+    "cache_creation": null,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "inference_geo": null,
+    "input_tokens": 1904,
+    "output_tokens": 848,
+    "server_tool_use": null,
+    "service_tier": null,
+    "speed": "standard",
+    "cost": 0.03072,
+    "is_byok": false,
+    "cost_details": {
+      "upstream_inference_cost": 0.03072,
+      "upstream_inference_prompt_cost": 0.00952,
+      "upstream_inference_completions_cost": 0.0212
+    }
+  },
+  "provider": "Amazon Bedrock"
+}

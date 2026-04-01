@@ -1,0 +1,41 @@
+{
+  "id": "gen-1775055046-i5hW9cuZwvUV2Dm6nEPj",
+  "container": null,
+  "content": [
+    {
+      "id": "toolu_bdrk_01VQqMw6wx8A2tdnuHg8HHAe",
+      "caller": {
+        "type": "direct"
+      },
+      "input": {
+        "command": "for i in 00 01 02 03 04 05 06 07 08 09 10 11 12; do\n    f=\"/logs/agent/compactions/compaction-${i}.json\"\n    if [ -f \"$f\" ]; then\n        echo \"=== compaction-${i}.json ===\"\n        python3 << 'PYEOF'\nimport json, re\nwith open(\"$f\") as fh:\n    data = json.load(fh)\nhistory = data['request'].get('history_to_compact', [])\nfor j, msg in enumerate(history):\n    content = msg.get('content', '')\n    if isinstance(content, str):\n        text = content\n    elif isinstance(content, list):\n        text = ' '.join(str(block.get('text', block.get('content', ''))) for block in content if isinstance(block, dict))\n    else:\n        text = str(content)\n    for line in text.split('\\n'):\n        ll = line.lower()\n        if any(kw in ll for kw in ['fig', 'grape', 'honey', 'kiwi', 'lemon', 'mango', 'item6', 'item7', 'item8', 'item9', 'item10', 'item11', '600', '700', '800', '900', '1000', '1100', 'insert', 'wal_header', 'salt', 'frame', 'reconstruct', 'xor', 'encrypt', 'cipher', 'rot']):\n            if not any(skip in line for skip in ['setuptools', 'packaging', 'compil', '/lib/']):\n                print(f'  hist[{j}]: {line.strip()[:200]}')\nPYEOF\n    fi\ndone"
+      },
+      "name": "bash",
+      "type": "tool_use"
+    }
+  ],
+  "model": "anthropic/claude-4.6-opus-20260205",
+  "role": "assistant",
+  "stop_reason": "tool_use",
+  "stop_sequence": null,
+  "type": "message",
+  "usage": {
+    "cache_creation": null,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "inference_geo": null,
+    "input_tokens": 8332,
+    "output_tokens": 485,
+    "server_tool_use": null,
+    "service_tier": null,
+    "speed": "standard",
+    "cost": 0.053785,
+    "is_byok": false,
+    "cost_details": {
+      "upstream_inference_cost": 0.053785,
+      "upstream_inference_prompt_cost": 0.04166,
+      "upstream_inference_completions_cost": 0.012125
+    }
+  },
+  "provider": "Amazon Bedrock"
+}

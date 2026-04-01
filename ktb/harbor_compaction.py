@@ -12,20 +12,35 @@ from .openrouter_common import ensure_dir
 
 SUMMARY_SYSTEM_PROMPT = """You are compacting earlier task history for a coding agent.
 
-Summarize only what is already known. Use exactly two sections:
+Summarize only what is already known — no speculation, no hedging. Use exactly three sections:
 
 ## COMPLETED
 What has been done and confirmed working. Include key commands, files modified, and verified outcomes.
 
+## KEY FINDINGS
+Concrete results from exploration and experiments. For each approach tried, state:
+- What was attempted (exact technique/command)
+- What happened (exact result — passed, failed, error message, output)
+- Why it succeeded or failed (if known)
+Preserve specific details: file paths, error messages, working bypass techniques, discovered constraints. Do NOT generalize ("most techniques failed") — list each one.
+Do NOT infer or guess missing values, filenames, record contents, root causes, or plans unless they were directly observed in command output or explicitly proven.
+
 ## PENDING
-What the agent still needs to DO (not verify or re-check). Only list items that have NOT been completed yet.
+What the agent still needs to DO next. Only list items that have NOT been completed yet.
 If specific fix commands were identified but not yet executed, include the exact commands.
-Verification and testing are handled by a separate harness — never list "test", "verify", or "check" as pending.
 
 Rules:
 - Never list a completed item under PENDING.
 - If the task appears fully done, write PENDING as "Nothing — task is complete, agent should stop."
-- Keep it concise and factual. No speculation.
+- Preserve concrete findings even if they seem minor — the agent needs these to avoid repeating work.
+- Never promote a hypothesis into a finding. Label uncertainty explicitly and keep guesses out of COMPLETED, KEY FINDINGS, and PENDING.
+
+## AUTHORED FILES
+List files the agent created or significantly modified. For each, include:
+- Exact path
+- Purpose (what it does / why it matters)
+- Current state (working? what's broken? what needs changing?)
+If a file is central to remaining work and under ~200 lines, include a structural summary (key functions, sections, logic flow). Do not reproduce full file contents.
 """
 
 
@@ -39,14 +54,27 @@ def _env_int(name: str, default: int) -> int:
         return default
 
 
-COMPACTION_TRIGGER_INPUT_TOKENS = _env_int("KTB_COMPACTION_TRIGGER_INPUT_TOKENS", 12000)
+COMPACTION_TRIGGER_INPUT_TOKENS = _env_int("KTB_COMPACTION_TRIGGER_INPUT_TOKENS", 187000)
 COMPACTION_RECENT_MESSAGES = _env_int("KTB_COMPACTION_RECENT_MESSAGES", 8)
-COMPACTION_SUMMARY_TOKENS = _env_int("KTB_COMPACTION_SUMMARY_TOKENS", 2000)
-SUMMARY_MODEL = os.environ.get("OPENROUTER_SUMMARY_MODEL", "anthropic/claude-3.5-haiku")
+COMPACTION_SUMMARY_TOKENS = _env_int("KTB_COMPACTION_SUMMARY_TOKENS", 4000)
+COMPACTION_MIN_EPISODE_GAP = _env_int("KTB_COMPACTION_MIN_EPISODE_GAP", 3)
+SUMMARY_MODEL = os.environ.get("OPENROUTER_SUMMARY_MODEL", "anthropic/claude-sonnet-4-6")
 
 
-def should_compact(last_input_tokens: int, messages: list[dict[str, Any]]) -> bool:
-    return last_input_tokens >= COMPACTION_TRIGGER_INPUT_TOKENS and len(messages) > COMPACTION_RECENT_MESSAGES + 2
+def should_compact(
+    last_input_tokens: int,
+    messages: list[dict[str, Any]],
+    *,
+    episode: int,
+    last_compaction_episode: int | None,
+) -> bool:
+    if last_input_tokens < COMPACTION_TRIGGER_INPUT_TOKENS:
+        return False
+    if len(messages) <= COMPACTION_RECENT_MESSAGES + 2:
+        return False
+    if last_compaction_episode is None:
+        return True
+    return (episode - last_compaction_episode) >= COMPACTION_MIN_EPISODE_GAP
 
 
 def is_prompt_too_long_error(exc: Exception) -> bool:

@@ -1,0 +1,41 @@
+{
+  "id": "gen-1775064701-4UWYeItZwdNa3dqkJj39",
+  "container": null,
+  "content": [
+    {
+      "id": "toolu_bdrk_01RDFZPoYZgYrfMeV4U5R8H7",
+      "caller": {
+        "type": "direct"
+      },
+      "input": {
+        "command": "cat > /app/decompress.py << 'PYTHON_SCRIPT'\n#!/usr/bin/env python3\n\"\"\"\nDecompress/reconstruct the original file structure from a resharded directory.\nOperates in-place: extracts files and removes shard artifacts.\n\"\"\"\n\nimport json\nimport os\nimport sys\nimport tarfile\n\n\ndef decompress_flat(resharded_dir, manifest):\n    \"\"\"Handle case where all shards are in the root directory.\"\"\"\n    shards = manifest[\"shards\"]\n    \n    for shard_name in shards:\n        shard_path = os.path.join(resharded_dir, shard_name)\n        with tarfile.open(shard_path, 'r:gz') as tar:\n            tar.extractall(path=resharded_dir)\n        os.remove(shard_path)\n\n\ndef decompress_nested(resharded_dir, manifest):\n    \"\"\"Handle case where shards are in subdirectories.\"\"\"\n    subdirs = manifest[\"subdirs\"]\n    \n    for subdir_name in subdirs:\n        subdir_path = os.path.join(resharded_dir, subdir_name)\n        \n        # Read sub-manifest\n        sub_manifest_path = os.path.join(subdir_path, \"sub_manifest.json\")\n        with open(sub_manifest_path, 'r') as f:\n            sub_manifest = json.load(f)\n        \n        # Extract all shards\n        for shard_name in sub_manifest[\"shards\"]:\n            shard_path = os.path.join(subdir_path, shard_name)\n            with tarfile.open(shard_path, 'r:gz') as tar:\n                tar.extractall(path=resharded_dir)\n            os.remove(shard_path)\n        \n        # Remove sub-manifest and subdirectory\n        os.remove(sub_manifest_path)\n        # Remove directory (should be empty now)\n        try:\n            os.rmdir(subdir_path)\n        except OSError:\n            # If there are extracted files in subdir, they should have been\n            # extracted to resharded_dir, so subdir should be empty\n            pass\n\n\ndef main():\n    if len(sys.argv) != 2:\n        print(f\"Usage: {sys.argv[0]} <resharded_dir>\", file=sys.stderr)\n        sys.exit(1)\n    \n    resharded_dir = sys.argv[1]\n    \n    if not os.path.isdir(resharded_dir):\n        print(f\"Error: Directory '{resharded_dir}' does not exist\", file=sys.stderr)\n        sys.exit(1)\n    \n    manifest_path = os.path.join(resharded_dir, \"manifest.json\")\n    if not os.path.isfile(manifest_path):\n        print(f\"Error: manifest.json not found in '{resharded_dir}'\", file=sys.stderr)\n        sys.exit(1)\n    \n    with open(manifest_path, 'r') as f:\n        manifest = json.load(f)\n    \n    if \"shards\" in manifest:\n        print(\"Decompressing flat structure...\")\n        decompress_flat(resharded_dir, manifest)\n    elif \"subdirs\" in manifest:\n        print(\"Decompressing nested structure...\")\n        decompress_nested(resharded_dir, manifest)\n    else:\n        print(\"Error: Invalid manifest format\", file=sys.stderr)\n        sys.exit(1)\n    \n    # Remove manifest\n    os.remove(manifest_path)\n    \n    print(\"Done!\")\n\n\nif __name__ == \"__main__\":\n    main()\nPYTHON_SCRIPT\nchmod +x /app/decompress.py"
+      },
+      "name": "bash",
+      "type": "tool_use"
+    }
+  ],
+  "model": "anthropic/claude-4.6-opus-20260205",
+  "role": "assistant",
+  "stop_reason": "tool_use",
+  "stop_sequence": null,
+  "type": "message",
+  "usage": {
+    "cache_creation": null,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "inference_geo": null,
+    "input_tokens": 10610,
+    "output_tokens": 954,
+    "server_tool_use": null,
+    "service_tier": null,
+    "speed": "standard",
+    "cost": 0.0769,
+    "is_byok": false,
+    "cost_details": {
+      "upstream_inference_cost": 0.0769,
+      "upstream_inference_prompt_cost": 0.05305,
+      "upstream_inference_completions_cost": 0.02385
+    }
+  },
+  "provider": "Amazon Bedrock"
+}

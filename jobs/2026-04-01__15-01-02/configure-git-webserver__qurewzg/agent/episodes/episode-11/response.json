@@ -1,0 +1,35 @@
+{
+  "id": "gen-1775056086-hBfSmdEPExJXiIP6ToFO",
+  "container": null,
+  "content": [
+    {
+      "citations": null,
+      "text": "Everything is configured and working. Here's a summary of what was set up:\n\n1. **SSH Server** (`sshd`) \u2014 running on port 22, allows `user` to connect and interact with git.\n\n2. **Git bare repository** at `/git/server` \u2014 owned by `user`, serves as the remote repository for `git clone user@server:/git/server`.\n\n3. **Post-receive hook** at `/git/server/hooks/post-receive` \u2014 on every push, it checks out the latest `master` branch into `/var/www/html` (the web root).\n\n4. **Web server** (Python HTTP server) \u2014 running on port 8080, serving files from `/var/www/html`.\n\n**Flow**: When a user pushes to the git repo \u2192 the post-receive hook deploys the files to `/var/www/html` \u2192 the web server on port 8080 serves them immediately.",
+      "type": "text"
+    }
+  ],
+  "model": "anthropic/claude-4.6-opus-20260205",
+  "role": "assistant",
+  "stop_reason": "end_turn",
+  "stop_sequence": null,
+  "type": "message",
+  "usage": {
+    "cache_creation": null,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "inference_geo": null,
+    "input_tokens": 4328,
+    "output_tokens": 209,
+    "server_tool_use": null,
+    "service_tier": null,
+    "speed": "standard",
+    "cost": 0.026865,
+    "is_byok": false,
+    "cost_details": {
+      "upstream_inference_cost": 0.026865,
+      "upstream_inference_prompt_cost": 0.02164,
+      "upstream_inference_completions_cost": 0.005225
+    }
+  },
+  "provider": "Amazon Bedrock"
+}

@@ -1,0 +1,41 @@
+{
+  "id": "gen-1775064998-9LVwA5qoH8DKttkprHhm",
+  "container": null,
+  "content": [
+    {
+      "id": "toolu_vrtx_01Bd5nBQoPe7MWkc711KSe9c",
+      "caller": {
+        "type": "direct"
+      },
+      "input": {
+        "command": "cd /app/task_file && python3 << 'EOF'\n# Great! 338 pairs selected, saving 1.12e8 of seq_time, well within budget.\n# Remaining seq_time \u2248 2.23e8 << 2.7e8 target.\n# Extra cost: 8.56e9 used of 8.57e9 budget -> total cost \u2248 2.914e11 + 8.56e9 \u2248 3.0e11\n\n# Actually very tight on cost. Let me be more careful about the total.\n# Let me also think about limiting cost_budget to leave some margin.\n\n# Also I need to check: the P95 latency. When we pair requests,\n# the latency for the smaller-gen request increases (because G_max = larger gen).\n# So the paired request's latency goes up, potentially increasing P95.\n\n# Let me build the full plan and evaluate with plan_metrics.\n\nimport json\nimport sys\nsys.path.insert(0, 'scripts')\nfrom cost_model import CostModel, CostConsts, align, HEADS, HIDDEN\nfrom collections import defaultdict\n\ncm = CostModel(64)\n\nreqs = []\nwith open('input_data/requests_bucket_1.jsonl') as f:\n    for line in f:\n        reqs.append(json.loads(line))\n\nfor r in reqs:\n    r['aligned'] = align(r['prompt_len'], 64)\n\n# Compute individual metrics\nfor r in reqs:\n    m = cm.batch_metrics([r])\n    r['indiv_cost'] = m['cost']\n    r['indiv_lat'] = max(l + 8.0 for l in m['latencies'])\n\nby_aligned = defaultdict(list)\nfor r in reqs:\n    by_aligned[r['aligned']].append(r)\n\n# Compute candidate pairs (consecutive in gen_len within same aligned group)\ncandidates = []\nfor s in sorted(by_aligned.keys()):\n    group = sorted(by_aligned[s], key=lambda r: (r['gen_len'], r['request_id']))\n    for i in range(len(group) - 1):\n        r1, r2 = group[i], group[i+1]\n        m_pair = cm.batch_metrics([r1, r2])\n        pair_cost = m_pair['cost']\n        pair_lat = max(l + 8.0 for l in m_pair['latencies'])\n        \n        extra_cost = pair_cost - (r1['indiv_cost'] + r2['indiv_cost'])\n        lat_saved = r1['indiv_lat'] + r2['indiv_lat'] - pair_lat\n        \n        candidates.append({\n            'r1': r1, 'r2': r2,\n            'extra_cost': extra_cost,\n            'lat_saved': lat_saved,\n            'ratio': lat_saved / max(1, extra_cost),\n        })\n\ncandidates.sort(key=lambda c: -c['ratio'])\n\n# Use tighter budget\nbase_cost = sum(r['indiv_cost'] for r in reqs) + 10_000_000 * 800\nshapes8 = [64, 128, 320, 640, 704, 1088, 1536, 2048]\ncompile_cost_8 = sum(500*s**2 + 2*s*4096 for s in shapes8)\n\n# When we pair, the number of batches decreases\n# Each pair removes one batch, saving 10M overhead\n# So actual extra cost = pair_extra_cost - 10M_overhead_saved\n\n# Let me redo calculation properly:\n# Individual: total_cost = sum(indiv_cost) + 10M * 800 + compile = base + compile\n# With pairs: total_cost = sum(indiv_cost) + sum(extra_costs) + 10M * (800 - n_pairs) + compile\n# = base - 10M * n_pairs + sum(extra_costs) + compile\n\n# Target: total_cost < 3.0e11\n# base + compile_8 = 2.87e11 + 0.08e11 + 0.044e11 = 2.914e11\n# (base already includes 10M * 800)\n\n# With pairs: 2.914e11 - n_pairs * 10M + sum(extra_costs) < 3.0e11\n# sum(extra_costs) - n_pairs * 10M < 0.086e11 = 8.6e9\n\nprint(f\"Base cost (indiv + overhead): {base_cost:.4e}\")\nprint(f\"Compile cost (8 shapes): {compile_cost_8:.4e}\")\nprint(f\"Total individual: {base_cost + compile_cost_8:.4e}\")\nprint(f\"Budget for net extra: {3.0e11 - base_cost - compile_cost_8:.4e}\")\n\nused = set()\nselected = []\ntotal_extra = 0\ntotal_lat_saved = 0\nbudget = 3.0e11 - base_cost - compile_cost_8\n\nfor c in candidates:\n    rid1 = c['r1']['request_id']\n    rid2 = c['r2']['request_id']\n    if rid1 in used or rid2 in used:\n        continue\n    net_extra = c['extra_cost'] - 10_000_000  # save one batch overhead\n    if total_extra + net_extra > budget * 0.95:  # leave 5% margin\n        continue\n    used.add(rid1)\n    used.add(rid2)\n    selected.append(c)\n    total_extra += net_extra\n    total_lat_saved += c['lat_saved']\n\nprint(f\"\\nSelected {len(selected)} pairs\")\nprint(f\"  Net extra cost: {total_extra:.4e}\")\nprint(f\"  Total lat saved: {total_lat_saved:.4e}\")\nprint(f\"  Estimated total cost: {base_cost + compile_cost_8 + total_extra:.4e}\")\nprint(f\"  Estimated seq_time: {3.351e8 - total_lat_saved:.4e}\")\n\n# Build plan\n# Assign shapes: each request gets the smallest shape >= its aligned prompt\ndef assign_shape(aligned):\n    for s in shapes8:\n        if s >= aligned:\n            return s\n    return shapes8[-1]\n\nbatch_id_counter = 0\nplan = []\n\n# Paired requests\npaired_rids = set()\nfor c in selected:\n    bid = f\"b-{batch_id_counter:04d}\"\n    batch_id_counter += 1\n    r1, r2 = c['r1'], c['r2']\n    paired_rids.add(r1['request_id'])\n    paired_rids.add(r2['request_id'])\n    \n    max_aligned = max(r1['aligned'], r2['aligned'])\n    shape_val = assign_shape(max_aligned)\n    \n    plan.append({\n        'request_id': r1['request_id'],\n        'batch_id': bid,\n        'shape': {'seq_align': shape_val, 'heads_align': 32, 'hidden_align': 4096}\n    })\n    plan.append({\n        'request_id': r2['request_id'],\n        'batch_id': bid,\n        'shape': {'seq_align': shape_val, 'heads_align': 32, 'hidden_align': 4096}\n    })\n\n# Unpaired requests\nfor r in reqs:\n    if r['request_id'] not in paired_rids:\n        bid = f\"b-{batch_id_counter:04d}\"\n        batch_id_counter += 1\n        shape_val = assign_shape(r['aligned'])\n        plan.append({\n            'request_id': r['request_id'],\n            'batch_id': bid,\n            'shape': {'seq_align': shape_val, 'heads_align': 32, 'hidden_align': 4096}\n        })\n\n# Write plan\nimport os\nos.makedirs('output_data', exist_ok=True)\nwith open('output_data/plan_b1.jsonl', 'w') as f:\n    for entry in plan:\n        f.write(json.dumps(entry) + '\\n')\n\n# Evaluate with plan_metrics\nmetrics = cm.plan_metrics(plan, reqs)\nprint(f\"\\n=== B1 Plan Metrics ===\")\nfor k, v in metrics.items():\n    if isinstance(v, float):\n        print(f\"  {k}: {v:.4e}\")\n    else:\n        print(f\"  {k}: {v}\")\n\nEOF\n"
+      },
+      "name": "bash",
+      "type": "tool_use"
+    }
+  ],
+  "model": "anthropic/claude-4.6-opus-20260205",
+  "role": "assistant",
+  "stop_reason": "tool_use",
+  "stop_sequence": null,
+  "type": "message",
+  "usage": {
+    "cache_creation": null,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "inference_geo": null,
+    "input_tokens": 14024,
+    "output_tokens": 2210,
+    "server_tool_use": null,
+    "service_tier": null,
+    "speed": "standard",
+    "cost": 0.12537,
+    "is_byok": false,
+    "cost_details": {
+      "upstream_inference_cost": 0.12537,
+      "upstream_inference_prompt_cost": 0.07012,
+      "upstream_inference_completions_cost": 0.05525
+    }
+  },
+  "provider": "Google"
+}

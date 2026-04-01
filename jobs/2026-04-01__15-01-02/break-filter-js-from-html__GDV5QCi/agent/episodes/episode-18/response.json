@@ -1,0 +1,35 @@
+{
+  "id": "gen-1775055931-z6urxpw1djielFAiyzej",
+  "container": null,
+  "content": [
+    {
+      "citations": null,
+      "text": "The solution works. Here's a summary of the bypass:\n\n**Technique: MathML namespace confusion (parsing differential)**\n\nThe payload `<math><style><img src=x onerror=alert(1)></style></math>` exploits a difference between how Python's `html.parser` (used by BeautifulSoup) and browser HTML parsers handle the `<style>` element inside MathML:\n\n- **BeautifulSoup's html.parser**: Has no concept of XML namespaces. It always treats `<style>` as a raw text element, so the `<img>` tag inside is seen as plain text, not as an HTML element. The filter never finds an element with an `onerror` attribute to remove.\n\n- **Browser HTML parser**: Inside `<math>` (MathML namespace), `<style>` is just a regular MathML element, not a raw text element. The browser parses `<img>` as an actual HTML element (via MathML-to-HTML integration), and the `onerror` handler fires when the image fails to load `x`.",
+      "type": "text"
+    }
+  ],
+  "model": "anthropic/claude-4.6-opus-20260205",
+  "role": "assistant",
+  "stop_reason": "end_turn",
+  "stop_sequence": null,
+  "type": "message",
+  "usage": {
+    "cache_creation": null,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "inference_geo": null,
+    "input_tokens": 12596,
+    "output_tokens": 252,
+    "server_tool_use": null,
+    "service_tier": null,
+    "speed": "standard",
+    "cost": 0.06928,
+    "is_byok": false,
+    "cost_details": {
+      "upstream_inference_cost": 0.06928,
+      "upstream_inference_prompt_cost": 0.06298,
+      "upstream_inference_completions_cost": 0.0063
+    }
+  },
+  "provider": "Amazon Bedrock"
+}

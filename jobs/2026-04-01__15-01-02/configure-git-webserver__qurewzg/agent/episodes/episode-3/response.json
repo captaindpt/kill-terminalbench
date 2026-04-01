@@ -1,0 +1,41 @@
+{
+  "id": "gen-1775056016-a0b6uqIZlLk6imjUJRS8",
+  "container": null,
+  "content": [
+    {
+      "id": "toolu_bdrk_01A9rXmEutmcbqbd6DciogU2",
+      "caller": {
+        "type": "direct"
+      },
+      "input": {
+        "command": "# Create the 'user' account\nuseradd -m -s /bin/bash user 2>/dev/null || true\necho \"user created\"\n\n# Set up SSH host keys and configure sshd\nssh-keygen -A 2>/dev/null\nmkdir -p /run/sshd\n\n# Create the web root directory\nmkdir -p /var/www/html\n\n# Create the bare git repository at /git/server\nmkdir -p /git/server\ncd /git/server\ngit init --bare\nchown -R user:user /git/server\n\necho \"Git repo initialized\""
+      },
+      "name": "bash",
+      "type": "tool_use"
+    }
+  ],
+  "model": "anthropic/claude-4.6-opus-20260205",
+  "role": "assistant",
+  "stop_reason": "tool_use",
+  "stop_sequence": null,
+  "type": "message",
+  "usage": {
+    "cache_creation": null,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "inference_geo": null,
+    "input_tokens": 2015,
+    "output_tokens": 187,
+    "server_tool_use": null,
+    "service_tier": null,
+    "speed": "standard",
+    "cost": 0.01475,
+    "is_byok": false,
+    "cost_details": {
+      "upstream_inference_cost": 0.01475,
+      "upstream_inference_prompt_cost": 0.010075,
+      "upstream_inference_completions_cost": 0.004675
+    }
+  },
+  "provider": "Amazon Bedrock"
+}

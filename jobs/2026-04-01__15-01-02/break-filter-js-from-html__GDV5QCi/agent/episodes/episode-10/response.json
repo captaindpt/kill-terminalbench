@@ -1,0 +1,46 @@
+{
+  "id": "gen-1775055794-nWl8w4tT4FPoZ91ceEHj",
+  "container": null,
+  "content": [
+    {
+      "citations": null,
+      "text": "Several of these pass through! The key insight is that BeautifulSoup's `html.parser` treats `<style>` as containing raw text, so it doesn't parse `<img>` tags inside. But in a real browser, when `<style>` is inside certain SVG/math elements (like `<math><mtext>`, `<svg><foreignObject>`, `<svg><desc>`), the browser may exit the SVG/math namespace context, causing the content inside `<style>` to be parsed as HTML.\n\nWait, actually I need to think about this more carefully. The browser's behavior with `<style>` inside SVG elements:\n\n- In SVG context, `<style>` is still a raw text element\n- But `<foreignObject>`, `<desc>`, and `<title>` in SVG switch to HTML parsing mode\n- Inside `<foreignObject>` in HTML parsing mode, `<style>` content is raw text again\n\nThe key question is: will the browser parse `<img src=x onerror=alert(1)>` as an actual tag or as text inside the style?\n\nLet me think about `<math><mtext><style>...`. In the browser:\n1. `<math>` enters MathML namespace\n2. `<mtext>` is a MathML integration point, so children are parsed in HTML mode\n3. `<style>` in HTML mode is a raw text element - content is NOT parsed as HTML\n\nSo the browser would also treat the img as text. Hmm.\n\nBut wait - there's a subtlety. Let me think about `<svg><foreignObject><style>...`:\n1. `<svg>` enters SVG namespace\n2. `<foreignObject>` is an HTML integration point\n3. `<style>` in HTML mode is raw text - img not parsed\n\nActually, the parsing differential approach may not work directly for these. Let me try a different approach.\n\nLet me reconsider the `<svg><style>` case without a foreignObject:",
+      "type": "text"
+    },
+    {
+      "id": "toolu_bdrk_01MrccZk2LUby74rjKYYXdAf",
+      "caller": {
+        "type": "direct"
+      },
+      "input": {
+        "command": "python3 -c \"\nimport sys\nsys.path.insert(0, '/app')\nfrom filter import remove_js\n\n# In SVG namespace, <style> is NOT a raw text element in the browser\n# So browser would parse the </style> closing tag but not create HTML elements inside SVG\n# Actually - wait. Let me think again.\n# \n# The browser parser: in SVG namespace, <style> element's content is treated as RAWTEXT\n# So the img tag would be treated as text, not as an element.\n# \n# But what about this: what if we close the SVG style and SVG, and then have img in HTML context?\n\ntests = [\n    '<svg><style></style></svg><img src=x onerror=alert(1)>',\n    '<svg><style>/*</style><img src=x onerror=alert(1)>*/</style></svg>',\n    # Encoding trick - using entities that html.parser doesn't resolve in style\n    '<svg><style></style><img src=x onerror=alert(1)></svg>',\n]\n\nfor t in tests:\n    result = remove_js(t)\n    print(f'Input:  {t}')\n    print(f'Output: {result}')\n    has_alert = 'alert' in result\n    has_event = 'onerror' in result or 'onload' in result\n    print(f'Has alert: {has_alert}, Has event handler: {has_event}')\n    print()\n\"\n"
+      },
+      "name": "bash",
+      "type": "tool_use"
+    }
+  ],
+  "model": "anthropic/claude-4.6-opus-20260205",
+  "role": "assistant",
+  "stop_reason": "tool_use",
+  "stop_sequence": null,
+  "type": "message",
+  "usage": {
+    "cache_creation": null,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "inference_geo": null,
+    "input_tokens": 8620,
+    "output_tokens": 873,
+    "server_tool_use": null,
+    "service_tier": null,
+    "speed": "standard",
+    "cost": 0.064925,
+    "is_byok": false,
+    "cost_details": {
+      "upstream_inference_cost": 0.064925,
+      "upstream_inference_prompt_cost": 0.0431,
+      "upstream_inference_completions_cost": 0.021825
+    }
+  },
+  "provider": "Amazon Bedrock"
+}

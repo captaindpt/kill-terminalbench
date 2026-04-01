@@ -1,0 +1,46 @@
+{
+  "id": "gen-1775082561-PcvTBukgViEaypa28p8B",
+  "container": null,
+  "content": [
+    {
+      "citations": null,
+      "text": "The server is running. Let me test it:",
+      "type": "text"
+    },
+    {
+      "id": "toolu_bdrk_01YXTFDzbn5uukwFZQXbFiak",
+      "caller": {
+        "type": "direct"
+      },
+      "input": {
+        "command": "# Test positive sentiment\necho \"=== Test 1: Positive text ===\"\ncurl -s -X POST http://localhost:5000/sentiment \\\n  -H \"Content-Type: application/json\" \\\n  -d '{\"text\": \"I love this movie, it was absolutely fantastic!\"}' | python3 -m json.tool\n\necho \"\"\necho \"=== Test 2: Negative text ===\"\ncurl -s -X POST http://localhost:5000/sentiment \\\n  -H \"Content-Type: application/json\" \\\n  -d '{\"text\": \"This is terrible, I hated every minute of it.\"}' | python3 -m json.tool\n\necho \"\"\necho \"=== Test 3: Missing text field (error) ===\"\ncurl -s -o /dev/null -w \"HTTP Status: %{http_code}\\n\" -X POST http://localhost:5000/sentiment \\\n  -H \"Content-Type: application/json\" \\\n  -d '{\"wrong_field\": \"test\"}'\ncurl -s -X POST http://localhost:5000/sentiment \\\n  -H \"Content-Type: application/json\" \\\n  -d '{\"wrong_field\": \"test\"}' | python3 -m json.tool\n\necho \"\"\necho \"=== Test 4: No JSON body (error) ===\"\ncurl -s -o /dev/null -w \"HTTP Status: %{http_code}\\n\" -X POST http://localhost:5000/sentiment\ncurl -s -X POST http://localhost:5000/sentiment | python3 -m json.tool"
+      },
+      "name": "bash",
+      "type": "tool_use"
+    }
+  ],
+  "model": "anthropic/claude-4.6-opus-20260205",
+  "role": "assistant",
+  "stop_reason": "tool_use",
+  "stop_sequence": null,
+  "type": "message",
+  "usage": {
+    "cache_creation": null,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "inference_geo": null,
+    "input_tokens": 3315,
+    "output_tokens": 434,
+    "server_tool_use": null,
+    "service_tier": null,
+    "speed": "standard",
+    "cost": 0.027425,
+    "is_byok": false,
+    "cost_details": {
+      "upstream_inference_cost": 0.027425,
+      "upstream_inference_prompt_cost": 0.016575,
+      "upstream_inference_completions_cost": 0.01085
+    }
+  },
+  "provider": "Amazon Bedrock"
+}

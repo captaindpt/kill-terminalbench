@@ -1,0 +1,7 @@
+[
+  {
+    "type": "tool_result",
+    "tool_use_id": "toolu_bdrk_01JJ3eBs1CRA7GhMdu6ucDz9",
+    "content": "[exit_code=0]\n\nimport torch\nimport torch.nn as nn\n\n\nclass MnistModel(nn.Module):\n    def __init__(\n        self,\n        input_dim: int,\n        hidden_dim: int,\n        num_classes: int,\n    ) -> torch.nn.Module:\n        super().__init__()\n\n        self.input_layer = nn.Linear(input_dim, hidden_dim)\n        self.hidden_layer = nn.Linear(hidden_dim, hidden_dim)\n        self.output_layer = nn.Linear(hidden_dim, num_classes)\n        self.activation = nn.ReLU()\n\n    def forward(self, x):\n        x = self.input_layer(x)\n        x = self.activation(x)\n\n        x = self.hidden_layer(x)\n        x = self.activation(x)\n\n        x = self.output_layer(x)\n        return x"
+  }
+]

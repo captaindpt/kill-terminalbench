@@ -1,0 +1,46 @@
+{
+  "id": "gen-1775071851-5hTBNKtiwUKwHVrLESbi",
+  "container": null,
+  "content": [
+    {
+      "citations": null,
+      "text": "Now let me test it:",
+      "type": "text"
+    },
+    {
+      "id": "toolu_bdrk_0125rZZAfSPfPPAe7NQRUgAH",
+      "caller": {
+        "type": "direct"
+      },
+      "input": {
+        "command": "cd /app && python3 -c \"\nfrom headless_terminal import HeadlessTerminal\n\n# Test basic command execution\nterm = HeadlessTerminal()\n\n# Send a simple command\nterm.send_keystrokes('echo hello_world\\n', wait_sec=0.5)\noutput = term.read_output(timeout=1.0)\nprint('=== echo test ===')\nprint(repr(output))\nassert 'hello_world' in output, f'Expected hello_world in output, got: {output}'\nprint('PASS: echo test')\n\n# Test Ctrl+C\nterm.send_keystrokes('sleep 100\\n', wait_sec=0.3)\nterm.send_keystrokes('\\x03', wait_sec=0.5)\noutput = term.read_output(timeout=1.0)\nprint('=== ctrl-c test ===')\nprint(repr(output))\nprint('PASS: ctrl-c test (no hang)')\n\n# Test interactive program (cat)\nterm.send_keystrokes('cat\\n', wait_sec=0.3)\nterm.send_keystrokes('test input\\n', wait_sec=0.3)\noutput = term.read_output(timeout=1.0)\nprint('=== interactive cat test ===')\nprint(repr(output))\n# Send Ctrl+D to end cat\nterm.send_keystrokes('\\x04', wait_sec=0.3)\noutput = term.read_output(timeout=0.5)\nprint(repr(output))\nprint('PASS: interactive cat test')\n\nterm.close()\nprint('All tests passed!')\n\"\n"
+      },
+      "name": "bash",
+      "type": "tool_use"
+    }
+  ],
+  "model": "anthropic/claude-4.6-opus-20260205",
+  "role": "assistant",
+  "stop_reason": "tool_use",
+  "stop_sequence": null,
+  "type": "message",
+  "usage": {
+    "cache_creation": null,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "inference_geo": null,
+    "input_tokens": 3667,
+    "output_tokens": 449,
+    "server_tool_use": null,
+    "service_tier": null,
+    "speed": "standard",
+    "cost": 0.02956,
+    "is_byok": false,
+    "cost_details": {
+      "upstream_inference_cost": 0.02956,
+      "upstream_inference_prompt_cost": 0.018335,
+      "upstream_inference_completions_cost": 0.011225
+    }
+  },
+  "provider": "Amazon Bedrock"
+}

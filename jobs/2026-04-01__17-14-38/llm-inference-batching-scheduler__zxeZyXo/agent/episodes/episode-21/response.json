@@ -1,0 +1,41 @@
+{
+  "id": "gen-1775064755-gh4wLZxVHzzkd1LJkqRL",
+  "container": null,
+  "content": [
+    {
+      "id": "toolu_bdrk_01VQoALXtxnaBrg7Wdf1dY6M",
+      "caller": {
+        "type": "direct"
+      },
+      "input": {
+        "command": "cd /app/task_file && python3 << 'EOF'\n# B1 batch_size=2: Cost=3.17e11 > 3e11 \u2717, SeqT=2.14e8 \u2713\n# B2 batch_size=2: Cost=4.83e10 > 4.8e10 \u2717 (barely), SeqT=2.98e7 \u2713, P95=2.45e5 > 2.1e5 \u2717\n\n# Hmm. B1 problem: cost too high with batch_size=2. With batch_size=1, seqT too high.\n# B2 problem: cost barely over with batch_size=2, AND P95 too high.\n\n# We need a mixed strategy:\n# - Some requests batched (to reduce seq_time)\n# - Some requests solo (to keep cost low)\n# - Especially: requests with high gen_len should NOT be paired with lower gen_len\n#   (to avoid G_max inflation)\n\n# Let me think about what contributes most to sequential time in B1.\n# With individual batching, the requests with highest latency dominate.\n# Let me look at latency distribution.\n\nimport json\nimport sys\nsys.path.insert(0, 'scripts')\nfrom cost_model import CostModel, CostConsts, align, HEADS, HIDDEN\nfrom collections import defaultdict\nimport numpy as np\n\ncm = CostModel(64)\n\nreqs = []\nwith open('input_data/requests_bucket_1.jsonl') as f:\n    for line in f:\n        reqs.append(json.loads(line))\n\nfor r in reqs:\n    r['aligned'] = align(r['prompt_len'], 64)\n\n# Compute individual latency for each request\nlats = []\nfor r in reqs:\n    m = cm.batch_metrics([r])\n    lat = max(l + 8.0 for l in m['latencies'])\n    lats.append((lat, r))\n\nlats.sort(reverse=True)\n\nprint(\"B1 top 20 latency requests:\")\nfor lat, r in lats[:20]:\n    print(f\"  {r['request_id']}: aligned={r['aligned']}, gen={r['gen_len']}, lat={lat:.0f}\")\n\nprint(f\"\\nTotal seq time (individual): {sum(l for l,_ in lats):.4e}\")\nprint(f\"Sum of top 50% latencies: {sum(l for l,_ in lats[:400]):.4e}\")\nprint(f\"Sum of bottom 50% latencies: {sum(l for l,_ in lats[400:]):.4e}\")\n\n# What fraction of seq_time is from high-prompt requests?\nhigh_prompt = sum(l for l, r in lats if r['aligned'] >= 1088)\nlow_prompt = sum(l for l, r in lats if r['aligned'] < 1088)\nprint(f\"\\nHigh prompt (>=1088) seq_time: {high_prompt:.4e} ({len([1 for _,r in lats if r['aligned']>=1088])} reqs)\")\nprint(f\"Low prompt (<1088) seq_time: {low_prompt:.4e} ({len([1 for _,r in lats if r['aligned']<1088])} reqs)\")\n\nEOF\n"
+      },
+      "name": "bash",
+      "type": "tool_use"
+    }
+  ],
+  "model": "anthropic/claude-4.6-opus-20260205",
+  "role": "assistant",
+  "stop_reason": "tool_use",
+  "stop_sequence": null,
+  "type": "message",
+  "usage": {
+    "cache_creation": null,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "inference_geo": null,
+    "input_tokens": 12013,
+    "output_tokens": 873,
+    "server_tool_use": null,
+    "service_tier": null,
+    "speed": "standard",
+    "cost": 0.08189,
+    "is_byok": false,
+    "cost_details": {
+      "upstream_inference_cost": 0.08189,
+      "upstream_inference_prompt_cost": 0.060065,
+      "upstream_inference_completions_cost": 0.021825
+    }
+  },
+  "provider": "Amazon Bedrock"
+}

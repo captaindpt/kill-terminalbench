@@ -1,0 +1,41 @@
+{
+  "id": "gen-1775054626-Vwwd2XGXzT3ZSbAtFMIM",
+  "container": null,
+  "content": [
+    {
+      "id": "toolu_bdrk_01CRxw2H19h7nYnmArGaZF5o",
+      "caller": {
+        "type": "direct"
+      },
+      "input": {
+        "command": "# Look more broadly - search for any text in the compaction logs\nfor f in /logs/agent/compactions/compaction-*.json; do\n    echo \"=== $f ===\"\n    python3 -c \"\nimport json, sys\nwith open('$f') as fh:\n    data = json.load(fh)\nfor msg in data.get('messages', []):\n    for item in msg.get('content', []):\n        if isinstance(item, dict):\n            if item.get('type') == 'tool_result':\n                for sub in item.get('content', []):\n                    if isinstance(sub, dict) and sub.get('type') == 'text':\n                        t = sub['text']\n                        if len(t) > 50:\n                            print(t[:300])\n                            print('---')\n\" 2>/dev/null\ndone 2>&1 | head -200"
+      },
+      "name": "bash",
+      "type": "tool_use"
+    }
+  ],
+  "model": "anthropic/claude-4.6-opus-20260205",
+  "role": "assistant",
+  "stop_reason": "tool_use",
+  "stop_sequence": null,
+  "type": "message",
+  "usage": {
+    "cache_creation": null,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "inference_geo": null,
+    "input_tokens": 4502,
+    "output_tokens": 269,
+    "server_tool_use": null,
+    "service_tier": null,
+    "speed": "standard",
+    "cost": 0.029235,
+    "is_byok": false,
+    "cost_details": {
+      "upstream_inference_cost": 0.029235,
+      "upstream_inference_prompt_cost": 0.02251,
+      "upstream_inference_completions_cost": 0.006725
+    }
+  },
+  "provider": "Amazon Bedrock"
+}

@@ -1,0 +1,41 @@
+{
+  "id": "gen-1775065115-OqWL0PtrZmOPDB3D08Z0",
+  "container": null,
+  "content": [
+    {
+      "id": "toolu_bdrk_01342Wn5BmNPo2ntXJuSgfxf",
+      "caller": {
+        "type": "direct"
+      },
+      "input": {
+        "command": "# Compare checksums\ncd /tmp/resharded && find . -type f | sort | sed 's|^\\./|c4_sample/|' | xargs -I{} bash -c 'echo \"$(md5sum \"/tmp/resharded/$(echo {} | sed \"s|c4_sample/||\")\" | cut -d\" \" -f1)  {}\"' > /tmp/decompressed_checksums.txt\ndiff /tmp/original_checksums.txt /tmp/decompressed_checksums.txt\necho \"Exit code: $?\""
+      },
+      "name": "bash",
+      "type": "tool_use"
+    }
+  ],
+  "model": "anthropic/claude-4.6-opus-20260205",
+  "role": "assistant",
+  "stop_reason": "tool_use",
+  "stop_sequence": null,
+  "type": "message",
+  "usage": {
+    "cache_creation": null,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "inference_geo": null,
+    "input_tokens": 14238,
+    "output_tokens": 180,
+    "server_tool_use": null,
+    "service_tier": null,
+    "speed": "standard",
+    "cost": 0.07569,
+    "is_byok": false,
+    "cost_details": {
+      "upstream_inference_cost": 0.07569,
+      "upstream_inference_prompt_cost": 0.07119,
+      "upstream_inference_completions_cost": 0.0045
+    }
+  },
+  "provider": "Amazon Bedrock"
+}

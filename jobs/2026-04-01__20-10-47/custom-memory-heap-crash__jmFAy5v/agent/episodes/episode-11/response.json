@@ -1,0 +1,46 @@
+{
+  "id": "gen-1775079907-0yKk6sQYQOaJ5sKbc3NX",
+  "container": null,
+  "content": [
+    {
+      "citations": null,
+      "text": "Now I understand the problem clearly:\n\n1. In RELEASE mode (`NDEBUG` defined), `_Facet_Register_impl()` allocates nodes using `::operator new`, which goes through the custom heap manager.\n2. When the program exits, the `Application` destructor runs first (it's on the stack), destroying the `CustomHeapManager`.\n3. Then static destructors run, including `_Fac_tidy_reg_t::~_Fac_tidy_reg_t()`, which tries to `::operator delete` the nodes. But `g_custom_heap` is already destroyed and its memory is freed, so this crashes.\n\nIn DEBUG mode, both allocation and deallocation use `std::malloc`/`std::free`, bypassing the custom heap entirely.\n\nLet me check when `_Facet_Register_impl` gets called:",
+      "type": "text"
+    },
+    {
+      "id": "toolu_bdrk_01HwjpfBdAtSgk99G7h39jMp",
+      "caller": {
+        "type": "direct"
+      },
+      "input": {
+        "command": "grep -rn \"_Facet_Register_impl\\|_Facet_Register\" /build/gcc-13.2.0/libstdc++-v3/include/ 2>/dev/null | head -20"
+      },
+      "name": "bash",
+      "type": "tool_use"
+    }
+  ],
+  "model": "anthropic/claude-4.6-opus-20260205",
+  "role": "assistant",
+  "stop_reason": "tool_use",
+  "stop_sequence": null,
+  "type": "message",
+  "usage": {
+    "cache_creation": null,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "inference_geo": null,
+    "input_tokens": 7940,
+    "output_tokens": 301,
+    "server_tool_use": null,
+    "service_tier": null,
+    "speed": "standard",
+    "cost": 0.047225,
+    "is_byok": false,
+    "cost_details": {
+      "upstream_inference_cost": 0.047225,
+      "upstream_inference_prompt_cost": 0.0397,
+      "upstream_inference_completions_cost": 0.007525
+    }
+  },
+  "provider": "Amazon Bedrock"
+}

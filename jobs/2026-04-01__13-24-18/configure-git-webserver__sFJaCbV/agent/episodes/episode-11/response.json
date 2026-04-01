@@ -1,0 +1,41 @@
+{
+  "id": "gen-1775050291-6uEbY7AutXQhq32k0YI9",
+  "container": null,
+  "content": [
+    {
+      "id": "toolu_bdrk_01TbbE9yXV39GMHaNW5Rkrt2",
+      "caller": {
+        "type": "direct"
+      },
+      "input": {
+        "command": "# Test the full workflow locally to make sure it works\n# Create a temp directory, clone, commit, and push\ncd /tmp\nrm -rf test-clone\n\n# Set up user for git operations\nsu - user -c '\n  git config --global user.email \"user@test.com\"\n  git config --global user.name \"Test User\"\n'\n\n# Clone as user (locally using file protocol for testing)\nsu - user -c '\n  cd /tmp\n  git clone /git/server test-clone 2>&1\n  cd test-clone\n  echo \"hello world\" > hello.html\n  git add hello.html\n  git commit -m \"add hello.html\" 2>&1\n  git push origin master 2>&1\n'\necho \"---\"\necho \"Contents of /var/www/git-deploy:\"\nls -la /var/www/git-deploy/\necho \"---\"\ncat /var/www/git-deploy/hello.html 2>/dev/null || echo \"File not found\"\necho \"---\"\ncurl -s http://localhost:8080/hello.html"
+      },
+      "name": "bash",
+      "type": "tool_use"
+    }
+  ],
+  "model": "anthropic/claude-4.6-opus-20260205",
+  "role": "assistant",
+  "stop_reason": "tool_use",
+  "stop_sequence": null,
+  "type": "message",
+  "usage": {
+    "cache_creation": null,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "inference_geo": null,
+    "input_tokens": 2308,
+    "output_tokens": 306,
+    "server_tool_use": null,
+    "service_tier": null,
+    "speed": "standard",
+    "cost": 0.01919,
+    "is_byok": false,
+    "cost_details": {
+      "upstream_inference_cost": 0.01919,
+      "upstream_inference_prompt_cost": 0.01154,
+      "upstream_inference_completions_cost": 0.00765
+    }
+  },
+  "provider": "Amazon Bedrock"
+}

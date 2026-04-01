@@ -1,0 +1,41 @@
+{
+  "id": "gen-1775045953-D7cSQqWvyHOfejcDTNw8",
+  "container": null,
+  "content": [
+    {
+      "id": "toolu_bdrk_01CTAHZqYUj73jgvXs78RsAk",
+      "caller": {
+        "type": "direct"
+      },
+      "input": {
+        "command": "# Create git user with password \"password\"\nid git 2>/dev/null || useradd -m -s /usr/bin/git-shell git\necho \"git:password\" | chpasswd\n\n# Create the bare git repository\nmkdir -p /git\ngit init --bare /git/project\nchown -R git:git /git"
+      },
+      "name": "bash",
+      "type": "tool_use"
+    }
+  ],
+  "model": "anthropic/claude-4.6-opus-20260205",
+  "role": "assistant",
+  "stop_reason": "tool_use",
+  "stop_sequence": null,
+  "type": "message",
+  "usage": {
+    "cache_creation": null,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "inference_geo": null,
+    "input_tokens": 1261,
+    "output_tokens": 128,
+    "server_tool_use": null,
+    "service_tier": null,
+    "speed": "standard",
+    "cost": 0.009505,
+    "is_byok": false,
+    "cost_details": {
+      "upstream_inference_cost": 0.009505,
+      "upstream_inference_prompt_cost": 0.006305,
+      "upstream_inference_completions_cost": 0.0032
+    }
+  },
+  "provider": "Amazon Bedrock"
+}

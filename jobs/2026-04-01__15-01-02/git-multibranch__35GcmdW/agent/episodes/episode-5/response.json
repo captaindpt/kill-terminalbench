@@ -1,0 +1,41 @@
+{
+  "id": "gen-1775056588-p0lypFw9iBx5Ehnj0xKT",
+  "container": null,
+  "content": [
+    {
+      "id": "toolu_bdrk_017tfhSTSfDLVWgB2KJTed9N",
+      "caller": {
+        "type": "direct"
+      },
+      "input": {
+        "command": "# Step 2: Create the post-receive hook\ncat > /git/project.git/hooks/post-receive << 'HOOK'\n#!/bin/bash\n\nwhile read oldrev newrev refname; do\n    branch=$(echo \"$refname\" | sed 's|refs/heads/||')\n    \n    if [ \"$branch\" = \"main\" ]; then\n        GIT_WORK_TREE=/var/www/main git checkout -f main\n    elif [ \"$branch\" = \"dev\" ]; then\n        GIT_WORK_TREE=/var/www/dev git checkout -f dev\n    fi\ndone\nHOOK\n\nchmod +x /git/project.git/hooks/post-receive\nchown -R git:git /git/project.git/hooks/\necho \"Hook created\""
+      },
+      "name": "bash",
+      "type": "tool_use"
+    }
+  ],
+  "model": "anthropic/claude-4.6-opus-20260205",
+  "role": "assistant",
+  "stop_reason": "tool_use",
+  "stop_sequence": null,
+  "type": "message",
+  "usage": {
+    "cache_creation": null,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "inference_geo": null,
+    "input_tokens": 2663,
+    "output_tokens": 237,
+    "server_tool_use": null,
+    "service_tier": null,
+    "speed": "standard",
+    "cost": 0.01924,
+    "is_byok": false,
+    "cost_details": {
+      "upstream_inference_cost": 0.01924,
+      "upstream_inference_prompt_cost": 0.013315,
+      "upstream_inference_completions_cost": 0.005925
+    }
+  },
+  "provider": "Amazon Bedrock"
+}

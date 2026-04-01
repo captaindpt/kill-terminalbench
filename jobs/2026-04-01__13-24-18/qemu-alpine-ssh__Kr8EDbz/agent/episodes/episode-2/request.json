@@ -1,0 +1,79 @@
+{
+  "system": "You are solving a task in a Linux environment.\n\nWork directly in the shell.\nInspect the environment before changing it.\nRead errors carefully and adapt.\nBefore finishing, remove any temp files or build artifacts you created that aren't part of the deliverable.\nA separate verifier tests your work automatically \u2014 once setup is done, stop immediately.\nWhen the task is complete, respond briefly with no tool calls.\n",
+  "tools": [
+    {
+      "name": "bash",
+      "description": "Run a shell command and return stdout/stderr and the exit code.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "command": {
+            "type": "string",
+            "description": "Shell command to execute."
+          },
+          "timeout_sec": {
+            "type": "number",
+            "description": "Maximum time to wait for the command to finish.",
+            "default": 180
+          }
+        },
+        "required": [
+          "command"
+        ]
+      }
+    }
+  ],
+  "messages": [
+    {
+      "role": "user",
+      "content": "Task:\nStart the /app/alpine.iso image in qemu, and then start an ssh server on the alpine linux vm. When you're done, I should be able to run `ssh -p 2222 root@localhost` with password `password123` and be dropped into a shell. On the /app/alpine.iso image, the default username is root with no password.\n"
+    },
+    {
+      "role": "assistant",
+      "content": [
+        "TextBlock(citations=None, text=\"\\n\\nI'll start by inspecting the environment, then set up the QEMU VM with Alpine Linux and configure SSH.\", type='text')",
+        "ToolUseBlock(id='toolu_bdrk_01LXEsBbpGRtMDvbxQEibqLv', caller=DirectCaller(type='direct'), input={'command': 'ls -la /app/alpine.iso'}, name='bash', type='tool_use')",
+        "ToolUseBlock(id='toolu_bdrk_017TeZRtaQfYRtRQKo1h5BdW', caller=DirectCaller(type='direct'), input={'command': 'which qemu-system-x86_64 qemu-system-i386 2>/dev/null; qemu-system-x86_64 --version 2>/dev/null || qemu-system-i386 --version 2>/dev/null'}, name='bash', type='tool_use')"
+      ]
+    },
+    {
+      "role": "user",
+      "content": [
+        {
+          "type": "tool_result",
+          "tool_use_id": "toolu_bdrk_01LXEsBbpGRtMDvbxQEibqLv",
+          "content": "[exit_code=0]\n\n-rw-r--r-- 1 root root 1003487232 Dec  7  2023 /app/alpine.iso"
+        },
+        {
+          "type": "tool_result",
+          "tool_use_id": "toolu_bdrk_017TeZRtaQfYRtRQKo1h5BdW",
+          "content": "[exit_code=0]\n\n/usr/bin/qemu-system-x86_64\n/usr/bin/qemu-system-i386\nQEMU emulator version 5.2.0 (Debian 1:5.2+dfsg-11+deb11u5)\nCopyright (c) 2003-2020 Fabrice Bellard and the QEMU Project developers"
+        }
+      ]
+    },
+    {
+      "role": "assistant",
+      "content": [
+        "ToolUseBlock(id='toolu_bdrk_01WQPury8Hdf5VKtr3sFwrPb', caller=DirectCaller(type='direct'), input={'command': 'which expect ssh-keygen sshpass 2>/dev/null; dpkg -l | grep -E \"expect|sshpass\" 2>/dev/null'}, name='bash', type='tool_use')",
+        "ToolUseBlock(id='toolu_bdrk_011L2j6a9g7TBgQhL7FKarFQ', caller=DirectCaller(type='direct'), input={'command': 'free -m; nproc'}, name='bash', type='tool_use')"
+      ]
+    },
+    {
+      "role": "user",
+      "content": [
+        {
+          "type": "tool_result",
+          "tool_use_id": "toolu_bdrk_01WQPury8Hdf5VKtr3sFwrPb",
+          "content": "[exit_code=0]\n\n/usr/bin/expect\n/usr/bin/ssh-keygen\nii  expect                               5.45.4-2+b1                    amd64        Automates interactive applications\nii  tcl-expect:amd64                     5.45.4-2+b1                    amd64        Automates interactive applications (Tcl package)"
+        },
+        {
+          "type": "tool_result",
+          "tool_use_id": "toolu_bdrk_011L2j6a9g7TBgQhL7FKarFQ",
+          "content": "[exit_code=0]\n\n2\nbash: line 1: free: command not found"
+        }
+      ]
+    }
+  ],
+  "model": "anthropic/claude-opus-4.6",
+  "temperature": 1.0
+}

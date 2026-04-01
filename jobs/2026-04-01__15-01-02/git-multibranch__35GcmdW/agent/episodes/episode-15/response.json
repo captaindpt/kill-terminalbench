@@ -1,0 +1,41 @@
+{
+  "id": "gen-1775056666-BAy0JEU3AcD2g8tfjjoJ",
+  "container": null,
+  "content": [
+    {
+      "id": "toolu_bdrk_011GXp8L9yEfspmia2cT2TL2",
+      "caller": {
+        "type": "direct"
+      },
+      "input": {
+        "command": "cd /tmp/test-project\n\n# Configure git\ngit config user.email \"test@test.com\"\ngit config user.name \"Test\"\n\n# Create main branch with index.html\ngit checkout -b main\necho \"main branch content\" > index.html\ngit add index.html\ngit commit -m \"main branch\"\n\n# Push main\nGIT_SSH_COMMAND=\"ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null\" \\\nsshpass -p password git push origin main 2>&1"
+      },
+      "name": "bash",
+      "type": "tool_use"
+    }
+  ],
+  "model": "anthropic/claude-4.6-opus-20260205",
+  "role": "assistant",
+  "stop_reason": "tool_use",
+  "stop_sequence": null,
+  "type": "message",
+  "usage": {
+    "cache_creation": null,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "inference_geo": null,
+    "input_tokens": 5379,
+    "output_tokens": 178,
+    "server_tool_use": null,
+    "service_tier": null,
+    "speed": "standard",
+    "cost": 0.031345,
+    "is_byok": false,
+    "cost_details": {
+      "upstream_inference_cost": 0.031345,
+      "upstream_inference_prompt_cost": 0.026895,
+      "upstream_inference_completions_cost": 0.00445
+    }
+  },
+  "provider": "Amazon Bedrock"
+}

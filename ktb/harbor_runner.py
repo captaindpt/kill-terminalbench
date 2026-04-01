@@ -22,6 +22,7 @@ def run_harbor(
     dataset: str = "terminal-bench@2.0",
     task_names: list[str] | None = None,
     n_concurrent_trials: int = 1,
+    n_attempts: int = 1,
 ) -> Path:
     jobs_dir = output_path or Path("jobs")
     job_name = datetime.now().strftime("%Y-%m-%d__%H-%M-%S")
@@ -42,6 +43,8 @@ def run_harbor(
         job_name,
         "--dataset",
         dataset,
+        "--n-attempts",
+        str(n_attempts),
         "--agent-import-path",
         "ktb.harbor_agent:OpenRouterHarborAgent",
         "--model",

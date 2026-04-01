@@ -1,0 +1,41 @@
+{
+  "id": "gen-1775053315-OpgjXro7ZCsqBGssgGRR",
+  "container": null,
+  "content": [
+    {
+      "id": "toolu_bdrk_01EJLVqAVkipUW48yWhLfUtL",
+      "caller": {
+        "type": "direct"
+      },
+      "input": {
+        "command": "# Step 3: Configure SSH for password authentication\ncat > /etc/ssh/sshd_config.d/git.conf << 'EOF'\nPasswordAuthentication yes\nPermitEmptyPasswords no\nEOF\n\n# Also need to allow git-shell users to authenticate\n# Make sure sshd allows the git user\n# Override the git user's shell temporarily - git-shell might block regular operations\n# Actually, git-shell should work for git operations. Let's check.\ncat /etc/shells"
+      },
+      "name": "bash",
+      "type": "tool_use"
+    }
+  ],
+  "model": "anthropic/claude-4.6-opus-20260205",
+  "role": "assistant",
+  "stop_reason": "tool_use",
+  "stop_sequence": null,
+  "type": "message",
+  "usage": {
+    "cache_creation": null,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "inference_geo": null,
+    "input_tokens": 2277,
+    "output_tokens": 164,
+    "server_tool_use": null,
+    "service_tier": null,
+    "speed": "standard",
+    "cost": 0.015485,
+    "is_byok": false,
+    "cost_details": {
+      "upstream_inference_cost": 0.015485,
+      "upstream_inference_prompt_cost": 0.011385,
+      "upstream_inference_completions_cost": 0.0041
+    }
+  },
+  "provider": "Amazon Bedrock"
+}

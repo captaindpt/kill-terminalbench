@@ -1,0 +1,46 @@
+{
+  "id": "gen-1775072903-Oe3M0Z59CkdL5UZgQuhu",
+  "container": null,
+  "content": [
+    {
+      "citations": null,
+      "text": "The text is connected. Let me look at the rendered image more carefully. Let me try to separate the letter groups by looking for narrow regions:",
+      "type": "text"
+    },
+    {
+      "id": "toolu_bdrk_01H8PTHCrrZ6VXinhxtUGbDn",
+      "caller": {
+        "type": "direct"
+      },
+      "input": {
+        "command": "python3 << 'PYTHON'\nimport re\nimport numpy as np\nimport math\nfrom PIL import Image\n\nwith open('/app/text.gcode', 'r') as f:\n    lines = f.readlines()\n\ncurrent_object = None\nsegments = []\nx, y, z = 0, 0, 0\n\nfor line in lines:\n    line = line.strip()\n    \n    m486 = re.match(r'M486 S(-?\\d+)', line)\n    if m486:\n        current_object = int(m486.group(1))\n        continue\n    \n    if current_object != 0:\n        if line.startswith('G0') or line.startswith('G1'):\n            x_match = re.search(r'X([\\d.]+)', line)\n            y_match = re.search(r'Y([\\d.]+)', line)\n            z_match = re.search(r'Z([\\d.]+)', line)\n            if x_match: x = float(x_match.group(1))\n            if y_match: y = float(y_match.group(1))\n            if z_match: z = float(z_match.group(1))\n        continue\n    \n    if line.startswith('G0') or line.startswith('G1'):\n        old_x, old_y = x, y\n        x_match = re.search(r'X([\\d.]+)', line)\n        y_match = re.search(r'Y([\\d.]+)', line)\n        z_match = re.search(r'Z([\\d.]+)', line)\n        e_match = re.search(r'E([\\d.]+)', line)\n        \n        if x_match: x = float(x_match.group(1))\n        if y_match: y = float(y_match.group(1))\n        if z_match: z = float(z_match.group(1))\n        \n        if e_match and float(e_match.group(1)) > 0:\n            segments.append((old_x, old_y, x, y))\n\n# Let me re-examine the angle more precisely by trying different angles\nangle_rad = math.radians(22.0)\ncx = (55.5 + 204.4) / 2\ncy = (79.7 + 146.9) / 2\ncos_a = math.cos(-angle_rad)\nsin_a = math.sin(-angle_rad)\n\nrotated = []\nfor seg in segments:\n    x1, y1, x2, y2 = seg\n    rx1 = cos_a * (x1 - cx) - sin_a * (y1 - cy)\n    ry1 = sin_a * (x1 - cx) + cos_a * (y1 - cy)\n    rx2 = cos_a * (x2 - cx) - sin_a * (y2 - cy)\n    ry2 = sin_a * (x2 - cx) + cos_a * (y2 - cy)\n    rotated.append((rx1, ry1, rx2, ry2))\n\nmin_x = min(min(s[0], s[2]) for s in rotated)\nmax_x = max(max(s[0], s[2]) for s in rotated)\nmin_y = min(min(s[1], s[3]) for s in rotated)\nmax_y = max(max(s[1], s[3]) for s in rotated)\n\n# Look at the ASCII art output more carefully\n# Let me render only the core \"text\" region, removing very sparse edges\nres = 0.4\nw = int((max_x - min_x) / res) + 1\nh = int((max_y - min_y) / res) + 1\n\ngrid = np.zeros((h, w), dtype=np.uint8)\n\nfor seg in rotated:\n    x1, y1, x2, y2 = seg\n    gx1 = (x1 - min_x) / res\n    gy1 = (y1 - min_y) / res\n    gx2 = (x2 - min_x) / res\n    gy2 = (y2 - min_y) / res\n    \n    steps = int(max(abs(gx2 - gx1), abs(gy2 - gy1), 1))\n    for i in range(steps + 1):\n        t = i / steps if steps > 0 else 0\n        px = int(gx1 + t * (gx2 - gx1))\n        py = int(gy1 + t * (gy2 - gy1))\n        if 0 <= px < w and 0 <= py < h:\n            grid[py][px] = 255\n\n# Now analyze column density to find word/letter boundaries\ncol_sums = np.sum(grid > 0, axis=0)\n# Print column density profile (compressed)\nchunk = 5\nfor c in range(0, w, chunk):\n    d = np.sum(col_sums[c:c+chunk])\n    char = '#' if d > 20 else '.' if d > 5 else ' '\n    print(f\"{c*res + min_x:7.1f}: {d:4d} {char}\")\n\nPYTHON"
+      },
+      "name": "bash",
+      "type": "tool_use"
+    }
+  ],
+  "model": "anthropic/claude-4.6-opus-20260205",
+  "role": "assistant",
+  "stop_reason": "tool_use",
+  "stop_sequence": null,
+  "type": "message",
+  "usage": {
+    "cache_creation": null,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "inference_geo": null,
+    "input_tokens": 11484,
+    "output_tokens": 1396,
+    "server_tool_use": null,
+    "service_tier": null,
+    "speed": "standard",
+    "cost": 0.09232,
+    "is_byok": false,
+    "cost_details": {
+      "upstream_inference_cost": 0.09232,
+      "upstream_inference_prompt_cost": 0.05742,
+      "upstream_inference_completions_cost": 0.0349
+    }
+  },
+  "provider": "Amazon Bedrock"
+}

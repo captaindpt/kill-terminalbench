@@ -1,0 +1,41 @@
+{
+  "id": "gen-1775062226-xXayhkJKnrJqBPRuguzh",
+  "container": null,
+  "content": [
+    {
+      "id": "toolu_bdrk_01Vm9TjzyXyGR91u81kNRwqi",
+      "caller": {
+        "type": "direct"
+      },
+      "input": {
+        "command": "cat > /app/task_file/optimizer3.py << 'PYEOF'\n#!/usr/bin/env python3\nimport json\nimport math\nimport os\nimport sys\nfrom collections import defaultdict\nfrom itertools import combinations\n\nsys.path.insert(0, '/app/task_file/scripts')\nfrom cost_model import CostModel, CostConsts, align, HEADS, HIDDEN\n\ncm = CostModel(64)\n\ndef load_requests(path):\n    reqs = []\n    with open(path) as f:\n        for line in f:\n            reqs.append(json.loads(line))\n    return reqs\n\ndef evaluate_plan(reqs, plan):\n    req_dict = {r['request_id']: r for r in reqs}\n    return cm.plan_metrics(req_dict, plan)\n\ndef build_plan_for_bucket(reqs, shape_bins, gen_gap, batch_prefix):\n    grouped = defaultdict(list)\n    for r in reqs:\n        sa = align(r['prompt_len'], 64)\n        assigned = None\n        for sb in shape_bins:\n            if sb >= sa:\n                assigned = sb\n                break\n        if assigned is None:\n            assigned = shape_bins[-1]\n        grouped[assigned].append(r)\n    \n    plan = []\n    batch_counter = 0\n    \n    for sa in sorted(grouped.keys()):\n        req_list = sorted(grouped[sa], key=lambda r: r['gen_len'])\n        \n        if gen_gap is None:\n            for r in req_list:\n                bid = f\"{batch_prefix}-{batch_counter:05d}\"\n                batch_counter += 1\n                plan.append({\n                    'request_id': r['request_id'],\n                    'batch_id': bid,\n                    'shape': {'seq_align': sa, 'heads_align': 32, 'hidden_align': 4096}\n                })\n        else:\n            i = 0\n            while i < len(req_list):\n                bid = f\"{batch_prefix}-{batch_counter:05d}\"\n                batch_counter += 1\n                base_gen = req_list[i]['gen_len']\n                j = i\n                while j < len(req_list) and req_list[j]['gen_len'] - base_gen <= gen_gap:\n                    plan.append({\n                        'request_id': req_list[j]['request_id'],\n                        'batch_id': bid,\n                        'shape': {'seq_align': sa, 'heads_align': 32, 'hidden_align': 4096}\n                    })\n                    j += 1\n                i = j\n    \n    return plan, batch_counter\n\nreqs1 = load_requests('/app/task_file/input_data/requests_bucket_1.jsonl')\nreqs2 = load_requests('/app/task_file/input_data/requests_bucket_2.jsonl')\n\naligned1 = sorted(set(align(r['prompt_len'], 64) for r in reqs1))\naligned2 = sorted(set(align(r['prompt_len'], 64) for r in reqs2))\n\n# B1 thresholds: cost<3e11, pad<0.055, p95<2.1e6, seq<2.7e8\n# B2 thresholds: cost<4.8e10, pad<0.15, p95<2.1e5, seq<3.2e7\n\n# Need max 8 unique shapes total across both buckets\n# B2 best uses ~3-5 shapes, B1 needs shapes up to 2048\n\n# B1 aligned: [64, 128, 320, 384, 448, 512, 576, 640, 1088-2048]\n# Key for B1: lots of values in 1088-2048 range (17 values: 1088 to 2048)\n# And 64, 128, 320-640\n\n# Strategy: share some shapes between B1 and B2\n# B2 needs coverage up to 704\n# B1 needs coverage up to 2048\n\n# Try: use some shapes for low end (shared), some for B1 high end only\n\n# For B1, the big question is how to cover 1088-2048 with few shapes\n# If we use 1 shape (2048) for all 1088-2048 requests, those requests get higher S_max\n# But there are only ~122 requests in that range\n\n# Count requests in ranges for B1\nfrom collections import Counter\nb1_aligned_counts = Counter(align(r['prompt_len'], 64) for r in reqs1)\nprint(\"B1 aligned counts:\")\nfor sa in sorted(b1_aligned_counts.keys()):\n    print(f\"  {sa}: {b1_aligned_counts[sa]}\")\n\n# Let's enumerate B1 shape candidates more carefully\n# B1 must cover: 64, 128, 320, 384, 448, 512, 576, 640, 1088-2048\n# Key observation: there's a gap between 640 and 1088\n\n# Try B1 shapes: divide into low (64-640) and high (1088-2048)\n# Low shapes: 128 covers 64,128; 640 covers 320-640\n# High shapes: 2048 covers all 1088-2048\n\n# With good shape selection for B1: [128, 640, 2048] = 3 shapes\n# Or [128, 384, 640, 1408, 2048] = 5 shapes\n\nprint(\"\\n=== Searching B1 configs ===\")\n\n# Generate B1 candidate shapes\nb1_all_possible = [i*64 for i in range(1, 33)]  # 64 to 2048\n\nbest_b1_configs = []\nfor n_shapes in range(2, 9):\n    count = 0\n    for combo in combinations(b1_all_possible, n_shapes):\n        combo = sorted(combo)\n        if combo[-1] < 2048:\n            continue\n        # Check coverage\n        valid = True\n        for a in aligned1:\n            if not any(s >= a for s in combo):\n                valid = False\n                break\n        if not valid:\n            continue\n        count += 1\n        # Evaluate with different gen_gaps\n        for gen_gap in [0, 2, 3, 4, 5]:\n            plan, nb = build_plan_for_bucket(reqs1, list(combo), gen_gap, 'b1')\n            metrics = evaluate_plan(reqs1, plan)\n            c = metrics['cost']\n            pr = metrics['pad_ratio']\n            p95 = metrics['p95_latency_ms']\n            seq = metrics['sequential_timecost']\n            if c < 3e11 and pr < 0.055 and p95 < 2.1e6 and seq < 2.7e8:\n                best_b1_configs.append((c, combo, gen_gap, nb, metrics))\n    print(f\"  n_shapes={n_shapes}: checked {count} combos, found {len(best_b1_configs)} feasible total\")\n    if count > 5000:\n        print(f\"  (too many combos for n_shapes={n_shapes}, skipping higher)\")\n        break\n\nbest_b1_configs.sort(key=lambda x: x[0])\nprint(f\"\\nB1 feasible configs: {len(best_b1_configs)}\")\nfor c, shapes, gen_gap, nb, m in best_b1_configs[:20]:\n    print(f\"  shapes={shapes}, gen_gap={gen_gap}, batches={nb}: cost={c:.4e}, pad={m['pad_ratio']:.4f}, p95={m['p95_latency_ms']:.4e}, seq={m['sequential_timecost']:.4e}\")\n\nPYEOF\ncd /app/task_file && timeout 120 python3 optimizer3.py\n"
+      },
+      "name": "bash",
+      "type": "tool_use"
+    }
+  ],
+  "model": "anthropic/claude-4.6-opus-20260205",
+  "role": "assistant",
+  "stop_reason": "tool_use",
+  "stop_sequence": null,
+  "type": "message",
+  "usage": {
+    "cache_creation": null,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "inference_geo": null,
+    "input_tokens": 24068,
+    "output_tokens": 2024,
+    "server_tool_use": null,
+    "service_tier": null,
+    "speed": "standard",
+    "cost": 0.17094,
+    "is_byok": false,
+    "cost_details": {
+      "upstream_inference_cost": 0.17094,
+      "upstream_inference_prompt_cost": 0.12034,
+      "upstream_inference_completions_cost": 0.0506
+    }
+  },
+  "provider": "Amazon Bedrock"
+}

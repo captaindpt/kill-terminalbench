@@ -1,0 +1,46 @@
+{
+  "id": "gen-1775082959-ywnJ0EIUoClV7DQBxmE7",
+  "container": null,
+  "content": [
+    {
+      "citations": null,
+      "text": "KVM not available \u2013 I'll use TCG (software emulation) instead.",
+      "type": "text"
+    },
+    {
+      "id": "toolu_bdrk_01Ws3xacB1L82gLEYS3tvt1E",
+      "caller": {
+        "type": "direct"
+      },
+      "input": {
+        "command": "setsid qemu-system-x86_64 \\\n  -m 512 \\\n  -cdrom /app/alpine.iso \\\n  -boot d \\\n  -nographic \\\n  -serial telnet:127.0.0.1:6665,server,nowait \\\n  -no-reboot \\\n  -accel tcg \\\n  </dev/null >/tmp/qemu.log 2>&1 &\necho \"QEMU PID: $!\"\nsleep 2\ncat /tmp/qemu.log\nss -tlnp | grep 6665"
+      },
+      "name": "bash",
+      "type": "tool_use"
+    }
+  ],
+  "model": "anthropic/claude-4.6-opus-20260205",
+  "role": "assistant",
+  "stop_reason": "tool_use",
+  "stop_sequence": null,
+  "type": "message",
+  "usage": {
+    "cache_creation": null,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "inference_geo": null,
+    "input_tokens": 1906,
+    "output_tokens": 208,
+    "server_tool_use": null,
+    "service_tier": null,
+    "speed": "standard",
+    "cost": 0.01473,
+    "is_byok": false,
+    "cost_details": {
+      "upstream_inference_cost": 0.01473,
+      "upstream_inference_prompt_cost": 0.00953,
+      "upstream_inference_completions_cost": 0.0052
+    }
+  },
+  "provider": "Amazon Bedrock"
+}

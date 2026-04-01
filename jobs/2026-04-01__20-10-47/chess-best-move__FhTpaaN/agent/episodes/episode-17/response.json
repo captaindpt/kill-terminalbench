@@ -1,0 +1,41 @@
+{
+  "id": "gen-1775081831-mdUbi8laNAFYRfxbtfzf",
+  "container": null,
+  "content": [
+    {
+      "id": "toolu_bdrk_013aJCKhCVC2ayNZs91u6rta",
+      "caller": {
+        "type": "direct"
+      },
+      "input": {
+        "command": "python3 << 'EOF'\nimport chess\n\n# Let me set up the position and verify it's valid\nfen = \"r1bk1r2/1p3pp1/p1q1p3/3qPnbP/8/P1N5/1P2QPP1/R1B1K2R w KQ - 0 1\"\nboard = chess.Board(fen)\nprint(board)\nprint()\nprint(f\"Valid: {board.is_valid()}\")\nprint(f\"White to move: {board.turn == chess.WHITE}\")\nprint()\nprint(\"Legal moves:\")\nfor move in board.legal_moves:\n    print(f\"  {move.uci()}\")\nEOF"
+      },
+      "name": "bash",
+      "type": "tool_use"
+    }
+  ],
+  "model": "anthropic/claude-4.6-opus-20260205",
+  "role": "assistant",
+  "stop_reason": "tool_use",
+  "stop_sequence": null,
+  "type": "message",
+  "usage": {
+    "cache_creation": null,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "inference_geo": null,
+    "input_tokens": 26578,
+    "output_tokens": 223,
+    "server_tool_use": null,
+    "service_tier": null,
+    "speed": "standard",
+    "cost": 0.138465,
+    "is_byok": false,
+    "cost_details": {
+      "upstream_inference_cost": 0.138465,
+      "upstream_inference_prompt_cost": 0.13289,
+      "upstream_inference_completions_cost": 0.005575
+    }
+  },
+  "provider": "Amazon Bedrock"
+}

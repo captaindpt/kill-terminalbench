@@ -1,0 +1,41 @@
+{
+  "id": "gen-1775052259-Vql0kvuwzSYtlrOvDg5d",
+  "container": null,
+  "content": [
+    {
+      "id": "toolu_bdrk_01SAUvAEsFaqc6CuCVfzfDFS",
+      "caller": {
+        "type": "direct"
+      },
+      "input": {
+        "command": "# Quick end-to-end verification\n# 1. Check git repo is accessible\nls -la /git/server/HEAD\n\n# 2. Check web server\ncurl -s http://localhost:8080/hello.html\n\n# 3. Check SSH\nservice ssh status 2>&1 | head -1\n\n# 4. Check deploy dir\nls -la /var/www/git-deploy/hello.html\ncat /var/www/git-deploy/hello.html"
+      },
+      "name": "bash",
+      "type": "tool_use"
+    }
+  ],
+  "model": "anthropic/claude-4.6-opus-20260205",
+  "role": "assistant",
+  "stop_reason": "tool_use",
+  "stop_sequence": null,
+  "type": "message",
+  "usage": {
+    "cache_creation": null,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "inference_geo": null,
+    "input_tokens": 1987,
+    "output_tokens": 158,
+    "server_tool_use": null,
+    "service_tier": null,
+    "speed": "standard",
+    "cost": 0.013885,
+    "is_byok": false,
+    "cost_details": {
+      "upstream_inference_cost": 0.013885,
+      "upstream_inference_prompt_cost": 0.009935,
+      "upstream_inference_completions_cost": 0.00395
+    }
+  },
+  "provider": "Amazon Bedrock"
+}

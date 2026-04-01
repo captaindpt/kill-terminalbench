@@ -1,0 +1,41 @@
+{
+  "id": "gen-1775072070-3jq1s0nzYy2dyG5Ql9Qt",
+  "container": null,
+  "content": [
+    {
+      "id": "toolu_bdrk_015Tha9TrM2kTcTJwk9sezq3",
+      "caller": {
+        "type": "direct"
+      },
+      "input": {
+        "command": "# Let me visualize the text by plotting the extrusion paths from a top-down view\n# I'll create a 2D grid and mark where extrusion happens\n\npython3 << 'PYTHON'\nimport re\n\nwith open('/app/text.gcode', 'r') as f:\n    lines = f.readlines()\n\n# Track which object is active\ncurrent_object = None\nsegments = []  # list of (x1,y1,x2,y2) extruding segments\nx, y, z = 0, 0, 0\n\nfor line in lines:\n    line = line.strip()\n    \n    m486 = re.match(r'M486 S(-?\\d+)', line)\n    if m486:\n        current_object = int(m486.group(1))\n        continue\n    \n    if current_object != 0:\n        # Still track position\n        if line.startswith('G0') or line.startswith('G1'):\n            x_match = re.search(r'X([\\d.]+)', line)\n            y_match = re.search(r'Y([\\d.]+)', line)\n            z_match = re.search(r'Z([\\d.]+)', line)\n            if x_match: x = float(x_match.group(1))\n            if y_match: y = float(y_match.group(1))\n            if z_match: z = float(z_match.group(1))\n        continue\n    \n    if line.startswith('G0') or line.startswith('G1'):\n        old_x, old_y = x, y\n        x_match = re.search(r'X([\\d.]+)', line)\n        y_match = re.search(r'Y([\\d.]+)', line)\n        z_match = re.search(r'Z([\\d.]+)', line)\n        e_match = re.search(r'E([\\d.]+)', line)\n        \n        if x_match: x = float(x_match.group(1))\n        if y_match: y = float(y_match.group(1))\n        if z_match: z = float(z_match.group(1))\n        \n        if e_match and float(e_match.group(1)) > 0:\n            segments.append((old_x, old_y, x, y))\n\nprint(f\"Total extruding segments for text: {len(segments)}\")\n\n# Create a bitmap\n# X range ~55-205, Y range ~79-147\nmin_x = min(min(s[0], s[2]) for s in segments)\nmax_x = max(max(s[0], s[2]) for s in segments)\nmin_y = min(min(s[1], s[3]) for s in segments)\nmax_y = max(max(s[1], s[3]) for s in segments)\n\nprint(f\"X: {min_x} to {max_x}\")\nprint(f\"Y: {min_y} to {max_y}\")\n\n# Create a grid - use reasonable resolution\nwidth = 200\nheight = int(width * (max_y - min_y) / (max_x - min_x))\ngrid = [[' ' for _ in range(width)] for _ in range(height)]\n\ndef draw_line(x1, y1, x2, y2):\n    # Convert to grid coords\n    gx1 = int((x1 - min_x) / (max_x - min_x) * (width - 1))\n    gy1 = int((y1 - min_y) / (max_y - min_y) * (height - 1))\n    gx2 = int((x2 - min_x) / (max_x - min_x) * (width - 1))\n    gy2 = int((y2 - min_y) / (max_y - min_y) * (height - 1))\n    \n    # Bresenham's line algorithm\n    dx = abs(gx2 - gx1)\n    dy = abs(gy2 - gy1)\n    sx = 1 if gx1 < gx2 else -1\n    sy = 1 if gy1 < gy2 else -1\n    err = dx - dy\n    \n    steps = max(dx, dy, 1)\n    for _ in range(steps + 1):\n        if 0 <= gx1 < width and 0 <= gy1 < height:\n            grid[gy1][gx1] = '#'\n        if gx1 == gx2 and gy1 == gy2:\n            break\n        e2 = 2 * err\n        if e2 > -dy:\n            err -= dy\n            gx1 += sx\n        if e2 < dx:\n            err += dx\n            gy1 += sy\n\nfor seg in segments:\n    draw_line(*seg)\n\n# Print grid (flip Y so it reads correctly - higher Y at top)\nfor row in reversed(grid):\n    print(''.join(row))\n\nPYTHON"
+      },
+      "name": "bash",
+      "type": "tool_use"
+    }
+  ],
+  "model": "anthropic/claude-4.6-opus-20260205",
+  "role": "assistant",
+  "stop_reason": "tool_use",
+  "stop_sequence": null,
+  "type": "message",
+  "usage": {
+    "cache_creation": null,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "inference_geo": null,
+    "input_tokens": 5655,
+    "output_tokens": 1295,
+    "server_tool_use": null,
+    "service_tier": null,
+    "speed": "standard",
+    "cost": 0.06065,
+    "is_byok": false,
+    "cost_details": {
+      "upstream_inference_cost": 0.06065,
+      "upstream_inference_prompt_cost": 0.028275,
+      "upstream_inference_completions_cost": 0.032375
+    }
+  },
+  "provider": "Amazon Bedrock"
+}

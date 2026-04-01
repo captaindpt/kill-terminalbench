@@ -1,0 +1,46 @@
+{
+  "id": "gen-1775058794-Vyvww1TaWTixroghR2rC",
+  "container": null,
+  "content": [
+    {
+      "citations": null,
+      "text": "The OCR isn't catching all items but the stated totals are clear. Now let me write the processing script:",
+      "type": "text"
+    },
+    {
+      "id": "toolu_bdrk_01AqWFrkP6oWdmh89FmUD6YS",
+      "caller": {
+        "type": "direct"
+      },
+      "input": {
+        "command": "cat > /tmp/process.py << 'PYTHON_SCRIPT'\nimport os\nimport shutil\nimport csv\nimport re\n\n# Define classifications based on our analysis\ninvoices = {\n    '2lgKzDuI4E4g.jpg': {'total_amount': 6558, 'vat_amount': 0},\n    'T0r6Ou8zvqTA.pdf': {'total_amount': 4031.0, 'vat_amount': 0},\n    'UsN9tVTKskms.pdf': {'total_amount': 896.0, 'vat_amount': 0},\n    'wIQEB5nR79b2.pdf': {'total_amount': 440.0, 'vat_amount': 0},\n    'JOiylq2_7S18.jpg': {'total_amount': 6860.45, 'vat_amount': 623.68},\n    'KrJiw0OZx7jf.jpg': {'total_amount': 9963, 'vat_amount': 0},\n    'ivE2mt3HwvEO.jpg': {'total_amount': 819.06, 'vat_amount': 74.46},\n    'lxtL9XrYRsVG.jpg': {'total_amount': 797.91, 'vat_amount': 72.54},\n    'vvK89XK847m3.jpg': {'total_amount': 6204.19, 'vat_amount': 564.02},\n    'w0i40MJP2Dzm.jpg': {'total_amount': 44745.59, 'vat_amount': 4067.78},\n}\n\nothers = [\n    'GFAlpKoFg81H.pdf',  # Stock Report\n    'dvkRkFVFhHga.pdf',  # Purchase Orders\n    'dx0AWchV01ZJ.pdf',  # Order/Shipping Details\n    '6NVuAIhTV4KB.jpg',  # CV/Resume\n    'F0oZMhSUm2dO.jpg',  # Just a number\n    'QOoA_j33PD_E.jpg',  # Interoffice Memorandum\n    'WqWMArQQlSMv.jpg',  # Inter-office Correspondence\n]\n\ndocs_dir = '/app/documents/'\ninv_dir = '/app/invoices/'\nother_dir = '/app/other/'\n\n# Move invoices\nfor filename in invoices:\n    src = os.path.join(docs_dir, filename)\n    dst = os.path.join(inv_dir, filename)\n    if os.path.exists(src):\n        shutil.move(src, dst)\n        print(f\"Moved invoice: {filename}\")\n\n# Move others\nfor filename in others:\n    src = os.path.join(docs_dir, filename)\n    dst = os.path.join(other_dir, filename)\n    if os.path.exists(src):\n        shutil.move(src, dst)\n        print(f\"Moved other: {filename}\")\n\n# Check if documents dir is empty\nremaining = os.listdir(docs_dir)\nif remaining:\n    print(f\"WARNING: Files remaining in documents: {remaining}\")\n    # Move any remaining files to other\n    for f in remaining:\n        shutil.move(os.path.join(docs_dir, f), os.path.join(other_dir, f))\n        print(f\"  Moved remaining file to other: {f}\")\n\n# Create summary CSV\ncsv_path = os.path.join(inv_dir, 'summary.csv')\ntotal_total = 0.0\ntotal_vat = 0.0\n\nrows = []\nfor filename in sorted(invoices.keys()):\n    data = invoices[filename]\n    ta = data['total_amount']\n    va = data['vat_amount']\n    total_total += ta\n    total_vat += va\n    rows.append({'filename': filename, 'total_amount': ta, 'vat_amount': va})\n\n# Add totals row\nrows.append({'filename': 'total', 'total_amount': round(total_total, 2), 'vat_amount': round(total_vat, 2)})\n\nwith open(csv_path, 'w', newline='') as csvfile:\n    writer = csv.DictWriter(csvfile, fieldnames=['filename', 'total_amount', 'vat_amount'])\n    writer.writeheader()\n    writer.writerows(rows)\n\nprint(f\"\\nCSV written to {csv_path}\")\nprint(f\"Total amount: {round(total_total, 2)}\")\nprint(f\"Total VAT: {round(total_vat, 2)}\")\n\nPYTHON_SCRIPT\npython3 /tmp/process.py"
+      },
+      "name": "bash",
+      "type": "tool_use"
+    }
+  ],
+  "model": "anthropic/claude-4.6-opus-20260205",
+  "role": "assistant",
+  "stop_reason": "tool_use",
+  "stop_sequence": null,
+  "type": "message",
+  "usage": {
+    "cache_creation": null,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "inference_geo": null,
+    "input_tokens": 11353,
+    "output_tokens": 1271,
+    "server_tool_use": null,
+    "service_tier": null,
+    "speed": "standard",
+    "cost": 0.08854,
+    "is_byok": false,
+    "cost_details": {
+      "upstream_inference_cost": 0.08854,
+      "upstream_inference_prompt_cost": 0.056765,
+      "upstream_inference_completions_cost": 0.031775
+    }
+  },
+  "provider": "Amazon Bedrock"
+}

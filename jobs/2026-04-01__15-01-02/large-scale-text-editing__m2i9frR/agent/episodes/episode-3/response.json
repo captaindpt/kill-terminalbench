@@ -1,0 +1,41 @@
+{
+  "id": "gen-1775059648-guDEa19QDy5QhJYFex1v",
+  "container": null,
+  "content": [
+    {
+      "id": "toolu_bdrk_01UnkMZwz1LnNSFRNFzP7RUb",
+      "caller": {
+        "type": "direct"
+      },
+      "input": {
+        "command": "cat > /tmp/test_macros.vim << 'VIMSCRIPT'\ncall setreg('a', \":s/\\\\v\\\\s*(\\\\S+)\\\\s*,\\\\s*(\\\\S+)\\\\s*,\\\\s*(\\\\S+)\\\\s*/\\\\3;\\\\2;\\\\1;OK/\\r\")\ncall setreg('b', \"gUU\")\ncall setreg('c', \"0\")\n:%normal! @a\n:%normal! @b\n:%normal! @c\n:wq\nVIMSCRIPT\nvim -Nu NONE -n -Es /tmp/test_input.csv -S /tmp/test_macros.vim\necho \"Exit code: $?\"\ncat /tmp/test_input.csv"
+      },
+      "name": "bash",
+      "type": "tool_use"
+    }
+  ],
+  "model": "anthropic/claude-4.6-opus-20260205",
+  "role": "assistant",
+  "stop_reason": "tool_use",
+  "stop_sequence": null,
+  "type": "message",
+  "usage": {
+    "cache_creation": null,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "inference_geo": null,
+    "input_tokens": 4104,
+    "output_tokens": 229,
+    "server_tool_use": null,
+    "service_tier": null,
+    "speed": "standard",
+    "cost": 0.026245,
+    "is_byok": false,
+    "cost_details": {
+      "upstream_inference_cost": 0.026245,
+      "upstream_inference_prompt_cost": 0.02052,
+      "upstream_inference_completions_cost": 0.005725
+    }
+  },
+  "provider": "Amazon Bedrock"
+}

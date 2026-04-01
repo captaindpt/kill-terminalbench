@@ -1,0 +1,41 @@
+{
+  "id": "gen-1775082864-U2S2JVIvfNkFO8OakAq4",
+  "container": null,
+  "content": [
+    {
+      "id": "toolu_bdrk_01M1uC7bLM8nwjHHC6b3AP14",
+      "caller": {
+        "type": "direct"
+      },
+      "input": {
+        "command": "cd /app && python3 -c \"\nfrom headless_terminal import HeadlessTerminal\n\n# Test modifier keys\nt = HeadlessTerminal()\n\n# Ctrl+C (\\x03)\nt.send_keystrokes('cat\\n', wait_sec=0.3)\nt.send_keystrokes('\\x03', wait_sec=0.3)\noutput = t._drain_output(timeout=0.5)\nprint('Ctrl+C test:', repr(output[:100]))\n\n# Ctrl+D (\\x04) - should not kill the shell since we're testing from a fresh state\nt.send_keystrokes('echo after_ctrlc\\n', wait_sec=0.5)\noutput = t._drain_output(timeout=0.5)\nassert 'after_ctrlc' in output\nprint('Shell still alive after Ctrl+C')\n\n# Ctrl+Z (\\x1a)\nt.send_keystrokes('sleep 100\\n', wait_sec=0.3)\nt.send_keystrokes('\\x1a', wait_sec=0.3)\noutput = t._drain_output(timeout=0.5)\nprint('Ctrl+Z test:', repr(output[:150]))\n\nt.send_keystrokes('echo after_ctrlz\\n', wait_sec=0.5)\noutput = t._drain_output(timeout=0.5)\nassert 'after_ctrlz' in output\nprint('Shell still alive after Ctrl+Z')\n\nt.close()\nprint('Modifier keys test passed!')\n\"\n"
+      },
+      "name": "bash",
+      "type": "tool_use"
+    }
+  ],
+  "model": "anthropic/claude-4.6-opus-20260205",
+  "role": "assistant",
+  "stop_reason": "tool_use",
+  "stop_sequence": null,
+  "type": "message",
+  "usage": {
+    "cache_creation": null,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "inference_geo": null,
+    "input_tokens": 6110,
+    "output_tokens": 426,
+    "server_tool_use": null,
+    "service_tier": null,
+    "speed": "standard",
+    "cost": 0.0412,
+    "is_byok": false,
+    "cost_details": {
+      "upstream_inference_cost": 0.0412,
+      "upstream_inference_prompt_cost": 0.03055,
+      "upstream_inference_completions_cost": 0.01065
+    }
+  },
+  "provider": "Amazon Bedrock"
+}

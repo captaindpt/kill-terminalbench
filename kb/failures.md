@@ -155,3 +155,85 @@ This file records every observed benchmark or benchmark-blocking failure so far.
   - leaving output artifacts that violate task constraints
 - We have one demonstrated long-horizon cost/turn risk:
   - `git-multibranch` used the full 75-episode budget in the successful debug batch
+
+## 2026-04-01: `tb2-diverse-15` rerun on patched Harbor harness
+
+- Run: [/root/kill-terminalbench/jobs/2026-04-01__15-01-02](/root/kill-terminalbench/jobs/2026-04-01__15-01-02)
+- Scope: 15-task official-TB2 debug slice on x86_64 after:
+  - Harbor prompt fixes
+  - Sonnet compaction
+  - high compaction threshold
+  - compaction cooldown
+  - anti-speculation summary rules
+  - explicit timeout notes
+
+### Notable Successes
+
+- `break-filter-js-from-html`
+  - flipped from prior fail to pass
+  - finished with `0` compactions
+- `polyglot-c-py`
+  - flipped from prior fail to pass
+  - no stray artifact failure on this run
+- `build-cython-ext`
+  - flipped from prior fail to pass
+  - passed despite still needing `6` compactions
+- `git-multibranch`
+  - passed in `21` episodes with `0` compactions
+
+### Failure: `configure-git-webserver`
+
+- Artifact:
+  - [/root/kill-terminalbench/jobs/2026-04-01__15-01-02/configure-git-webserver__qurewzg/verifier/test-stdout.txt](/root/kill-terminalbench/jobs/2026-04-01__15-01-02/configure-git-webserver__qurewzg/verifier/test-stdout.txt)
+- Failure class: task correctness
+- Exact blocker:
+  - verifier reached the web server but got HTTP `404`
+- Interpretation:
+  - execution-model guidance helped relative to earlier HTTP `000`
+  - the remaining miss is content/deployment correctness, not service availability
+
+### Failure: `openssl-selfsigned-cert`
+
+- Artifact:
+  - [/root/kill-terminalbench/jobs/2026-04-01__15-01-02/openssl-selfsigned-cert__2vkktKA/verifier/test-stdout.txt](/root/kill-terminalbench/jobs/2026-04-01__15-01-02/openssl-selfsigned-cert__2vkktKA/verifier/test-stdout.txt)
+- Failure class: dependency completeness
+- Exact blocker:
+  - `/app/check_cert.py` existed but failed with `ModuleNotFoundError: No module named 'cryptography'`
+- Interpretation:
+  - output files were mostly present
+  - the agent missed a required Python runtime dependency for the verification script
+
+### Failure: `raman-fitting`
+
+- Artifacts:
+  - [/root/kill-terminalbench/jobs/2026-04-01__15-01-02/raman-fitting__fYpnnSa/result.json](/root/kill-terminalbench/jobs/2026-04-01__15-01-02/raman-fitting__fYpnnSa/result.json)
+  - [/root/kill-terminalbench/jobs/2026-04-01__15-01-02/raman-fitting__fYpnnSa/verifier/test-stdout.txt](/root/kill-terminalbench/jobs/2026-04-01__15-01-02/raman-fitting__fYpnnSa/verifier/test-stdout.txt)
+- Failure class: timeout / incomplete deliverable
+- Exact blockers:
+  - Harbor recorded `AgentTimeoutError: Agent execution timed out after 900.0 seconds`
+  - verifier found `/app/results.json` missing
+- Interpretation:
+  - this is still a long-horizon failure, not a harness-crash failure
+
+### Failure: `db-wal-recovery`
+
+- Artifact:
+  - [/root/kill-terminalbench/jobs/2026-04-01__15-01-02/db-wal-recovery__Epu9ntv/result.json](/root/kill-terminalbench/jobs/2026-04-01__15-01-02/db-wal-recovery__Epu9ntv/result.json)
+- Failure class: per-command timeout
+- Exact blocker:
+  - Harbor raised `RuntimeError: Command timed out after 300 seconds`
+  - verifier did not run
+- Interpretation:
+  - improved compaction policy removed the compaction storm
+  - remaining issue is a long single command inside the agent loop
+
+### Failure: `qemu-alpine-ssh`
+
+- Artifact:
+  - [/root/kill-terminalbench/jobs/2026-04-01__15-01-02/qemu-alpine-ssh__P2wegmN/result.json](/root/kill-terminalbench/jobs/2026-04-01__15-01-02/qemu-alpine-ssh__P2wegmN/result.json)
+- Failure class: per-command timeout
+- Exact blocker:
+  - Harbor raised `RuntimeError: Command timed out after 300 seconds`
+  - verifier did not run
+- Interpretation:
+  - another case where explicit timeout notes are relevant, but the command still overran the 300s ceiling

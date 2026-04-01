@@ -1,0 +1,41 @@
+{
+  "id": "gen-1775072518-lwMTzAGZmwTIiOw7AEf5",
+  "container": null,
+  "content": [
+    {
+      "id": "toolu_bdrk_01TkrmxcKwsyNX971JJzr6tL",
+      "caller": {
+        "type": "direct"
+      },
+      "input": {
+        "command": "# The top layers only have small parts of the text. Let me find layers where the text is most spread out\n# The text is 3D - it's embossed letters. Let me look at the middle Z range\n\npython3 << 'PYTHON'\nimport re\nimport numpy as np\nimport math\n\nwith open('/app/text.gcode', 'r') as f:\n    lines = f.readlines()\n\ncurrent_object = None\nsegments_by_z = {}\nx, y, z = 0, 0, 0\n\nfor line in lines:\n    line = line.strip()\n    \n    m486 = re.match(r'M486 S(-?\\d+)', line)\n    if m486:\n        current_object = int(m486.group(1))\n        continue\n    \n    if current_object != 0:\n        if line.startswith('G0') or line.startswith('G1'):\n            x_match = re.search(r'X([\\d.]+)', line)\n            y_match = re.search(r'Y([\\d.]+)', line)\n            z_match = re.search(r'Z([\\d.]+)', line)\n            if x_match: x = float(x_match.group(1))\n            if y_match: y = float(y_match.group(1))\n            if z_match: z = float(z_match.group(1))\n        continue\n    \n    if line.startswith('G0') or line.startswith('G1'):\n        old_x, old_y = x, y\n        x_match = re.search(r'X([\\d.]+)', line)\n        y_match = re.search(r'Y([\\d.]+)', line)\n        z_match = re.search(r'Z([\\d.]+)', line)\n        e_match = re.search(r'E([\\d.]+)', line)\n        \n        if x_match: x = float(x_match.group(1))\n        if y_match: y = float(y_match.group(1))\n        if z_match: z = float(z_match.group(1))\n        \n        if e_match and float(e_match.group(1)) > 0:\n            z_key = round(z, 2)\n            if z_key not in segments_by_z:\n                segments_by_z[z_key] = []\n            segments_by_z[z_key].append((old_x, old_y, x, y))\n\n# Find layers with most segments\nz_vals = sorted(segments_by_z.keys())\nlayer_info = [(z, len(segments_by_z[z])) for z in z_vals]\nlayer_info.sort(key=lambda x: -x[1])\nprint(\"Top 20 layers by segment count:\")\nfor z, cnt in layer_info[:20]:\n    segs = segments_by_z[z]\n    xs = [s[0] for s in segs] + [s[2] for s in segs]\n    ys = [s[1] for s in segs] + [s[3] for s in segs]\n    print(f\"  Z={z:.2f}: {cnt} segs, X=[{min(xs):.1f}, {max(xs):.1f}], Y=[{min(ys):.1f}, {max(ys):.1f}]\")\n\nPYTHON"
+      },
+      "name": "bash",
+      "type": "tool_use"
+    }
+  ],
+  "model": "anthropic/claude-4.6-opus-20260205",
+  "role": "assistant",
+  "stop_reason": "tool_use",
+  "stop_sequence": null,
+  "type": "message",
+  "usage": {
+    "cache_creation": null,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "inference_geo": null,
+    "input_tokens": 12587,
+    "output_tokens": 885,
+    "server_tool_use": null,
+    "service_tier": null,
+    "speed": "standard",
+    "cost": 0.08506,
+    "is_byok": false,
+    "cost_details": {
+      "upstream_inference_cost": 0.08506,
+      "upstream_inference_prompt_cost": 0.062935,
+      "upstream_inference_completions_cost": 0.022125
+    }
+  },
+  "provider": "Amazon Bedrock"
+}

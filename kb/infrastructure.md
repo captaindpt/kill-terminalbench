@@ -1,22 +1,26 @@
 # Infrastructure
 
+## Score-Bearing Benchmark Host
+- Current benchmark truth host: rented `x86_64` machine
+- Current size: `8 vCPU / 32 GB RAM`
+- This is the machine to use for Harbor TB2 debug batches and score-bearing runs.
+- The older ARM/Colima machine should be treated as development-only.
+
 ## Docker
-- Docker is running via Colima.
-- Active Docker context: `colima`
-- Resolved Docker socket used by SDK: `unix:///Users/manirashahmadi/.colima/default/docker.sock`
+- Docker is running on the benchmark host.
+- Docker is accessible to the benchmark user and Harbor can launch task environments.
 
 ## Compose
-- Installed via Homebrew: Docker Compose `5.1.1`
-- Docker plugin discovery configured in `~/.docker/config.json`
+- `docker compose` is available on the benchmark host.
+- Harbor TB2 task environments depend on Compose support and should be validated after machine rebuilds or resizes.
 
 ## Python Runtime
-- System `python3`: `3.9.6`
-- Benchmark/runtime interpreter: `.venv/bin/python` -> Python `3.12.12`
-- CLI re-execs into Python 3.12 automatically for benchmark paths
+- Harbor runs use the repo-local `.venv`.
+- Benchmark/runtime interpreter should remain the `.venv` Python on the x86 host.
 
 ## Installed Tooling
-- `terminal-bench` installed editable into `.venv`
-- `harbor` installed into `.venv`
+- `terminal-bench` is installed in the repo environment.
+- `harbor` is installed in the repo environment.
 
 ## OpenRouter
 - API key loaded from `.env`
@@ -24,14 +28,20 @@
 - Client path: Anthropic SDK pointed at OpenRouter-compatible base URL
 
 ## Verified Environment Facts
-- Official local Terminal-Bench harness path works
 - Official Harbor dataset resolution works for `terminal-bench@2.0`
 - OpenRouter API key can access:
   - key usage endpoint
   - credits endpoint
-- This ARM/Colima machine is suitable for harness development and synthetic validation.
-- This ARM/Colima machine is not a trustworthy source of final TB2 benchmark results for browser-sensitive x86 task images.
-- Score-bearing Harbor runs should be executed on the rented `x86_64` machine.
+- Score-bearing Harbor runs should be executed on the rented `x86_64` machine, not on the ARM development host.
+
+## Concurrency Policy
+- Strictest benchmark-truth reruns:
+  - use `--n-concurrent 1`
+- Comparison-grade Harbor runs on the current `8 vCPU / 32 GB` x86 host:
+  - default to `--n-concurrent 2`
+- Exploratory/debug Harbor runs on the current `8 vCPU / 32 GB` x86 host:
+  - default to `--n-concurrent 3`
+- Do not increase beyond `3` by default without confirming stability on the current task mix.
 
 ## Logging Guarantees
 Current adapters write detailed artifacts for debugging:
@@ -57,5 +67,5 @@ This is sufficient to reconstruct prompt/context progression when the model fail
 - Large tool outputs are now persisted and uploaded into the task container under `/tmp/ktb-agent-artifacts/...`.
 - Tool results now return a short preview plus a reread path when output is persisted.
 - Long conversations now compact older history through the same OpenRouter client using a cheaper summary model.
-- Default summary model: `anthropic/claude-3.5-haiku`
+- Default summary model: `anthropic/claude-sonnet-4.6`
 - Model calls now use an explicit client timeout and reduced retries.

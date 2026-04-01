@@ -1,0 +1,41 @@
+{
+  "id": "gen-1775051645-RUwSxa6nto1pZkRCpIol",
+  "container": null,
+  "content": [
+    {
+      "id": "toolu_bdrk_01BDG6Ff8GjkKJkr9NDnMSWj",
+      "caller": {
+        "type": "direct"
+      },
+      "input": {
+        "command": "# Verify everything is clean and ready\necho \"=== Repo refs ===\"\ngit --git-dir=/git/project.git show-ref 2>&1 || echo \"(no refs - empty repo)\"\n\necho \"\"\necho \"=== Deployed files ===\"\nls -la /var/www/main/ /var/www/dev/ 2>&1\n\necho \"\"\necho \"=== Services running ===\"\nservice ssh status 2>&1 | head -1\nservice nginx status 2>&1 | head -1\n\necho \"\"\necho \"=== SSH password auth ===\"\ngrep -i \"PasswordAuthentication\" /etc/ssh/sshd_config | grep -v \"^#\"\n\necho \"\"\necho \"=== Hook permissions ===\"\nls -la /git/project.git/hooks/post-receive\n\necho \"\"\necho \"=== Symlink ===\"\nls -la /git/project"
+      },
+      "name": "bash",
+      "type": "tool_use"
+    }
+  ],
+  "model": "anthropic/claude-4.6-opus-20260205",
+  "role": "assistant",
+  "stop_reason": "tool_use",
+  "stop_sequence": null,
+  "type": "message",
+  "usage": {
+    "cache_creation": null,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "inference_geo": null,
+    "input_tokens": 3059,
+    "output_tokens": 260,
+    "server_tool_use": null,
+    "service_tier": null,
+    "speed": "standard",
+    "cost": 0.021795,
+    "is_byok": false,
+    "cost_details": {
+      "upstream_inference_cost": 0.021795,
+      "upstream_inference_prompt_cost": 0.015295,
+      "upstream_inference_completions_cost": 0.0065
+    }
+  },
+  "provider": "Amazon Bedrock"
+}

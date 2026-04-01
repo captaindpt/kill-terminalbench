@@ -1,0 +1,41 @@
+{
+  "id": "gen-1775065119-wIkDywgBJIXic2OuEvIP",
+  "container": null,
+  "content": [
+    {
+      "id": "toolu_bdrk_015pZfKnrz6RbBJwT2xSFTtW",
+      "caller": {
+        "type": "direct"
+      },
+      "input": {
+        "command": "cd /app/task_file && python3 << 'EOF'\n# plan_metrics expects requests as Dict[str, Dict[str, int]], i.e., keyed by request_id\n# Let me fix and re-run\n\nimport json\nimport sys\nsys.path.insert(0, 'scripts')\nfrom cost_model import CostModel, CostConsts, align, HEADS, HIDDEN\nfrom collections import defaultdict\nimport os\n\ncm = CostModel(64)\n\nreqs_list = []\nwith open('input_data/requests_bucket_1.jsonl') as f:\n    for line in f:\n        reqs_list.append(json.loads(line))\n\nfor r in reqs_list:\n    r['aligned'] = align(r['prompt_len'], 64)\n\n# requests dict for plan_metrics\nrequests_dict = {r['request_id']: r for r in reqs_list}\n\n# Compute individual metrics\nfor r in reqs_list:\n    m = cm.batch_metrics([r])\n    r['indiv_cost'] = m['cost']\n    r['indiv_lat'] = max(l + 8.0 for l in m['latencies'])\n\nby_aligned = defaultdict(list)\nfor r in reqs_list:\n    by_aligned[r['aligned']].append(r)\n\n# Compute candidate pairs\ncandidates = []\nfor s in sorted(by_aligned.keys()):\n    group = sorted(by_aligned[s], key=lambda r: (r['gen_len'], r['request_id']))\n    for i in range(len(group) - 1):\n        r1, r2 = group[i], group[i+1]\n        m_pair = cm.batch_metrics([r1, r2])\n        pair_cost = m_pair['cost']\n        pair_lat = max(l + 8.0 for l in m_pair['latencies'])\n        \n        extra_cost = pair_cost - (r1['indiv_cost'] + r2['indiv_cost'])\n        lat_saved = r1['indiv_lat'] + r2['indiv_lat'] - pair_lat\n        \n        candidates.append({\n            'r1': r1, 'r2': r2,\n            'extra_cost': extra_cost,\n            'lat_saved': lat_saved,\n            'ratio': lat_saved / max(1, extra_cost),\n        })\n\ncandidates.sort(key=lambda c: -c['ratio'])\n\nshapes8 = [64, 128, 320, 640, 704, 1088, 1536, 2048]\n\nbase_cost = sum(r['indiv_cost'] for r in reqs_list) + 10_000_000 * 800\ncompile_cost_8 = sum(500*s**2 + 2*s*4096 for s in shapes8)\nbudget = 3.0e11 - base_cost - compile_cost_8\n\nused = set()\nselected = []\ntotal_extra = 0\ntotal_lat_saved = 0\n\nfor c in candidates:\n    rid1 = c['r1']['request_id']\n    rid2 = c['r2']['request_id']\n    if rid1 in used or rid2 in used:\n        continue\n    net_extra = c['extra_cost'] - 10_000_000\n    if total_extra + net_extra > budget * 0.90:\n        continue\n    used.add(rid1)\n    used.add(rid2)\n    selected.append(c)\n    total_extra += net_extra\n    total_lat_saved += c['lat_saved']\n\nprint(f\"Selected {len(selected)} pairs, net extra cost: {total_extra:.4e}, lat saved: {total_lat_saved:.4e}\")\n\ndef assign_shape(aligned):\n    for s in shapes8:\n        if s >= aligned:\n            return s\n    return shapes8[-1]\n\nbatch_id_counter = 0\nplan = []\npaired_rids = set()\n\nfor c in selected:\n    bid = f\"b-{batch_id_counter:04d}\"\n    batch_id_counter += 1\n    r1, r2 = c['r1'], c['r2']\n    paired_rids.add(r1['request_id'])\n    paired_rids.add(r2['request_id'])\n    \n    max_aligned = max(r1['aligned'], r2['aligned'])\n    shape_val = assign_shape(max_aligned)\n    \n    plan.append({\n        'request_id': r1['request_id'],\n        'batch_id': bid,\n        'shape': {'seq_align': shape_val, 'heads_align': 32, 'hidden_align': 4096}\n    })\n    plan.append({\n        'request_id': r2['request_id'],\n        'batch_id': bid,\n        'shape': {'seq_align': shape_val, 'heads_align': 32, 'hidden_align': 4096}\n    })\n\nfor r in reqs_list:\n    if r['request_id'] not in paired_rids:\n        bid = f\"b-{batch_id_counter:04d}\"\n        batch_id_counter += 1\n        shape_val = assign_shape(r['aligned'])\n        plan.append({\n            'request_id': r['request_id'],\n            'batch_id': bid,\n            'shape': {'seq_align': shape_val, 'heads_align': 32, 'hidden_align': 4096}\n        })\n\nos.makedirs('output_data', exist_ok=True)\nwith open('output_data/plan_b1.jsonl', 'w') as f:\n    for entry in plan:\n        f.write(json.dumps(entry) + '\\n')\n\nmetrics = cm.plan_metrics(requests_dict, plan)\nprint(f\"\\n=== B1 Plan Metrics ===\")\nprint(f\"  cost: {metrics['cost']:.4e}  (target < 3.0e11)\")\nprint(f\"  pad_ratio: {metrics['pad_ratio']:.4f}  (target < 0.055)\")\nprint(f\"  p95_latency_ms: {metrics['p95_latency_ms']:.4e}  (target < 2.1e6)\")\nprint(f\"  sequential_timecost: {metrics['sequential_timecost']:.4e}  (target < 2.7e8)\")\n\n# Check unique shapes\nunique_shapes = set()\nfor entry in plan:\n    sh = entry['shape']\n    unique_shapes.add((sh['seq_align'], sh['heads_align'], sh['hidden_align']))\nprint(f\"  unique_shapes: {len(unique_shapes)} (target <= 8)\")\n\nEOF\n"
+      },
+      "name": "bash",
+      "type": "tool_use"
+    }
+  ],
+  "model": "anthropic/claude-4.6-opus-20260205",
+  "role": "assistant",
+  "stop_reason": "tool_use",
+  "stop_sequence": null,
+  "type": "message",
+  "usage": {
+    "cache_creation": null,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "inference_geo": null,
+    "input_tokens": 12766,
+    "output_tokens": 1717,
+    "server_tool_use": null,
+    "service_tier": null,
+    "speed": "standard",
+    "cost": 0.106755,
+    "is_byok": false,
+    "cost_details": {
+      "upstream_inference_cost": 0.106755,
+      "upstream_inference_prompt_cost": 0.06383,
+      "upstream_inference_completions_cost": 0.042925
+    }
+  },
+  "provider": "Amazon Bedrock"
+}

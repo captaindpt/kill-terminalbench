@@ -1,0 +1,46 @@
+{
+  "id": "gen-1775056768-AZRgZOfgrmXZwjgw8NrO",
+  "container": null,
+  "content": [
+    {
+      "citations": null,
+      "text": "No KVM, so we'll use TCG emulation. Let me start the VM with QEMU in the background with a serial console and port forwarding.",
+      "type": "text"
+    },
+    {
+      "id": "toolu_bdrk_01J9L7DisUmKh1ZB7uUrkBAw",
+      "caller": {
+        "type": "direct"
+      },
+      "input": {
+        "command": "# Start QEMU in the background with serial console via unix socket and port forwarding\nsetsid qemu-system-x86_64 \\\n  -m 512 \\\n  -cdrom /app/alpine.iso \\\n  -boot d \\\n  -nographic \\\n  -serial mon:unix:/tmp/qemu-serial.sock,server,nowait \\\n  -net nic \\\n  -net user,hostfwd=tcp::2222-:22 \\\n  -no-reboot \\\n  </dev/null > /tmp/qemu-stdout.log 2>&1 &\necho \"QEMU PID: $!\"\nsleep 2\nls -la /tmp/qemu-serial.sock"
+      },
+      "name": "bash",
+      "type": "tool_use"
+    }
+  ],
+  "model": "anthropic/claude-4.6-opus-20260205",
+  "role": "assistant",
+  "stop_reason": "tool_use",
+  "stop_sequence": null,
+  "type": "message",
+  "usage": {
+    "cache_creation": null,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "inference_geo": null,
+    "input_tokens": 1413,
+    "output_tokens": 256,
+    "server_tool_use": null,
+    "service_tier": null,
+    "speed": "standard",
+    "cost": 0.013465,
+    "is_byok": false,
+    "cost_details": {
+      "upstream_inference_cost": 0.013465,
+      "upstream_inference_prompt_cost": 0.007065,
+      "upstream_inference_completions_cost": 0.0064
+    }
+  },
+  "provider": "Amazon Bedrock"
+}

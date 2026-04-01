@@ -1,0 +1,41 @@
+{
+  "id": "gen-1775052128-F2Pk46CwgFwFJ1jeFSMM",
+  "container": null,
+  "content": [
+    {
+      "id": "toolu_bdrk_017H87TPznJBFdw1k2yG3Fti",
+      "caller": {
+        "type": "direct"
+      },
+      "input": {
+        "command": "# Good, web server works. Now ensure SSH is running\nservice ssh status 2>/dev/null || service ssh start 2>/dev/null || /usr/sbin/sshd 2>/dev/null\necho \"sshd status: $?\"\n\n# Verify git repo setup\nls -la /git/server/hooks/post-receive\necho \"---\"\ncat /git/server/hooks/post-receive\necho \"---\"\nls -la /git/server/\necho \"---\"\n# Make sure the repo ownership is correct\nchown -R user:user /git/server\nls -la /var/www/git-deploy/"
+      },
+      "name": "bash",
+      "type": "tool_use"
+    }
+  ],
+  "model": "anthropic/claude-4.6-opus-20260205",
+  "role": "assistant",
+  "stop_reason": "tool_use",
+  "stop_sequence": null,
+  "type": "message",
+  "usage": {
+    "cache_creation": null,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "inference_geo": null,
+    "input_tokens": 1872,
+    "output_tokens": 199,
+    "server_tool_use": null,
+    "service_tier": null,
+    "speed": "standard",
+    "cost": 0.014335,
+    "is_byok": false,
+    "cost_details": {
+      "upstream_inference_cost": 0.014335,
+      "upstream_inference_prompt_cost": 0.00936,
+      "upstream_inference_completions_cost": 0.004975
+    }
+  },
+  "provider": "Amazon Bedrock"
+}

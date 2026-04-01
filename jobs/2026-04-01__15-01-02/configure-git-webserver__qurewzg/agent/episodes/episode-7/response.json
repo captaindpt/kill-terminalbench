@@ -1,0 +1,46 @@
+{
+  "id": "gen-1775056055-vkXNdDQ4H7gyRWgUPTDA",
+  "container": null,
+  "content": [
+    {
+      "citations": null,
+      "text": "Both SSH (port 22 = 0x0016) and the web server (port 8080 = 0x1F90) are listening.\n\nNow let me do an end-to-end test to make sure everything works:",
+      "type": "text"
+    },
+    {
+      "id": "toolu_bdrk_01Cuy5JehdiP2A3HTbL98Xvm",
+      "caller": {
+        "type": "direct"
+      },
+      "input": {
+        "command": "# End-to-end test: simulate the git workflow locally\ncd /tmp\nrm -rf test-clone\n\n# Set up SSH key for root to connect as user (for testing)\nmkdir -p /home/user/.ssh\nssh-keygen -t ed25519 -f /root/.ssh/id_test -N \"\" -q 2>/dev/null || true\ncat /root/.ssh/id_test.pub >> /home/user/.ssh/authorized_keys\nchown -R user:user /home/user/.ssh\nchmod 700 /home/user/.ssh\nchmod 600 /home/user/.ssh/authorized_keys\n\n# Clone via SSH\nGIT_SSH_COMMAND=\"ssh -i /root/.ssh/id_test -o StrictHostKeyChecking=no\" git clone user@localhost:/git/server /tmp/test-clone 2>&1\n"
+      },
+      "name": "bash",
+      "type": "tool_use"
+    }
+  ],
+  "model": "anthropic/claude-4.6-opus-20260205",
+  "role": "assistant",
+  "stop_reason": "tool_use",
+  "stop_sequence": null,
+  "type": "message",
+  "usage": {
+    "cache_creation": null,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "inference_geo": null,
+    "input_tokens": 3430,
+    "output_tokens": 307,
+    "server_tool_use": null,
+    "service_tier": null,
+    "speed": "standard",
+    "cost": 0.024825,
+    "is_byok": false,
+    "cost_details": {
+      "upstream_inference_cost": 0.024825,
+      "upstream_inference_prompt_cost": 0.01715,
+      "upstream_inference_completions_cost": 0.007675
+    }
+  },
+  "provider": "Amazon Bedrock"
+}

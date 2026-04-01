@@ -1,0 +1,41 @@
+{
+  "id": "gen-1775060019-cK1kqOBQ6gGCVtuVx3Ow",
+  "container": null,
+  "content": [
+    {
+      "id": "toolu_bdrk_019XrUsWxquegY2eVmHCAbCv",
+      "caller": {
+        "type": "direct"
+      },
+      "input": {
+        "command": "# Final verification of all files and permissions\necho \"=== Directory listing ===\"\nls -la /app/ssl/\n\necho \"\"\necho \"=== Key file permissions ===\"\nstat -c '%a' /app/ssl/server.key\n\necho \"\"\necho \"=== Key validation ===\"\nopenssl rsa -in /app/ssl/server.key -check -noout 2>&1\n\necho \"\"\necho \"=== Key bit length ===\"\nopenssl rsa -in /app/ssl/server.key -text -noout 2>&1 | head -1\n\necho \"\"\necho \"=== Certificate validation ===\"\nopenssl x509 -in /app/ssl/server.crt -noout -text 2>&1 | head -15\n\necho \"\"\necho \"=== PEM file contains both key and cert ===\"\ngrep -c \"BEGIN\" /app/ssl/server.pem\n\necho \"\"\necho \"=== verification.txt ===\"\ncat /app/ssl/verification.txt\n\necho \"\"\necho \"=== check_cert.py exists ===\"\nls -la /app/check_cert.py"
+      },
+      "name": "bash",
+      "type": "tool_use"
+    }
+  ],
+  "model": "anthropic/claude-4.6-opus-20260205",
+  "role": "assistant",
+  "stop_reason": "tool_use",
+  "stop_sequence": null,
+  "type": "message",
+  "usage": {
+    "cache_creation": null,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "inference_geo": null,
+    "input_tokens": 4789,
+    "output_tokens": 310,
+    "server_tool_use": null,
+    "service_tier": null,
+    "speed": "standard",
+    "cost": 0.031695,
+    "is_byok": false,
+    "cost_details": {
+      "upstream_inference_cost": 0.031695,
+      "upstream_inference_prompt_cost": 0.023945,
+      "upstream_inference_completions_cost": 0.00775
+    }
+  },
+  "provider": "Amazon Bedrock"
+}

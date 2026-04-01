@@ -1,0 +1,99 @@
+{
+  "system": "You are solving a task in a Linux environment.\n\nWork directly in the shell.\nInspect the environment before changing it.\nRead errors carefully and adapt.\nBefore finishing, remove any temp files or build artifacts you created that aren't part of the deliverable.\nA separate verifier tests your work automatically.\n\nExecution model:\n- Each bash command runs in a separate non-persistent shell.\n- Background jobs started with `&` or `nohup` may die when the command ends.\n- For persistent services, use a real daemon strategy such as `setsid`, `start-stop-daemon`, or an actual service.\n\nVerification:\n- When task tests or verifier scripts are visible, run them the way they are intended to run.\n- An exit code of 0 from the wrong invocation is not evidence of success.\n- Stop once the task is complete and you have a strong success signal aligned with the task's actual checks.\n- Do not keep rechecking after a clear pass, but do not stop on weak or ambiguous signals.\n\nWhen the task is complete, respond briefly with no tool calls.\n",
+  "tools": [
+    {
+      "name": "bash",
+      "description": "Run a shell command and return stdout/stderr and the exit code.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "command": {
+            "type": "string",
+            "description": "Shell command to execute."
+          },
+          "timeout_sec": {
+            "type": "number",
+            "description": "Maximum time to wait for the command to finish.",
+            "default": 180
+          }
+        },
+        "required": [
+          "command"
+        ]
+      }
+    }
+  ],
+  "messages": [
+    {
+      "role": "user",
+      "content": "Task:\nI have downloaded the gpt-2 weights stored as a TF .ckpt. Write me a dependency-free C file that samples from the model with arg-max sampling. Call your program /app/gpt2.c, I will compile with gcc -O3 -lm. It should read the .ckpt and the .bpe file. Your c program must be <5000 bytes. I will run it /app/a.out gpt2-124M.ckpt vocab.bpe \"[input string here]\" and you should continue the output under whatever GPT-2 would print for the next 20 tokens.\n"
+    },
+    {
+      "role": "assistant",
+      "content": [
+        "TextBlock(citations=None, text=\"\\n\\nI'll start by examining the environment to understand the file formats and structure.\", type='text')",
+        "ToolUseBlock(id='toolu_bdrk_011sTchxsrjz2o2Cq1xd31Nu', caller=DirectCaller(type='direct'), input={'command': 'ls /app/'}, name='bash', type='tool_use')"
+      ]
+    },
+    {
+      "role": "user",
+      "content": [
+        {
+          "type": "tool_result",
+          "tool_use_id": "toolu_bdrk_011sTchxsrjz2o2Cq1xd31Nu",
+          "content": "[exit_code=0]\n\ngpt2-124M.ckpt\nvocab.bpe"
+        }
+      ]
+    },
+    {
+      "role": "assistant",
+      "content": [
+        "ToolUseBlock(id='toolu_bdrk_01BUp4pp1M7JDZBrPPrKsBmx', caller=DirectCaller(type='direct'), input={'command': 'file /app/gpt2-124M.ckpt && ls -lh /app/gpt2-124M.ckpt'}, name='bash', type='tool_use')"
+      ]
+    },
+    {
+      "role": "user",
+      "content": [
+        {
+          "type": "tool_result",
+          "tool_use_id": "toolu_bdrk_01BUp4pp1M7JDZBrPPrKsBmx",
+          "content": "[exit_code=127]\n\nbash: line 1: file: command not found"
+        }
+      ]
+    },
+    {
+      "role": "assistant",
+      "content": [
+        "ToolUseBlock(id='toolu_bdrk_011mRjWYfTnSSLRtRoaLrDp8', caller=DirectCaller(type='direct'), input={'command': 'ls -lh /app/gpt2-124M.ckpt && ls -lh /app/vocab.bpe'}, name='bash', type='tool_use')"
+      ]
+    },
+    {
+      "role": "user",
+      "content": [
+        {
+          "type": "tool_result",
+          "tool_use_id": "toolu_bdrk_011mRjWYfTnSSLRtRoaLrDp8",
+          "content": "[exit_code=0]\n\n-rw-r--r-- 1 root root 475M Oct 28 22:20 /app/gpt2-124M.ckpt\n-rw-r--r-- 1 root root 446K Oct 28 22:18 /app/vocab.bpe"
+        }
+      ]
+    },
+    {
+      "role": "assistant",
+      "content": [
+        "ToolUseBlock(id='toolu_vrtx_01WXAJmmZ3ZEAsTSnLKmaBVf', caller=DirectCaller(type='direct'), input={'command': 'xxd /app/gpt2-124M.ckpt | head -50'}, name='bash', type='tool_use')"
+      ]
+    },
+    {
+      "role": "user",
+      "content": [
+        {
+          "type": "tool_result",
+          "tool_use_id": "toolu_vrtx_01WXAJmmZ3ZEAsTSnLKmaBVf",
+          "content": "[exit_code=0]\n\nbash: line 1: xxd: command not found"
+        }
+      ]
+    }
+  ],
+  "model": "anthropic/claude-opus-4.6",
+  "temperature": 1.0
+}

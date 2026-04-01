@@ -1,0 +1,699 @@
+[exit_code=0]
+
+[exit_code=0]
+
+import json
+import re
+import os
+
+rules = []
+
+def add(pattern, repl):
+    rules.append([pattern, repl])
+
+BOARD_OR_SLASH = r'[rnbqkpRNBQKP./]'
+
+def exact_gap(n):
+    if n == 0:
+        return ''
+    if n == 1:
+        return BOARD_OR_SLASH
+    return BOARD_OR_SLASH + '{' + str(n) + '}'
+
+def pos_in_board(file, rank_idx):
+    return rank_idx * 9 + file
+
+def chess_rank(rank_idx):
+    return 8 - rank_idx
+
+BLACK_PIECE = r'[rnbqkp]'
+EMPTY = r'\.'
+BLACK_OR_EMPTY = r'[rnbqkp.]'
+
+def make_move_regex(squares_and_patterns, board_len=71):
+    squares_and_patterns = sorted(set(squares_and_patterns), key=lambda x: x[0])
+    parts = []
+    group_infos = []
+    group_num = 0
+    prev_end = 0
+    
+    for pos, pat in squares_and_patterns:
+        gap = pos - prev_end
+        if gap > 0:
+            parts.append('(' + exact_gap(gap) + ')')
+            group_num += 1
+            group_infos.append(('gap', group_num, prev_end))
+        parts.append('(' + pat + ')')
+        group_num += 1
+        group_infos.append(('sq', group_num, pos))
+        prev_end = pos + 1
+    
+    remaining = board_len - prev_end
+    if remaining > 0:
+        parts.append('(' + exact_gap(remaining) + ')')
+        group_num += 1
+        group_infos.append(('gap', group_num, prev_end))
+    
+    return ''.join(parts), group_infos, group_num
+
+def make_replacement(group_infos, replacements, total_groups):
+    parts = []
+    for info_type, gnum, pos in group_infos:
+        if info_type == 'sq' and pos in replacements:
+            parts.append(replacements[pos])
+        else:
+            parts.append('\\' + str(gnum))
+    return ''.join(parts)
+
+def gen_move_rule(src_file, src_rank_idx, dst_file, dst_rank_idx, 
+                  piece, capture_pattern, 
+                  path_squares=None,
+                  extra_squares=None,
+                  ep_cond=None,
+                  new_ep=None,
+                  promotion=None,
+                  src_becomes='.',
+                  dst_becomes=None):
+    
+    if dst_becomes is None:
+        dst_becomes = promotion if promotion else piece
+    
+    src_pos = pos_in_board(src_file, src_rank_idx)
+    dst_pos = pos_in_board(dst_file, dst_rank_idx)
+    
+    match_squares = []
+    match_squares.append((src_pos, re.escape(piece)))
+    match_squares.append((dst_pos, capture_pattern))
+    
+    replacements = {src_pos: src_becomes, dst_pos: dst_becomes}
+    
+    if path_squares:
+        for pf, pr in path_squares:
+            pp = pos_in_board(pf, pr)
+            match_squares.append((pp, r'\.'))
+            replacements[pp] = '.'
+    
+    if extra_squares:
+        for pp, match, repl in extra_squares:
+            match_squares.append((pp, match))
+            replacements[pp] = repl
+    
+    # Deduplicate - if same position appears multiple times, keep the one with the most specific pattern
+    seen = {}
+    for pos, pat in match_squares:
+        if pos not in seen:
+            seen[pos] = pat
+        else:
+            # If same pos has different patterns, we have a conflict - skip this move as invalid
+            if seen[pos] != pat:
+                return  # conflicting requirements
+    match_squares = list(seen.items())
+    match_squares.sort(key=lambda x: x[0])
+    
+    board_pattern, group_infos, num_groups = make_move_regex(match_squares)
+    board_replacement = make_replacement(group_infos, replacements, num_groups)
+    
+    gn = num_groups
+    
+    # Castling field - just capture it
+    castling_pat = '([KQkq]{1,4}|-)'
+    gn += 1
+    castling_group = gn
+    
+    # EP field
+    if ep_cond:
+        ep_pat = '(' + ep_cond + ')'
+    else:
+        ep_pat = '([a-h][ZY]|-)'
+    gn += 1
+    ep_group = gn
+    
+    full_pattern = '!' + board_pattern + r' w ' + castling_pat + ' ' + ep_pat + ' 0 0'
+    
+    castling_repl = '\\' + str(castling_group)
+    ep_repl = new_ep if new_ep else '-'
+    
+    new_fen = board_replacement + ' b ' + castling_repl + ' ' + ep_repl + ' 0 0'
+    full_replacement = '\\g<0>\\n' + new_fen
+    
+    add(full_pattern, full_replacement)
+
+
+# ============================================================
+# PHASE 0: Pre-processing
+# ============================================================
+
+add(r' (\d+) (\d+)$', r' 0 0')
+add(r'([a-h])6 0 0', r'\1Z 0 0')
+add(r'([a-h])3 0 0', r'\1Y 0 0')
+
+add(r'8', '........')
+add(r'7', '.......')
+add(r'6', '......')
+add(r'5', '.....')
+add(r'4', '....')
+add(r'3', '...')
+add(r'2', '..')
+add(r'1', '.')
+
+# Add "!" marker
+add(r'^', '!')
+
+# ============================================================
+# PHASE 1: Generate all pseudo-legal moves
+# ============================================================
+
+# --- PAWN MOVES ---
+for f in range(8):
+    for ri in range(1, 7):
+        chess_r = chess_rank(ri)
+        
+        # Single push
+        dst_ri = ri - 1
+        if dst_ri == 0:
+            gen_move_rule(f, ri, f, dst_ri, 'P', EMPTY, promotion='Q')
+        else:
+            gen_move_rule(f, ri, f, dst_ri, 'P', EMPTY)
+        
+        # Double push from rank 2
+        if chess_r == 2:
+            dst_ri = ri - 2
+            mid_ri = ri - 1
+            gen_move_rule(f, ri, f, dst_ri, 'P', EMPTY,
+                         path_squares=[(f, mid_ri)],
+                         new_ep=chr(ord('a') + f) + 'Y')
+        
+        # Captures
+        for df in [f-1, f+1]:
+            if 0 <= df <= 7:
+                dst_ri = ri - 1
+                if dst_ri == 0:
+                    gen_move_rule(f, ri, df, dst_ri, 'P', BLACK_PIECE, promotion='Q')
+                else:
+                    gen_move_rule(f, ri, df, dst_ri, 'P', BLACK_PIECE)
+        
+        # En passant (white pawn on rank 5, chess_r=5, ri=3)
+        if chess_r == 5:
+            for df in [f-1, f+1]:
+                if 0 <= df <= 7:
+                    captured_pawn_pos = pos_in_board(df, ri)
+                    ep_file = chr(ord('a') + df)
+                    gen_move_rule(f, ri, df, ri - 1, 'P', EMPTY,
+                                extra_squares=[(captured_pawn_pos, 'p', '.')],
+                                ep_cond=re.escape(ep_file + 'Z'))
+
+# --- KNIGHT MOVES ---
+knight_deltas = [(-2,-1),(-2,1),(-1,-2),(-1,2),(1,-2),(1,2),(2,-1),(2,1)]
+for f in range(8):
+    for ri in range(8):
+        for df_delta, dr_delta in knight_deltas:
+            df = f + df_delta
+            dri = ri + dr_delta
+            if 0 <= df <= 7 and 0 <= dri <= 7:
+                gen_move_rule(f, ri, df, dri, 'N', BLACK_OR_EMPTY)
+
+# --- KING MOVES (non-castling) ---
+king_deltas = [(-1,-1),(-1,0),(-1,1),(0,-1),(0,1),(1,-1),(1,0),(1,1)]
+for f in range(8):
+    for ri in range(8):
+        for df_delta, dr_delta in king_deltas:
+            df = f + df_delta
+            dri = ri + dr_delta
+            if 0 <= df <= 7 and 0 <= dri <= 7:
+                gen_move_rule(f, ri, df, dri, 'K', BLACK_OR_EMPTY)
+
+# --- ROOK MOVES ---
+for f in range(8):
+    for ri in range(8):
+        for df in range(8):
+            if df == f: continue
+            path = [(pf, ri) for pf in range(min(f,df)+1, max(f,df))]
+            gen_move_rule(f, ri, df, ri, 'R', BLACK_OR_EMPTY, path_squares=path)
+        for dri in range(8):
+            if dri == ri: continue
+            path = [(f, pr) for pr in range(min(ri,dri)+1, max(ri,dri))]
+            gen_move_rule(f, ri, f, dri, 'R', BLACK_OR_EMPTY, path_squares=path)
+
+# --- BISHOP MOVES ---
+for f in range(8):
+    for ri in range(8):
+        for fd, rd in [(1,1),(1,-1),(-1,1),(-1,-1)]:
+            for d in range(1, 8):
+                df = f + d * fd
+                dri = ri + d * rd
+                if not (0 <= df <= 7 and 0 <= dri <= 7):
+                    break
+                path = [(f + i * fd, ri + i * rd) for i in range(1, d)]
+                gen_move_rule(f, ri, df, dri, 'B', BLACK_OR_EMPTY, path_squares=path)
+
+# --- QUEEN MOVES ---
+for f in range(8):
+    for ri in range(8):
+        for df in range(8):
+            if df == f: continue
+            path = [(pf, ri) for pf in range(min(f,df)+1, max(f,df))]
+            gen_move_rule(f, ri, df, ri, 'Q', BLACK_OR_EMPTY, path_squares=path)
+        for dri in range(8):
+            if dri == ri: continue
+            path = [(f, pr) for pr in range(min(ri,dri)+1, max(ri,dri))]
+            gen_move_rule(f, ri, f, dri, 'Q', BLACK_OR_EMPTY, path_squares=path)
+        for fd, rd in [(1,1),(1,-1),(-1,1),(-1,-1)]:
+            for d in range(1, 8):
+                df = f + d * fd
+                dri = ri + d * rd
+                if not (0 <= df <= 7 and 0 <= dri <= 7):
+                    break
+                path = [(f + i * fd, ri + i * rd) for i in range(1, d)]
+                gen_move_rule(f, ri, df, dri, 'Q', BLACK_OR_EMPTY, path_squares=path)
+
+# --- CASTLING ---
+# White kingside: King e1->g1, Rook h1->f1
+# e1=(4,7), f1=(5,7), g1=(6,7), h1=(7,7)
+e1 = pos_in_board(4, 7)
+f1 = pos_in_board(5, 7)
+g1 = pos_in_board(6, 7)
+h1 = pos_in_board(7, 7)
+a1 = pos_in_board(0, 7)
+b1 = pos_in_board(1, 7)
+c1 = pos_in_board(2, 7)
+d1 = pos_in_board(3, 7)
+
+# Kingside castle
+squares = [(e1, 'K'), (f1, r'\.'), (g1, r'\.'), (h1, 'R')]
+board_pat, ginfos, ng = make_move_regex(squares)
+repls = {e1: '.', f1: 'R', g1: 'K', h1: '.'}
+board_repl = make_replacement(ginfos, repls, ng)
+gn = ng
+# Castling field must contain K
+# Match castling field with K present
+# We'll use a specific pattern: [Qq]*K[Qq]* (possibly with other letters)
+# Actually castling is a subset of {K,Q,k,q}. K must be present.
+castling_pat = '([Qq]*K[KQkq]*)'
+gn += 1
+c_gn = gn
+ep_pat = '([a-h][ZY]|-)'
+gn += 1
+full_pat = '!' + board_pat + r' w ' + castling_pat + ' ' + ep_pat + ' 0 0'
+new_fen = board_repl + ' b \\' + str(c_gn) + ' - 0 0'
+add(full_pat, '\\g<0>\\n' + new_fen)
+
+# Queenside castle: King e1->c1, Rook a1->d1
+# b1, c1, d1 must be empty
+squares = [(a1, 'R'), (b1, r'\.'), (c1, r'\.'), (d1, r'\.'), (e1, 'K')]
+board_pat, ginfos, ng = make_move_regex(squares)
+repls = {a1: '.', b1: '.', c1: 'K', d1: 'R', e1: '.'}
+board_repl = make_replacement(ginfos, repls, ng)
+gn = ng
+castling_pat = '([Kk]*Q[KQkq]*)'
+gn += 1
+c_gn = gn
+ep_pat = '([a-h][ZY]|-)'
+gn += 1
+full_pat = '!' + board_pat + r' w ' + castling_pat + ' ' + ep_pat + ' 0 0'
+new_fen = board_repl + ' b \\' + str(c_gn) + ' - 0 0'
+add(full_pat, '\\g<0>\\n' + new_fen)
+
+print(f"Move generation rules: {len(rules)}")
+
+# ============================================================
+# PHASE 2: Remove the original "!" FEN line
+# ============================================================
+# The original FEN starts with "!". Remove it.
+add(r'![^\n]*\n?', '')
+
+# ============================================================
+# PHASE 3: Update castling rights
+# ============================================================
+# Now each line is a generated FEN (expanded board, b to move, etc.)
+# We need to update castling rights based on what pieces are where.
+
+# Rules:
+# If white king is not at e1 → remove K and Q from castling
+# If white rook is not at h1 → remove K
+# If white rook is not at a1 → remove Q  
+# If black king is not at e8 → remove k and q
+# If black rook is not at h8 → remove k
+# If black rook is not at a8 → remove q
+
+# However, we need to be careful: re.sub is applied to the ENTIRE string (all lines).
+# We need patterns that match individual FEN lines and modify them.
+
+# Since "." doesn't match newlines, patterns without DOTALL flag work line-by-line
+# when they don't span newlines. But re.sub matches ALL occurrences.
+
+# Approach: use patterns that match within a single line.
+# The board is 71 chars. Specific squares have known positions.
+
+# e1 is at position 67 in the board string (rank_idx=7, file=4 → 7*9+4=67)
+# h1 is at position 70 (7*9+7=70)  
+# a1 is at position 63 (7*9+0=63)
+# e8 is at position 4 (0*9+4=4)
+# h8 is at position 7 (0*9+7=7)
+# a8 is at position 0 (0*9+0=0)
+
+# If e1 != K, remove K and Q from castling
+# Pattern: match a line where position 67 in board is not 'K', and castling contains K or Q
+# This is tricky because we need to simultaneously match a board position and a castling field.
+
+# Let me use a different approach for castling rights.
+# After each generated FEN line, I'll use regexes that:
+# 1. Match the entire line
+# 2. Check a specific board square
+# 3. Remove a specific castling letter if the condition is met
+
+# For "if e1 != K, remove K from castling":
+# We need to match lines where position 67 is not K AND castling contains K.
+# 
+# Position 67 in the board (0-indexed from start of board): the char at index 67
+# Board starts at the beginning of the line (after we removed "!").
+# FEN line: BOARD SP b SP CASTLING SP EP SP 0 SP 0
+# 
+# Position 67 = e1. We need 67 chars before it, then a char that's not K.
+# BOARD is 71 chars. So: 67 chars + [^K] + 3 chars = 71 chars for the board.
+# Then " b CASTLING ..."
+# 
+# But wait, the 67 chars might match across the board and into metadata if I'm not careful.
+# Let me be precise: the board is exactly 71 chars (pieces, dots, and slashes).
+
+# OK here's how I'll do it. For each condition, I'll match a line and remove the castling letter.
+# The pattern needs to capture everything and let me reconstruct the line with the modified castling.
+
+# Let's define position-based castling removal:
+# For each (board_position, expected_char, castling_char_to_remove):
+# If board[pos] != expected_char, remove castling_char from the castling field.
+
+def castling_removal_rule(board_pos, expected_char, castling_chars_to_check):
+    """
+    For each generated FEN line: if the board character at board_pos is NOT expected_char,
+    remove castling_chars from the castling field.
+    
+    castling_chars_to_check: string of chars to remove (e.g., "KQ")
+    """
+    # Match the line with the board split at board_pos
+    # Board: [0..board_pos-1] [board_pos] [board_pos+1..70]
+    # Then: " b " castling " " ep " 0 0"
+    
+    before = board_pos
+    after = 70 - board_pos
+    
+    for ch in castling_chars_to_check:
+        # Pattern: match a line where:
+        # - board[pos] != expected_char
+        # - castling field contains ch
+        # Replace: remove ch from castling field
+        
+        # We need to handle the castling field. It can be 1-4 chars from {K,Q,k,q} or "-".
+        # We need to remove a specific char.
+        
+        # Strategy: match the castling field and capture parts before and after ch.
+        # Castling field pattern with ch: ([KQkq]*)ch([KQkq]*)
+        # This assumes ch appears exactly once (which it does in valid FEN).
+        
+        # Full pattern:
+        # (BOARD_before)(NOT_expected)(BOARD_after) b (CAST_before)ch(CAST_after) (EP) 0 0
+        
+        not_expected = '[^' + expected_char + r'\n]'
+        
+        # Groups: 1=board_before, 2=bad_char, 3=board_after, 4=cast_before, 5=cast_after, 6=ep
+        pat = (
+            '(' + exact_gap(before) + ')' +  # group 1
+            '(' + not_expected + ')' +  # group 2
+            '(' + exact_gap(after) + ')' +  # group 3
+            ' b ' +
+            '([KQkq]*)' + re.escape(ch) + '([KQkq]*)' +  # groups 4, 5
+            ' ([a-h][ZY]|-) 0 0'  # group 6
+        )
+        
+        repl = '\\1\\2\\3 b \\4\\5 \\6 0 0'
+        add(pat, repl)
+
+# White king at e1 (pos 67) → if not K, remove K and Q
+castling_removal_rule(67, 'K', 'KQ')
+# White rook at h1 (pos 70) → if not R, remove K
+castling_removal_rule(70, 'R', 'K')
+# White rook at a1 (pos 63) → if not R, remove Q  
+castling_removal_rule(63, 'R', 'Q')
+# Black king at e8 (pos 4) → if not k, remove k and q
+castling_removal_rule(4, 'k', 'kq')
+# Black rook at h8 (pos 7) → if not r, remove k
+castling_removal_rule(7, 'r', 'k')
+# Black rook at a8 (pos 0) → if not r, remove q
+castling_removal_rule(0, 'r', 'q')
+
+# After removal, the castling field might be empty. Replace empty castling with "-".
+# Match lines where castling field is empty (two spaces around it become " b  " with double space)
+add(r' b  ', r' b - ')
+
+# ============================================================
+# PHASE 4: Check legality - remove positions where white king is in check
+# ============================================================
+# Wait, actually we need to check if the WHITE king is in check in the RESULTING position.
+# Since white just moved, we need to make sure white's king is not in check (i.e., white didn't
+# move into check or leave the king in check).
+# 
+# This means: in the resulting position (black to move), the white king must not be attacked
+# by any black piece.
+#
+# We need to find the white King position and check all attack vectors.
+# This is the hardest part because:
+# 1. The king can be anywhere on the board
+# 2. We need to check attacks from all directions (8 directions for sliders, 8 for knights, 2 for pawns)
+#
+# For each possible king position, for each attack vector, we generate a regex that matches
+# "the king is at this position AND there's an attacking piece along this vector".
+# If ANY such regex matches a line, that line should be removed.
+#
+# Approach: Mark lines as illegal, then remove them.
+# 
+# For each king position (file, rank) - 64 possible positions:
+#   For each attack type:
+#     Match: board has K at that position AND attacking piece along the vector
+#     Replace: mark the line as illegal (prepend "X" or something)
+#
+# Then: remove all lines starting with "X"
+#
+# Number of checks: 64 positions × ~(8 slider directions × up to 7 distances + 8 knight + 2 pawn)
+# = 64 × (56 + 8 + 2) = 64 × 66 = 4,224 checks
+# But for sliding pieces, we need to check that the path is clear AND the attacking piece is there.
+# This means for each (king_pos, attacker_pos, direction), one regex.
+# 
+# Total slider attacks: for each king position, up to 7 squares in each of 8 directions = 56 max
+# But each direction has at most 7 squares, and only the NEAREST piece matters.
+# 
+# Actually, we can check "is there a piece that attacks the king along this line?"
+# For a specific direction from the king:
+# - Check: the first piece encountered is an enemy slider (rook/queen for straight, bishop/queen for diagonal)
+# 
+# For a rook/queen attacking horizontally/vertically:
+# King at (kf, kr). Check right: first piece at (kf+d, kr) for d=1,2,...
+# If it's 'r' or 'q', the king is in check.
+# The pattern: King followed by d-1 empty squares, then r or q.
+# But we need "first piece" - meaning the path is clear.
+# Pattern: K followed by d-1 dots, then [rq], with nothing in between.
+# 
+# Wait, on the same rank, files increase to the right. In the board string,
+# on the same rank, consecutive chars are adjacent files.
+# So King at position p, then dots, then attacker at position p+d (same rank).
+# 
+# For cross-rank attacks (vertical), the gap between adjacent squares on the same file
+# is 9 chars (8 files + 1 slash). So we need to match with gaps of 9.
+#
+# For diagonal attacks, the gap is 8 (up-left/down-right) or 10 (up-right/down-left) chars.
+# Actually: NE = +1 file, -1 rank = position - 9 + 1 = -8 from king
+# Wait let me recalculate:
+# Position(f, r) = r*9 + f
+# N (same file, rank-1): position - 9
+# S (same file, rank+1): position + 9
+# E (file+1, same rank): position + 1
+# W (file-1, same rank): position - 1
+# NE: position - 9 + 1 = position - 8
+# NW: position - 9 - 1 = position - 10
+# SE: position + 9 + 1 = position + 10
+# SW: position + 9 - 1 = position + 8
+#
+# But we need to be careful about rank boundaries (slashes in the board string).
+# The slash is at positions 8, 17, 26, 35, 44, 53, 62.
+# When matching along a rank (E/W), we stay within 8 chars between slashes.
+# When matching across ranks (N/S/NE/NW/SE/SW), we cross slashes.
+#
+# For E direction (same rank, increasing file):
+# From King at (kf, kr), the next square east is at position (kf+1, kr) = kr*9 + kf + 1
+# The gap between king and the next square is 1 char (no intermediate).
+# For d squares east: the attacker is at (kf+d, kr), and we need d-1 intermediate dots.
+# Pattern for d=1: K[rq] (king immediately followed by rook/queen on same rank)
+# Pattern for d=2: K\.[rq]
+# etc.
+# BUT we need to make sure we don't cross a rank boundary (slash).
+# Since we're on the same rank, all positions kf to kf+d must be in [0,7], so no slash crossing.
+
+# For N direction (same file, decreasing rank):
+# Attacker at (kf, kr-d). Position difference: -9*d.
+# Between king and attacker: d-1 intermediate squares, each 9 apart.
+# Each intermediate square: must be empty (dot), and between them are 8 other chars on the rank.
+# Pattern: [rq]<8_chars>...<8_chars>\.K... wait, this is backwards.
+# The attacker is at a LOWER position in the string (since lower rank_idx = higher chess rank).
+# In the string, the attacker comes BEFORE the king.
+#
+# Let me reconsider. Let's work with the attacker potentially being before or after the king in the string.
+
+# For clarity, let me generate attack checks per king position:
+
+# Actually, I realize this approach generates a LOT of regexes. Let me count:
+# For each king position (64), for each direction (8 for sliders), for each distance (1-7):
+# 64 * 8 * 4(avg) ≈ 2048 for sliders
+# For knights: 64 * 8(max) ≈ 512
+# For pawns: 64 * 2 = 128
+# For king adjacency: not needed (opponent king can't attack; it would be mutual check)
+# Total: ~2700 regexes for check detection
+# Plus the move generation regexes (~3400). Total ~6100, well within 100K.
+
+# But wait, for the check detection, I need to match the ENTIRE line (board + metadata)
+# and mark it as illegal. The king position within the board determines the pattern.
+
+# Let me be even more efficient: instead of per-king-position, I can use relative patterns.
+# But the board string has slashes, making relative patterns tricky.
+
+# Let me just go with per-king-position patterns. 64 * ~30 attacks = ~2000 patterns.
+# That's very manageable.
+
+# For efficiency, let me generate check detection patterns.
+
+# Mark illegal positions with "#" at the start of the line.
+# Then remove all lines starting with "#".
+
+# Attack patterns for the white king:
+# The white king is 'K'. Black pieces that can attack:
+# - Pawn: 'p' can attack diagonally (from K's perspective: NE and NW, since black pawns attack south)
+#   Wait, black pawns attack SOUTH (towards lower ranks). So a black pawn at (kf±1, kr-1) attacks (kf, kr).
+#   In board position: pawn at position king_pos - 9 ± 1 = king_pos - 10 or king_pos - 8
+# - Knight: 'n' at knight-move distance
+# - Bishop: 'b' along diagonals (any distance, path clear)
+# - Rook: 'r' along ranks/files (any distance, path clear)
+# - Queen: 'q' along any direction (any distance, path clear)
+# - King: 'k' adjacent (for completeness, but normally impossible in valid positions)
+
+# For each king position, generate patterns for each attacker.
+
+def gen_check_pattern(king_file, king_rank_idx, attacker_pos_in_board, attacker_pattern, 
+                      path_positions=None):
+    """
+    Generate a regex that matches a FEN line where the white king at (king_file, king_rank_idx)
+    is attacked by a piece matching attacker_pattern at attacker_pos_in_board.
+    path_positions: list of positions that must be empty (for sliders)
+    
+    If matched, prepend "#" to mark as illegal.
+    """
+    king_pos = pos_in_board(king_file, king_rank_idx)
+    
+    match_squares = [(king_pos, 'K'), (attacker_pos_in_board, attacker_pattern)]
+    if path_positions:
+        for pp in path_positions:
+            match_squares.append((pp, r'\.'))
+    
+    # Deduplicate
+    seen = {}
+    for pos, pat in match_squares:
+        if pos in seen:
+            if seen[pos] != pat:
+                return  # conflict
+        else:
+            seen[pos] = pat
+    match_squares = list(seen.items())
+    match_squares.sort(key=lambda x: x[0])
+    
+    board_pattern, group_infos, num_groups = make_move_regex(match_squares)
+    
+    # Match the full line (no newlines)
+    # The line is: BOARD b CASTLING EP 0 0
+    gn = num_groups
+    rest_pat = '( b [KQkq]{1,4}|- [a-h][ZY]|- 0 0)'
+    # Actually let me be less strict about the rest
+    rest_pat = '([^\n]*)'
+    gn += 1
+    rest_gn = gn
+    
+    full_pat = board_pattern + rest_pat
+    
+    # Replacement: prepend "#" to mark as illegal
+    # We need to reconstruct the line with "#" at the start
+    board_repl = make_replacement(group_infos, {}, num_groups)  # no changes to board
+    full_repl = '#' + board_repl + '\\' + str(rest_gn)
+    
+    add(full_pat, full_repl)
+
+# Generate check patterns for each possible king position
+for kf in range(8):
+    for kri in range(8):
+        kpos = pos_in_board(kf, kri)
+        
+        # --- Pawn attacks ---
+        # Black pawn attacks south-west and south-east (from black's perspective, south = increasing rank_idx)
+        # A black pawn at (kf-1, kri-1) or (kf+1, kri-1) attacks (kf, kri)
+        for df in [-1, 1]:
+            af = kf + df
+            ari = kri - 1
+            if 0 <= af <= 7 and 0 <= ari <= 7:
+                gen_check_pattern(kf, kri, pos_in_board(af, ari), 'p')
+        
+        # --- Knight attacks ---
+        for df, dr in knight_deltas:
+            af = kf + df
+            ari = kri + dr
+            if 0 <= af <= 7 and 0 <= ari <= 7:
+                gen_check_pattern(kf, kri, pos_in_board(af, ari), 'n')
+        
+        # --- Rook/Queen attacks (straight lines) ---
+        for fd, rd in [(1,0),(-1,0),(0,1),(0,-1)]:
+            for d in range(1, 8):
+                af = kf + d * fd
+                ari = kri + d * rd
+                if not (0 <= af <= 7 and 0 <= ari <= 7):
+                    break
+                path = [pos_in_board(kf + i * fd, kri + i * rd) for i in range(1, d)]
+                gen_check_pattern(kf, kri, pos_in_board(af, ari), '[rq]', path)
+        
+        # --- Bishop/Queen attacks (diagonals) ---
+        for fd, rd in [(1,1),(1,-1),(-1,1),(-1,-1)]:
+            for d in range(1, 8):
+                af = kf + d * fd
+                ari = kri + d * rd
+                if not (0 <= af <= 7 and 0 <= ari <= 7):
+                    break
+                path = [pos_in_board(kf + i * fd, kri + i * rd) for i in range(1, d)]
+                gen_check_pattern(kf, kri, pos_in_board(af, ari), '[bq]', path)
+        
+        # --- King attacks (adjacent) ---
+        for df, dr in king_deltas:
+            af = kf + df
+            ari = kri + dr
+            if 0 <= af <= 7 and 0 <= ari <= 7:
+                gen_check_pattern(kf, kri, pos_in_board(af, ari), 'k')
+
+# Remove all lines marked with "#"
+add(r'#[^\n]*\n?', '')
+# Also remove trailing newline if any
+add(r'\n$', '')
+
+# ============================================================
+# PHASE 5: Compress board - convert dots back to digits
+# ============================================================
+add(r'\.\.\.\.\.\.\.\.', '8')
+add(r'\.\.\.\.\.\.\.', '7')
+add(r'\.\.\.\.\.\.', '6')
+add(r'\.\.\.\.\.', '5')
+add(r'\.\.\.\.', '4')
+add(r'\.\.\.', '3')
+add(r'\.\.', '2')
+add(r'\.', '1')
+
+# Restore en-passant encoding
+add(r'([a-h])Z', r'\g<1>6')
+add(r'([a-h])Y', r'\g<1>3')
+
+print(f"Total rules: {len(rules)}")
+
+with open('/app/re.json', 'w') as f:
+    json.dump(rules, f)
+
+print(f"File size: {os.path.getsize('/app/re.json')} bytes")
+print(f"File size MB: {os.path.getsize('/app/re.json') / 1024 / 1024:.2f}")

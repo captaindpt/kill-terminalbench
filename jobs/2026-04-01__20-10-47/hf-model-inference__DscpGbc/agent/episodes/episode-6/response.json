@@ -1,0 +1,41 @@
+{
+  "id": "gen-1775082428-e1JPmluRu19XYOyfSgiC",
+  "container": null,
+  "content": [
+    {
+      "id": "toolu_bdrk_01VUs8FG7t88u3HhAB1u8vZM",
+      "caller": {
+        "type": "direct"
+      },
+      "input": {
+        "command": "# Kill any existing process on port 5000\npkill -f \"python3 /app/app.py\" 2>/dev/null || true\nsleep 1\n\n# Start the service in the background using setsid so it persists\nsetsid python3 /app/app.py > /app/app.log 2>&1 &\necho \"Started Flask app, waiting for it to be ready...\"\nsleep 5\n\n# Check if it's running\nif curl -s http://localhost:5000/sentiment -X POST -H \"Content-Type: application/json\" -d '{\"text\": \"test\"}' > /dev/null 2>&1; then\n    echo \"Service is up!\"\nelse\n    echo \"Service might still be loading, waiting more...\"\n    sleep 10\nfi"
+      },
+      "name": "bash",
+      "type": "tool_use"
+    }
+  ],
+  "model": "anthropic/claude-4.6-opus-20260205",
+  "role": "assistant",
+  "stop_reason": "tool_use",
+  "stop_sequence": null,
+  "type": "message",
+  "usage": {
+    "cache_creation": null,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "inference_geo": null,
+    "input_tokens": 2847,
+    "output_tokens": 233,
+    "server_tool_use": null,
+    "service_tier": null,
+    "speed": "standard",
+    "cost": 0.02006,
+    "is_byok": false,
+    "cost_details": {
+      "upstream_inference_cost": 0.02006,
+      "upstream_inference_prompt_cost": 0.014235,
+      "upstream_inference_completions_cost": 0.005825
+    }
+  },
+  "provider": "Amazon Bedrock"
+}

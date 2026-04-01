@@ -1,0 +1,46 @@
+{
+  "id": "gen-1775059946-CmaexOCxsyHeVYv1zTwS",
+  "container": null,
+  "content": [
+    {
+      "citations": null,
+      "text": "Good. Now let me create everything step by step.",
+      "type": "text"
+    },
+    {
+      "id": "toolu_bdrk_01RyZCq9nNLiDX1fNbai6DgR",
+      "caller": {
+        "type": "direct"
+      },
+      "input": {
+        "command": "# Step 1: Create directory\nmkdir -p /app/ssl/\n\n# Step 2: Generate 2048-bit RSA private key\nopenssl genrsa -out /app/ssl/server.key 2048 2>&1\nchmod 600 /app/ssl/server.key\n\n# Step 3: Create self-signed certificate valid for 365 days\nopenssl req -new -x509 -key /app/ssl/server.key -out /app/ssl/server.crt -days 365 \\\n  -subj \"/O=DevOps Team/CN=dev-internal.company.local\" 2>&1\n\n# Step 4: Create combined PEM file (key + cert)\ncat /app/ssl/server.key /app/ssl/server.crt > /app/ssl/server.pem\nchmod 600 /app/ssl/server.pem\n\necho \"=== Files created ===\"\nls -la /app/ssl/"
+      },
+      "name": "bash",
+      "type": "tool_use"
+    }
+  ],
+  "model": "anthropic/claude-4.6-opus-20260205",
+  "role": "assistant",
+  "stop_reason": "tool_use",
+  "stop_sequence": null,
+  "type": "message",
+  "usage": {
+    "cache_creation": null,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "inference_geo": null,
+    "input_tokens": 2022,
+    "output_tokens": 288,
+    "server_tool_use": null,
+    "service_tier": null,
+    "speed": "standard",
+    "cost": 0.01731,
+    "is_byok": false,
+    "cost_details": {
+      "upstream_inference_cost": 0.01731,
+      "upstream_inference_prompt_cost": 0.01011,
+      "upstream_inference_completions_cost": 0.0072
+    }
+  },
+  "provider": "Amazon Bedrock"
+}

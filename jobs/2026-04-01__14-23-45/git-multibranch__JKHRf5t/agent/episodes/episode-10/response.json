@@ -1,0 +1,41 @@
+{
+  "id": "gen-1775055320-l8LNe24Aut9sI7Ae1lvM",
+  "container": null,
+  "content": [
+    {
+      "id": "toolu_bdrk_01NvEyhRaiBunaEJZWAAoCsw",
+      "caller": {
+        "type": "direct"
+      },
+      "input": {
+        "command": "# Configure SSH for password auth\nmkdir -p /etc/ssh/sshd_config.d\ncat > /etc/ssh/sshd_config.d/allow-password.conf << 'EOF'\nPasswordAuthentication yes\nPermitRootLogin yes\nEOF\n\n# Also set password for git user\necho \"git:password\" | chpasswd\n\n# Make sure git user has a valid shell\nchsh -s /bin/bash git\n\n# Generate SSH host keys if missing\nssh-keygen -A\n\n# Start sshd\n/usr/sbin/sshd\npgrep sshd"
+      },
+      "name": "bash",
+      "type": "tool_use"
+    }
+  ],
+  "model": "anthropic/claude-4.6-opus-20260205",
+  "role": "assistant",
+  "stop_reason": "tool_use",
+  "stop_sequence": null,
+  "type": "message",
+  "usage": {
+    "cache_creation": null,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "inference_geo": null,
+    "input_tokens": 2465,
+    "output_tokens": 191,
+    "server_tool_use": null,
+    "service_tier": null,
+    "speed": "standard",
+    "cost": 0.0171,
+    "is_byok": false,
+    "cost_details": {
+      "upstream_inference_cost": 0.0171,
+      "upstream_inference_prompt_cost": 0.012325,
+      "upstream_inference_completions_cost": 0.004775
+    }
+  },
+  "provider": "Amazon Bedrock"
+}

@@ -1,0 +1,46 @@
+{
+  "id": "gen-1775056583-HC8CoS4JsZIjyI6tAJjv",
+  "container": null,
+  "content": [
+    {
+      "citations": null,
+      "text": "Now let me set everything up:",
+      "type": "text"
+    },
+    {
+      "id": "toolu_bdrk_01JYbR8Way1odzcDGgJkck1b",
+      "caller": {
+        "type": "direct"
+      },
+      "input": {
+        "command": "# Step 1: Create the 'git' user with password \"password\"\nid git 2>/dev/null || useradd -m -s /usr/bin/git-shell git\necho 'git:password' | chpasswd\necho \"git user created\"\n\n# Create the bare git repository\nmkdir -p /git\ngit init --bare /git/project.git\nchown -R git:git /git\n\n# Create deployment directories\nmkdir -p /var/www/main /var/www/dev\nchown -R git:git /var/www/main /var/www/dev\n\necho \"Done creating repo and dirs\""
+      },
+      "name": "bash",
+      "type": "tool_use"
+    }
+  ],
+  "model": "anthropic/claude-4.6-opus-20260205",
+  "role": "assistant",
+  "stop_reason": "tool_use",
+  "stop_sequence": null,
+  "type": "message",
+  "usage": {
+    "cache_creation": null,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "inference_geo": null,
+    "input_tokens": 2280,
+    "output_tokens": 204,
+    "server_tool_use": null,
+    "service_tier": null,
+    "speed": "standard",
+    "cost": 0.0165,
+    "is_byok": false,
+    "cost_details": {
+      "upstream_inference_cost": 0.0165,
+      "upstream_inference_prompt_cost": 0.0114,
+      "upstream_inference_completions_cost": 0.0051
+    }
+  },
+  "provider": "Amazon Bedrock"
+}

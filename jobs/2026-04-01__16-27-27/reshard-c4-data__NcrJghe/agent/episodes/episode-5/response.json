@@ -1,0 +1,41 @@
+{
+  "id": "gen-1775063041-kl5FX97HOAhWi3n4nY1j",
+  "container": null,
+  "content": [
+    {
+      "id": "toolu_bdrk_016CYHRX7qv2L35thKJFVWKb",
+      "caller": {
+        "type": "direct"
+      },
+      "input": {
+        "command": "# Test: compress a few files together\ncd /app/c4_sample && tar czf /tmp/test_bundle.tar.gz c4-mini-0000[0-9]-of-10000.jsonl c4-mini-0001[0-9]-of-10000.jsonl c4-mini-0002[0-9]-of-10000.jsonl\nls -la /tmp/test_bundle.tar.gz\necho \"---\"\n# Total original size of those 30 files\nls -la /app/c4_sample/c4-mini-0000[0-9]-of-10000.jsonl /app/c4_sample/c4-mini-0001[0-9]-of-10000.jsonl /app/c4_sample/c4-mini-0002[0-9]-of-10000.jsonl | awk '{sum+=$5} END{print sum}'\nrm /tmp/test_bundle.tar.gz"
+      },
+      "name": "bash",
+      "type": "tool_use"
+    }
+  ],
+  "model": "anthropic/claude-4.6-opus-20260205",
+  "role": "assistant",
+  "stop_reason": "tool_use",
+  "stop_sequence": null,
+  "type": "message",
+  "usage": {
+    "cache_creation": null,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "inference_geo": null,
+    "input_tokens": 5567,
+    "output_tokens": 279,
+    "server_tool_use": null,
+    "service_tier": null,
+    "speed": "standard",
+    "cost": 0.03481,
+    "is_byok": false,
+    "cost_details": {
+      "upstream_inference_cost": 0.03481,
+      "upstream_inference_prompt_cost": 0.027835,
+      "upstream_inference_completions_cost": 0.006975
+    }
+  },
+  "provider": "Amazon Bedrock"
+}

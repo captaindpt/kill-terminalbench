@@ -1,0 +1,41 @@
+{
+  "id": "gen-1775051394-0p0J3M5m0hbrJJjFeMEr",
+  "container": null,
+  "content": [
+    {
+      "id": "toolu_bdrk_019TUomeHqHVoYjeKmohu33B",
+      "caller": {
+        "type": "direct"
+      },
+      "input": {
+        "command": "# Set password authentication\nsed -i 's/^#PasswordAuthentication yes/PasswordAuthentication yes/' /etc/ssh/sshd_config\nsed -i 's/^PasswordAuthentication no/PasswordAuthentication yes/' /etc/ssh/sshd_config\n\n# Ensure KbdInteractiveAuthentication is enabled (Ubuntu 24.04 uses this)\ngrep -q \"^KbdInteractiveAuthentication\" /etc/ssh/sshd_config && \\\n    sed -i 's/^KbdInteractiveAuthentication.*/KbdInteractiveAuthentication yes/' /etc/ssh/sshd_config || \\\n    echo \"KbdInteractiveAuthentication yes\" >> /etc/ssh/sshd_config\n\n# Make sure PasswordAuthentication is explicitly set\ngrep -q \"^PasswordAuthentication\" /etc/ssh/sshd_config || echo \"PasswordAuthentication yes\" >> /etc/ssh/sshd_config\n\n# Verify\ngrep \"PasswordAuthentication\\|KbdInteractive\" /etc/ssh/sshd_config | grep -v \"^#\""
+      },
+      "name": "bash",
+      "type": "tool_use"
+    }
+  ],
+  "model": "anthropic/claude-4.6-opus-20260205",
+  "role": "assistant",
+  "stop_reason": "tool_use",
+  "stop_sequence": null,
+  "type": "message",
+  "usage": {
+    "cache_creation": null,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "inference_geo": null,
+    "input_tokens": 2550,
+    "output_tokens": 321,
+    "server_tool_use": null,
+    "service_tier": null,
+    "speed": "standard",
+    "cost": 0.020775,
+    "is_byok": false,
+    "cost_details": {
+      "upstream_inference_cost": 0.020775,
+      "upstream_inference_prompt_cost": 0.01275,
+      "upstream_inference_completions_cost": 0.008025
+    }
+  },
+  "provider": "Amazon Bedrock"
+}

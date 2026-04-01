@@ -16,6 +16,9 @@ Suggested reading order:
 5. `failures.md`
 6. `task-buckets.md`
 7. `usage-and-cost.md`
+8. `semantic-compaction.md`
+9. `dynamic-temperature.md`
+10. `session-notes-memory.md`
 
 Conventions:
 - Prefer dated, factual entries over long narrative notes.

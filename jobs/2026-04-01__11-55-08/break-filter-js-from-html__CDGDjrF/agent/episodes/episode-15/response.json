@@ -1,0 +1,41 @@
+{
+  "id": "gen-1775044766-LxPksDFEzEtZk2LLUa6i",
+  "container": null,
+  "content": [
+    {
+      "id": "toolu_bdrk_01Vt9VuyLdvaqThf8RPcNkn8",
+      "caller": {
+        "type": "direct"
+      },
+      "input": {
+        "command": "# The onerror gets stripped. Let me think more carefully.\n# \n# What about SVG <set> element with href to navigate to javascript: URI?\n# Or <svg><a> with href=\"javascript:alert(1)\"?\n# These don't start with \"on\" so they survive...\n# But <a href=\"javascript:...\"> requires a click.\n#\n# What about <meta http-equiv=\"refresh\" content=\"0;url=javascript:alert(1)\">?\n# Modern browsers don't support javascript: in meta refresh.\n#\n# What about <body background=\"javascript:alert(1)\">? No, that doesn't work.\n#\n# Let me think about actual auto-triggering vectors:\n# 1. SVG <animate> can animate attributes and potentially trigger things\n# 2. SVG <set> can set attributes\n# 3. CSS-based attacks? @import or expressions?\n\n# Actually wait - what about <img src=x onerror=alert(1)>?\n# The \"onerror\" starts with \"on\" so it gets removed.\n\n# What if I use a capitalized or mixed case \"on\" attribute?\necho '<img src=x Onerror=alert(1)>' | python3 -c \"\nfrom bs4 import BeautifulSoup\nhtml = open('/dev/stdin').read()\nsoup = BeautifulSoup(html, 'html.parser')\nfor tag in soup.find_all(True):\n    for attr in list(tag.attrs):\n        print(f'attr: {repr(attr)}')\n        if attr.startswith('on'):\n            del tag.attrs[attr]\nprint(str(soup))\n\""
+      },
+      "name": "bash",
+      "type": "tool_use"
+    }
+  ],
+  "model": "anthropic/claude-4.6-opus-20260205",
+  "role": "assistant",
+  "stop_reason": "tool_use",
+  "stop_sequence": null,
+  "type": "message",
+  "usage": {
+    "cache_creation": null,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "inference_geo": null,
+    "input_tokens": 2711,
+    "output_tokens": 444,
+    "server_tool_use": null,
+    "service_tier": null,
+    "speed": "standard",
+    "cost": 0.024655,
+    "is_byok": false,
+    "cost_details": {
+      "upstream_inference_cost": 0.024655,
+      "upstream_inference_prompt_cost": 0.013555,
+      "upstream_inference_completions_cost": 0.0111
+    }
+  },
+  "provider": "Amazon Bedrock"
+}

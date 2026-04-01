@@ -1,0 +1,41 @@
+{
+  "id": "gen-1775055521-q4NLjgEc6JTVkdPSQsZT",
+  "container": null,
+  "content": [
+    {
+      "id": "toolu_bdrk_01WMwtZ5ogMjeTq189ZEXZBP",
+      "caller": {
+        "type": "direct"
+      },
+      "input": {
+        "command": "# Let's try using expect or SSH with StrictHostKeyChecking=no\n# First, let me set up SSH key-based auth for testing, or use GIT_SSH_COMMAND with a password\n\n# Actually, let me use the git credential helper approach\n# Or let me set up known_hosts first\n\nssh-keyscan -H localhost 2>/dev/null >> /root/.ssh/known_hosts 2>/dev/null || true\nmkdir -p /root/.ssh\nssh-keyscan -H localhost >> /root/.ssh/known_hosts 2>/dev/null\n\n# Generate an SSH key for root and add it to git user's authorized_keys\nssh-keygen -t rsa -f /root/.ssh/id_rsa -N \"\" -q 2>/dev/null || true\nmkdir -p /home/git/.ssh\ncat /root/.ssh/id_rsa.pub >> /home/git/.ssh/authorized_keys\nchown -R git:git /home/git/.ssh\nchmod 700 /home/git/.ssh\nchmod 600 /home/git/.ssh/authorized_keys\n\n# Test SSH\nssh -o StrictHostKeyChecking=no git@localhost echo \"SSH works\""
+      },
+      "name": "bash",
+      "type": "tool_use"
+    }
+  ],
+  "model": "anthropic/claude-4.6-opus-20260205",
+  "role": "assistant",
+  "stop_reason": "tool_use",
+  "stop_sequence": null,
+  "type": "message",
+  "usage": {
+    "cache_creation": null,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "inference_geo": null,
+    "input_tokens": 3629,
+    "output_tokens": 331,
+    "server_tool_use": null,
+    "service_tier": null,
+    "speed": "standard",
+    "cost": 0.02642,
+    "is_byok": false,
+    "cost_details": {
+      "upstream_inference_cost": 0.02642,
+      "upstream_inference_prompt_cost": 0.018145,
+      "upstream_inference_completions_cost": 0.008275
+    }
+  },
+  "provider": "Amazon Bedrock"
+}

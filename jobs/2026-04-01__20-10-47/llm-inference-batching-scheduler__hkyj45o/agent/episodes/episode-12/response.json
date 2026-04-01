@@ -1,0 +1,41 @@
+{
+  "id": "gen-1775074549-D3ue89rJEbB8asuw7T4A",
+  "container": null,
+  "content": [
+    {
+      "id": "toolu_bdrk_01CWkseL3yFs5sdeENKkGKoa",
+      "caller": {
+        "type": "direct"
+      },
+      "input": {
+        "command": "cd /app/task_file && python3 << 'PYEOF'\nimport sys, json, math\nfrom collections import defaultdict\nsys.path.insert(0, 'scripts')\nfrom cost_model import CostModel, CostConsts, align, HEADS, HIDDEN\n\ncm = CostModel(64)\n\ndef load_requests(path):\n    reqs = []\n    with open(path) as f:\n        for line in f:\n            reqs.append(json.loads(line))\n    return reqs\n\ndef evaluate_plan(reqs, plan_records):\n    req_dict = {r['request_id']: r for r in reqs}\n    metrics = cm.plan_metrics(req_dict, plan_records)\n    return metrics\n\n# First, let me try a simple approach:\n# Pick 8 shapes, assign requests, sort by gen_len, batch with similar gen_len\n\n# Shape selection: need to cover both buckets\n# B1 aligned seqs: 64, 128, 320, 384, 448, 512, 576, 640, 1088-2048\n# B2 aligned seqs: 64, 128, 192, 256, 320, 384-704\n\n# Let's try: 64, 128, 192, 320, 640, 704, 1408, 2048\nshapes = [64, 128, 192, 320, 640, 704, 1408, 2048]\n\ndef assign_shape(prompt_len, shapes):\n    s = align(prompt_len, 64)\n    for sh in shapes:\n        if sh >= s:\n            return sh\n    return shapes[-1]  # shouldn't happen if shapes cover max\n\ndef build_plan(reqs, shapes, batch_size_target=None):\n    # Group by assigned shape\n    shape_groups = defaultdict(list)\n    for r in reqs:\n        sh = assign_shape(r['prompt_len'], shapes)\n        shape_groups[sh].append(r)\n    \n    plan = []\n    bid_counter = 0\n    \n    for sh in sorted(shape_groups.keys()):\n        group = shape_groups[sh]\n        # Sort by gen_len\n        group.sort(key=lambda r: r['gen_len'])\n        \n        # Create batches - group by similar gen_len\n        # Simple approach: fixed batch size\n        bs = batch_size_target or max(1, len(group))\n        \n        for i in range(0, len(group), bs):\n            batch = group[i:i+bs]\n            bid_counter += 1\n            batch_id = f\"b-{bid_counter:04d}\"\n            for r in batch:\n                plan.append({\n                    'request_id': r['request_id'],\n                    'batch_id': batch_id,\n                    'shape': {\n                        'seq_align': sh,\n                        'heads_align': HEADS,\n                        'hidden_align': HIDDEN,\n                    }\n                })\n    \n    return plan\n\n# Test with different batch sizes\nfor fname, label in [('input_data/requests_bucket_1.jsonl', 'B1'), ('input_data/requests_bucket_2.jsonl', 'B2')]:\n    reqs = load_requests(fname)\n    \n    for bs in [1, 5, 10, 20, 50, 100, 800]:\n        plan = build_plan(reqs, shapes, bs)\n        metrics = evaluate_plan(reqs, plan)\n        num_batches = len(set(p['batch_id'] for p in plan))\n        print(f'{label} bs={bs:4d}: cost={metrics[\"cost\"]:.2e}, pad={metrics[\"pad_ratio\"]:.4f}, '\n              f'p95={metrics[\"p95_latency_ms\"]:.2e}, seq={metrics[\"sequential_timecost\"]:.2e}, batches={num_batches}')\n\nPYEOF\n"
+      },
+      "name": "bash",
+      "type": "tool_use"
+    }
+  ],
+  "model": "anthropic/claude-4.6-opus-20260205",
+  "role": "assistant",
+  "stop_reason": "tool_use",
+  "stop_sequence": null,
+  "type": "message",
+  "usage": {
+    "cache_creation": null,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "inference_geo": null,
+    "input_tokens": 15183,
+    "output_tokens": 1017,
+    "server_tool_use": null,
+    "service_tier": null,
+    "speed": "standard",
+    "cost": 0.10134,
+    "is_byok": false,
+    "cost_details": {
+      "upstream_inference_cost": 0.10134,
+      "upstream_inference_prompt_cost": 0.075915,
+      "upstream_inference_completions_cost": 0.025425
+    }
+  },
+  "provider": "Amazon Bedrock"
+}

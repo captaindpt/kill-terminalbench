@@ -1,0 +1,41 @@
+{
+  "id": "gen-1775064849-x0mvLqIbFyEcpk1c8ldy",
+  "container": null,
+  "content": [
+    {
+      "id": "toolu_vrtx_01Mo7UcMqpiAnpEkvzDYNQiY",
+      "caller": {
+        "type": "direct"
+      },
+      "input": {
+        "command": "cd /app/task_file && python3 << 'EOF'\nimport json\nimport sys\nsys.path.insert(0, 'scripts')\nfrom cost_model import CostModel, CostConsts, align, HEADS, HIDDEN\nfrom collections import defaultdict\n\ncm = CostModel(64)\n\nreqs = []\nwith open('input_data/requests_bucket_1.jsonl') as f:\n    for line in f:\n        reqs.append(json.loads(line))\n\nfor r in reqs:\n    r['aligned'] = align(r['prompt_len'], 64)\n\n# Compute individual latency for each request\nlats = []\nfor r in reqs:\n    m = cm.batch_metrics([r])\n    lat = max(l + 8.0 for l in m['latencies'])\n    lats.append((lat, r))\n\nlats.sort(reverse=True)\n\nprint(\"B1 top 20 latency requests:\")\nfor lat, r in lats[:20]:\n    print(f\"  {r['request_id']}: aligned={r['aligned']}, gen={r['gen_len']}, lat={lat:.0f}\")\n\nprint(f\"\\nTotal seq time (individual): {sum(l for l,_ in lats):.4e}\")\n\n# What fraction of seq_time is from high-prompt requests?\nhigh_prompt = sum(l for l, r in lats if r['aligned'] >= 1088)\nlow_prompt = sum(l for l, r in lats if r['aligned'] < 1088)\nn_high = len([1 for _,r in lats if r['aligned']>=1088])\nn_low = len([1 for _,r in lats if r['aligned']<1088])\nprint(f\"\\nHigh prompt (>=1088) seq_time: {high_prompt:.4e} ({n_high} reqs)\")\nprint(f\"Low prompt (<1088) seq_time: {low_prompt:.4e} ({n_low} reqs)\")\n\n# If we batch high-prompt requests in pairs (reducing seq_time by ~50% for those)\n# and keep low-prompt as individual:\n# high contribution: ~125e6 / 2 \u2248 62.5e6 -> total \u2248 210e6 + 62.5e6 = 272.5e6\n# Still close to threshold of 270e6\n\n# What if we batch all requests in pairs but only for those with very close gen_len?\n# i.e., adaptive: pair only when gen_len difference is small\n\n# Actually let me think differently. \n# seq_time target for B1 = 2.7e8\n# current individual = 3.35e8\n# need to save: 3.35e8 - 2.7e8 = 6.5e7\n\n# If we batch some requests in pairs, each pair saves roughly its individual latency\n# (since seq_time contribution goes from lat1 + lat2 to max(lat1, lat2) \u2248 lat1)\n# So we save roughly the latency of the smaller request\n\n# To save 6.5e7 ms, we need pairs whose smaller-request latencies sum to 6.5e7\n# Average latency \u2248 3.35e8 / 800 = 418750 ms\n# So we need about 155 pairs (saving 418750 each)\n\n# But pairing increases cost. We need cost < 3e11\n# Current cost (individual) = 2.87e11 (without compile)\n# Budget: 3e11 - compile_cost \u2248 3e11 - 4.4e9 \u2248 2.96e11\n# So we can add about 9e9 in decode cost from pairing\n\n# When we pair requests with same aligned prompt:\n# decode cost increase = request1 sees G_max = max(g1, g2) instead of g1\n# The additional decode steps for request1: g2 - g1 steps (if g2 > g1)\n# Each step costs A*(S+g)^2 + B*(S+g)\n# For large S (say 2048), each step \u2248 1*2048^2 + 2048*2048 = 4M + 4M = 8M\n# So pairing with delta_g = 10 at S=2048: extra cost \u2248 10 * 8M = 80M per request\n# For the request that defines G_max, no extra (it's already at G_max)\n\n# Total budget per pair: 9e9 / 155 \u2248 58M\n# At S=2048: max delta_g \u2248 58M / 8M \u2248 7 tokens\n\n# So for high-prompt requests, pairs must be VERY close in gen_len\n# For low-prompt requests, we can tolerate larger delta_g\n\nprint(f\"\\n--- Gen len analysis for high-prompt B1 ---\")\nhigh_reqs = sorted([(r['aligned'], r['gen_len'], r['request_id']) for _, r in lats if r['aligned'] >= 1088])\nby_aligned = defaultdict(list)\nfor a, g, rid in high_reqs:\n    by_aligned[a].append(g)\n\nfor a in sorted(by_aligned.keys()):\n    gl = sorted(by_aligned[a])\n    print(f\"  S={a}: gen_lens={gl}\")\n\nEOF\n"
+      },
+      "name": "bash",
+      "type": "tool_use"
+    }
+  ],
+  "model": "anthropic/claude-4.6-opus-20260205",
+  "role": "assistant",
+  "stop_reason": "tool_use",
+  "stop_sequence": null,
+  "type": "message",
+  "usage": {
+    "cache_creation": null,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "inference_geo": null,
+    "input_tokens": 12943,
+    "output_tokens": 1387,
+    "server_tool_use": null,
+    "service_tier": null,
+    "speed": "standard",
+    "cost": 0.09939,
+    "is_byok": false,
+    "cost_details": {
+      "upstream_inference_cost": 0.09939,
+      "upstream_inference_prompt_cost": 0.064715,
+      "upstream_inference_completions_cost": 0.034675
+    }
+  },
+  "provider": "Google"
+}
