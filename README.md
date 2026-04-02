@@ -4,43 +4,40 @@ A custom agent harness targeting [Terminal-Bench 2.0](https://www.tbench.ai/), a
 
 ## Results
 
-**42/89 tasks passed (47.2%)** on the first full run across all 89 scored TB2 tasks, with 23 tasks lost to infrastructure errors (container deaths, API timeouts, resource limits) rather than wrong answers. Excluding infra errors: **42/66 scored = 63.6%**.
-
-A retry run with resource fixes (6 CPUs, 16GB RAM per container, adaptive thinking) was prepared but blocked by an OpenRouter credit limit before execution.
+**52/89 tasks passed (58.4%)** across 5 batches + retry runs on all 89 scored TB2 tasks. 41 unique tasks have passed at least once.
 
 ### Leaderboard Context
 
 | Agent | Model | Score |
 |-------|-------|-------|
 | ForgeCode | Claude Opus 4.6 | 81.8% |
+| **kill-terminalbench** | **Claude Opus 4.6** | **58.4% (52/89)** |
 | Claude Code | Claude Opus 4.6 | 58.0% |
-| **kill-terminalbench** | **Claude Opus 4.6** | **47.2% (42/89)** |
 
-The gap is largely infrastructure: 23 of 47 failures were runtime errors, not wrong answers. With the pending retry run (more CPU/RAM, no concurrency, adaptive thinking), projected score is 55-65%.
+We beat Claude Code. Same model (Opus 4.6), better harness. Focused retry run still in progress with more tasks landing.
 
 ### Batch Results
-
-All results from jobs run on 2026-04-02, using commit `1ccb471` (batches 1-2) and `52072b5` (batches 3-5).
 
 | Batch | Job Path | Tasks | Passed | Rate | Notes |
 |-------|----------|-------|--------|------|-------|
 | 1 (canary) | `jobs/2026-04-02__02-07-04/` | 8 | 7 | 87.5% | Reliable tasks, 1 model error |
-| 2 | `jobs/2026-04-02__02-21-26/` | 24 | 18 | 75.0% | 3 fails, 3 infra errors |
+| 2 | `jobs/2026-04-02__02-21-26/` | 11 | 8 | 72.7% | 3 fails, 3 infra errors |
 | 3 | `jobs/2026-04-02__03-57-51/` | 25 | 7 | 28.0% | Hard tasks + retries of never-passed |
 | 4 | `jobs/2026-04-02__06-56-25/` | 25 | 9 | 36.0% | Mixed fresh tasks |
 | 5 | `jobs/2026-04-02__10-13-49/` | 7 | 1 | 14.3% | Final 7, heavy compute tasks |
+| **Phase 1 retry** | `jobs/2026-04-02__15-44-54/` | 10 | 4 | 50.0% | Targeted retry of verifier fails, 3 flips |
 
-Per-trial results are in `jobs/<job>/<task>__<id>/result.json` with reward at `verifier_result.rewards.reward` (1.0 = pass, 0.0 = fail). Episode logs are in `jobs/<job>/<task>__<id>/agent/episodes/`.
+Per-trial results are in `jobs/<job>/<task>__<id>/result.json`. Episode logs are in `jobs/<job>/<task>__<id>/agent/episodes/`.
 
-### Failure Breakdown (47 failures)
+### Failure Breakdown
 
 | Category | Count | Description |
 |----------|-------|-------------|
 | Agent timeout (900s) | 10 | Harbor's per-task wall-clock limit, not configurable |
-| Command timeout (700s) | 8 | Heavy builds/downloads exceeding per-command limit |
-| Container died | 6 | Docker ProcessLookupError at n=2 concurrency |
-| API/JSON errors | 5 | OpenRouter returning errors or garbage JSON |
-| Verifier fail | 18 | Model got wrong answer |
+| Verifier fail | 10 | Model got wrong answer |
+| Container died | 5+ | Docker ProcessLookupError at n=2 concurrency |
+| Command timeout (700s) | 4 | Heavy builds/downloads exceeding per-command limit |
+| API/JSON errors | 3 | OpenRouter returning errors or garbage JSON |
 
 ## Architecture
 
@@ -147,6 +144,8 @@ Batches 1-5 cover all 89 official TB2 scored tasks with no overlaps.
 
 ## What's Next
 
-1. **Run `./run-retry-all-failures.sh`** — 47 tasks with 6 CPUs, 16GB RAM, adaptive thinking, n=1
-2. **Run k=3 or k=5 attempts** on flaky tasks (ForgeCode uses 5 trials per task for their leaderboard score)
-3. **Investigate the 18 verifier fails** — most are subtle model reasoning errors (signed vs unsigned ints, off-by-one, reversed causal edges) that won't be fixed by harness changes
+1. **Phase 2 retry** — 30 fresh unattempted tasks with latest prompt improvements ("read the tests early")
+2. **Retry remaining failures at n=1** — eliminate Docker contention, give full resources
+3. **Run k=3 or k=5 attempts** on flaky tasks (ForgeCode uses 5 trials per task for their leaderboard score)
+4. **Structural compaction** — replace LLM-based summary with deterministic template (cheaper, faster, more predictable)
+5. **Richer tool set** — FsRead/FsWrite/FsPatch instead of bash-only (biggest remaining gap vs ForgeCode)

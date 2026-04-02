@@ -5,12 +5,14 @@ from __future__ import annotations
 import json
 import os
 import re
+import asyncio
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
-from .harbor_compaction import compact_messages, is_prompt_too_long_error, should_compact
+from .harbor_compaction import compact_messages_async, is_prompt_too_long_error, should_compact
 from .harbor_tooling import ToolExecution, ensure_remote_artifact_dir, format_exec_output, prepare_tool_results
-from .openrouter_common import SYSTEM_PROMPT, TOOLS, ensure_dir, get_openrouter_client
+from .openrouter_common import SYSTEM_PROMPT, TOOLS, ensure_dir, get_async_openrouter_client
 
 from harbor.agents.base import BaseAgent
 from harbor.environments.base import BaseEnvironment
@@ -79,6 +81,33 @@ def _detect_repeating_pattern(
 def _is_infra_blocker(output: str) -> bool:
     lowered = output.lower()
     return any(marker in lowered for marker in INFRA_BLOCKERS)
+
+
+def _is_retryable_api_error(exc: Exception) -> bool:
+    """Detect transient API errors worth retrying (e.g., OpenRouter returning garbage)."""
+    # asyncio.TimeoutError / TimeoutError often have empty messages
+    if isinstance(exc, (TimeoutError, asyncio.TimeoutError)):
+        return True
+    msg = str(exc).lower()
+    return any(marker in msg for marker in (
+        "expecting value",       # JSONDecodeError from garbage response
+        "jsondecode",
+        "connection reset",
+        "connection aborted",
+        "remote end closed",
+        "read timeout",
+        "timed out",
+        "502",
+        "503",
+        "overloaded",
+    ))
+
+
+def _append_agent_log(logs_dir: Path, message: str) -> None:
+    log_path = logs_dir / "agent-api.log"
+    timestamp = datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
+    with log_path.open("a", encoding="utf-8") as fh:
+        fh.write(f"{timestamp} {message}\n")
 
 
 # ---------------------------------------------------------------------------
@@ -234,6 +263,7 @@ class OpenRouterHarborAgent(BaseAgent):
         model_name: str | None = None,
         max_episodes: int = 75,
         command_timeout: int = 700,
+        model_turn_timeout: int = 180,
         temperature: float = 0.7,
         **kwargs,
     ):
@@ -242,9 +272,10 @@ class OpenRouterHarborAgent(BaseAgent):
         kwargs.pop("thinking_standard", None)
         kwargs.pop("thinking_low", None)
         super().__init__(logs_dir=logs_dir, model_name=model_name, **kwargs)
-        self._client = get_openrouter_client()
+        self._client = get_async_openrouter_client()
         self._max_episodes = max_episodes
         self._command_timeout = command_timeout
+        self._model_turn_timeout = model_turn_timeout
         self._temperature = temperature
         self._thinking = _ThinkingEffort()
 
@@ -313,23 +344,50 @@ class OpenRouterHarborAgent(BaseAgent):
                 output_config = self._thinking.output_config(episode, self._max_episodes)
                 while True:
                     try:
-                        response = self._client.messages.create(
-                            model=self.model_name or "anthropic/claude-opus-4.6",
-                            max_tokens=current_max_tokens,
-                            system=SYSTEM_PROMPT,
-                            tools=TOOLS,
-                            messages=messages,
-                            temperature=1.0,  # required by adaptive thinking API
-                            thinking=thinking_config,
-                            output_config=output_config,
+                        _append_agent_log(
+                            self.logs_dir,
+                            (
+                                f"episode={episode} attempt={model_attempts + 1} "
+                                f"calling_messages_create max_tokens={current_max_tokens} "
+                                f"messages={len(messages)}"
+                            ),
+                        )
+                        response = await asyncio.wait_for(
+                            self._client.messages.create(
+                                model=self.model_name or "anthropic/claude-opus-4.6",
+                                max_tokens=current_max_tokens,
+                                system=SYSTEM_PROMPT,
+                                tools=TOOLS,
+                                messages=messages,
+                                temperature=1.0,  # required by adaptive thinking API
+                                thinking=thinking_config,
+                                output_config=output_config,
+                            ),
+                            timeout=self._model_turn_timeout,
+                        )
+                        _append_agent_log(
+                            self.logs_dir,
+                            (
+                                f"episode={episode} attempt={model_attempts + 1} "
+                                f"messages_create_ok stop_reason={response.stop_reason!r} "
+                                f"response_id={response.id!r}"
+                            ),
                         )
                     except Exception as exc:
+                        _append_agent_log(
+                            self.logs_dir,
+                            (
+                                f"episode={episode} attempt={model_attempts + 1} "
+                                f"messages_create_error type={type(exc).__name__} "
+                                f"detail={exc!s}"
+                            ),
+                        )
                         if (
                             is_prompt_too_long_error(exc)
                             and model_attempts < 3
                             and len(messages) > 2
                         ):
-                            messages = compact_messages(
+                            messages = await compact_messages_async(
                                 client=self._client,
                                 messages=messages,
                                 logs_dir=self.logs_dir,
@@ -337,6 +395,10 @@ class OpenRouterHarborAgent(BaseAgent):
                             )
                             compaction_count += 1
                             last_compaction_episode = episode
+                            model_attempts += 1
+                            continue
+                        # Retry on API flakes (garbage JSON from OpenRouter)
+                        if _is_retryable_api_error(exc) and model_attempts < 3:
                             model_attempts += 1
                             continue
                         raise
@@ -629,7 +691,7 @@ class OpenRouterHarborAgent(BaseAgent):
                 episode=episode,
                 last_compaction_episode=last_compaction_episode,
             ):
-                messages = compact_messages(
+                messages = await compact_messages_async(
                     client=self._client,
                     messages=messages,
                     logs_dir=self.logs_dir,
