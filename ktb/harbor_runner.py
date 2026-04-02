@@ -23,6 +23,8 @@ def run_harbor(
     task_names: list[str] | None = None,
     n_concurrent_trials: int = 1,
     n_attempts: int = 1,
+    override_cpus: int | None = None,
+    override_memory_mb: int | None = None,
 ) -> Path:
     jobs_dir = output_path or Path("jobs")
     job_name = datetime.now().strftime("%Y-%m-%d__%H-%M-%S")
@@ -58,6 +60,11 @@ def run_harbor(
         "--ak",
         f"command_timeout={config.bash_timeout}",
     ]
+
+    if override_cpus is not None:
+        cmd.extend(["--override-cpus", str(override_cpus)])
+    if override_memory_mb is not None:
+        cmd.extend(["--override-memory-mb", str(override_memory_mb)])
 
     for task_name in task_names or []:
         cmd.extend(["--include-task-name", task_name])

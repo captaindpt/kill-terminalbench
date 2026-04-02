@@ -125,6 +125,8 @@ def main():
     parser.add_argument("--no-rebuild", action="store_true", help="Skip rebuilding task containers")
     parser.add_argument("--cleanup", action="store_true", help="Remove built images after the run")
     parser.add_argument("--n-concurrent", type=int, default=1, help="Concurrent trials for the Terminal-Bench harness")
+    parser.add_argument("--override-cpus", type=int, default=None, help="Override CPUs per Docker container")
+    parser.add_argument("--override-memory-mb", type=int, default=None, help="Override memory (MB) per Docker container")
     args = parser.parse_args()
 
     if args.single and args.task_set:
@@ -171,6 +173,8 @@ def main():
             task_names=task_ids,
             n_concurrent_trials=args.n_concurrent,
             n_attempts=args.n_attempts,
+            override_cpus=args.override_cpus,
+            override_memory_mb=args.override_memory_mb,
         )
         print(f"Job saved to {job_dir}")
         return

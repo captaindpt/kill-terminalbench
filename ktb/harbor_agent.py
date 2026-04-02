@@ -183,51 +183,44 @@ def _extract_read_paths(tool_results: list[ToolExecution]) -> set[str]:
     return paths
 
 
-class _ThinkingBudget:
-    """Adaptive thinking budget that responds to episode progress and failures.
+class _ThinkingEffort:
+    """Adaptive thinking effort that responds to episode progress and failures.
+
+    Uses Anthropic's adaptive thinking API with effort levels instead of
+    deprecated budget_tokens. The model decides how much to think, but
+    effort controls the ceiling.
 
     Strategy:
-    - Early episodes (first 20%): high budget for planning and understanding
-    - Mid episodes (20-70%): standard budget for execution
-    - Late episodes (70%+): low budget to save tokens for action
-    - After failures: temporarily bump budget for re-evaluation
+    - Early episodes (first 20%): max effort for planning and understanding
+    - Mid episodes (20-70%): high effort (default — thinks when useful)
+    - Late episodes (70%+): high effort (still need correctness)
+    - After failures: bump to max for deep reassessment
     """
 
-    def __init__(
-        self,
-        high: int = 10000,
-        standard: int = 5000,
-        low: int = 2000,
-    ):
-        self._high = high
-        self._standard = standard
-        self._low = low
-        self._failure_bump_episodes = 0  # episodes remaining with boosted budget
+    def __init__(self):
+        self._failure_bump_episodes = 0
 
     def bump_for_failure(self, episodes: int = 2) -> None:
-        """Temporarily increase budget after a failure."""
+        """Temporarily increase effort after failures."""
         self._failure_bump_episodes = max(self._failure_bump_episodes, episodes)
 
-    def get(self, episode: int, max_episodes: int) -> int:
-        # Failure bump overrides phase-based budget
+    def effort(self, episode: int, max_episodes: int) -> str:
         if self._failure_bump_episodes > 0:
             self._failure_bump_episodes -= 1
-            return self._high
+            return "max"
 
-        pct = episode / max_episodes
+        pct = episode / max_episodes if max_episodes > 0 else 0
         if pct < 0.20:
-            return self._high
-        elif pct < 0.70:
-            return self._standard
-        else:
-            return self._low
+            return "max"
+        return "high"
 
-    def config(self, episode: int, max_episodes: int) -> dict:
-        """Return the thinking config dict for the API call."""
-        return {
-            "type": "enabled",
-            "budget_tokens": self.get(episode, max_episodes),
-        }
+    def thinking_config(self) -> dict:
+        """Return the thinking parameter for the API call."""
+        return {"type": "adaptive"}
+
+    def output_config(self, episode: int, max_episodes: int) -> dict:
+        """Return the output_config parameter for the API call."""
+        return {"effort": self.effort(episode, max_episodes)}
 
 
 class OpenRouterHarborAgent(BaseAgent):
@@ -240,23 +233,20 @@ class OpenRouterHarborAgent(BaseAgent):
         logs_dir: Path,
         model_name: str | None = None,
         max_episodes: int = 75,
-        command_timeout: int = 300,
+        command_timeout: int = 700,
         temperature: float = 0.7,
-        thinking_high: int = 10000,
-        thinking_standard: int = 5000,
-        thinking_low: int = 2000,
         **kwargs,
     ):
+        # Pop deprecated thinking kwargs silently so old configs don't break
+        kwargs.pop("thinking_high", None)
+        kwargs.pop("thinking_standard", None)
+        kwargs.pop("thinking_low", None)
         super().__init__(logs_dir=logs_dir, model_name=model_name, **kwargs)
         self._client = get_openrouter_client()
         self._max_episodes = max_episodes
         self._command_timeout = command_timeout
         self._temperature = temperature
-        self._thinking = _ThinkingBudget(
-            high=thinking_high,
-            standard=thinking_standard,
-            low=thinking_low,
-        )
+        self._thinking = _ThinkingEffort()
 
     def version(self) -> str | None:
         return "0.1.0"
@@ -319,7 +309,8 @@ class OpenRouterHarborAgent(BaseAgent):
             model_attempts = 0
             try:
                 current_max_tokens = 16000
-                thinking_config = self._thinking.config(episode, self._max_episodes)
+                thinking_config = self._thinking.thinking_config()
+                output_config = self._thinking.output_config(episode, self._max_episodes)
                 while True:
                     try:
                         response = self._client.messages.create(
@@ -328,8 +319,9 @@ class OpenRouterHarborAgent(BaseAgent):
                             system=SYSTEM_PROMPT,
                             tools=TOOLS,
                             messages=messages,
-                            temperature=1.0,  # required by extended thinking API
+                            temperature=1.0,  # required by adaptive thinking API
                             thinking=thinking_config,
+                            output_config=output_config,
                         )
                     except Exception as exc:
                         if (
@@ -389,6 +381,7 @@ class OpenRouterHarborAgent(BaseAgent):
                         "messages": messages,
                         "model": self.model_name,
                         "thinking": thinking_config,
+                        "output_config": output_config,
                     },
                     indent=2,
                     default=str,

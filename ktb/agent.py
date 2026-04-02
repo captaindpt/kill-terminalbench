@@ -30,7 +30,7 @@ class AgentConfig:
     model: str = "anthropic/claude-opus-4.6"
     max_turns: int = 75
     max_tokens: int = 16384
-    bash_timeout: int = 300
+    bash_timeout: int = 700
     temperature: float = 1.0
 
 
