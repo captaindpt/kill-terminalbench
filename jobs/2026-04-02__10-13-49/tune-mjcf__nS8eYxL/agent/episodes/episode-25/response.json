@@ -1,0 +1,41 @@
+{
+  "id": "gen-1775126073-FiuPzueCEneKpT0TZsei",
+  "container": null,
+  "content": [
+    {
+      "id": "toolu_bdrk_01Shyyqp45mPXNJuRVvA8Kof",
+      "caller": {
+        "type": "direct"
+      },
+      "input": {
+        "command": "cd /app && python -c \"\nimport mujoco, numpy as np\n\n# All geoms have contype=1, conaffinity=1 so collision checking happens\n# But no contacts are generated. If we set contype=0 and conaffinity=0, \n# the broadphase should be much faster.\n\n# Let's try setting contype=0 and conaffinity=0 for all geoms\nmodel = mujoco.MjModel.from_xml_path('model_ref.xml')\nmodel.opt.jacobian = 0  # dense\n\n# Disable collision\nmodel.geom_contype[:] = 0\nmodel.geom_conaffinity[:] = 0\n\ndata = mujoco.MjData(model)\nrng = np.random.default_rng(42)\ndata.qpos += rng.normal(0, 0.01, size=data.qpos.shape)\nmujoco.mj_forward(model, data)\nfor _ in range(1000):\n    mujoco.mj_step(model, data)\n\n# Check timers\ntimer_labels = ['STEP', 'FORWARD', 'INVERSE', 'POSITION', 'POS_KINEMATICS', \n                'POS_INERTIA', 'POS_COLLISION', 'POS_MAKE', 'POS_PROJECT',\n                'VELOCITY', 'ACTUATION', 'CONSTRAINT', 'ADVANCE',\n                'COL_BROAD', 'COL_NARROW']\ntotal_step = data.timer[0].duration\nprint(f'Total step time: {total_step*1000:.2f}ms')\nfor i in range(len(data.timer)):\n    if data.timer[i].number > 0:\n        label = timer_labels[i] if i < len(timer_labels) else f'unknown_{i}'\n        dur = data.timer[i].duration\n        print(f'  {label:20s}: {dur*1000:.2f}ms ({dur/total_step*100:.1f}%)')\n\n# Check correctness\nref_model = mujoco.MjModel.from_xml_path('model_ref.xml')\nref_data = mujoco.MjData(ref_model)\nrng = np.random.default_rng(42)\nref_data.qpos += rng.normal(0, 0.01, size=ref_data.qpos.shape)\nmujoco.mj_forward(ref_model, ref_data)\nfor _ in range(1000):\n    mujoco.mj_step(ref_model, ref_data)\n\nfull_physics = mujoco.mjtState.mjSTATE_FULLPHYSICS\nstate = np.zeros(mujoco.mj_stateSize(model, full_physics))\nref_state = np.zeros(mujoco.mj_stateSize(ref_model, full_physics))\nmujoco.mj_getState(model, data, state, full_physics)\nmujoco.mj_getState(ref_model, ref_data, ref_state, full_physics)\n\ndiff = np.max(np.abs(ref_state - state))\nprint(f'max_diff={diff:.2e}')\n\""
+      },
+      "name": "bash",
+      "type": "tool_use"
+    }
+  ],
+  "model": "anthropic/claude-4.6-opus-20260205",
+  "role": "assistant",
+  "stop_reason": "tool_use",
+  "stop_sequence": null,
+  "type": "message",
+  "usage": {
+    "cache_creation": null,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "inference_geo": null,
+    "input_tokens": 6169,
+    "output_tokens": 849,
+    "server_tool_use": null,
+    "service_tier": null,
+    "speed": "standard",
+    "cost": 0.05207,
+    "is_byok": false,
+    "cost_details": {
+      "upstream_inference_cost": 0.05207,
+      "upstream_inference_prompt_cost": 0.030845,
+      "upstream_inference_completions_cost": 0.021225
+    }
+  },
+  "provider": "Amazon Bedrock"
+}

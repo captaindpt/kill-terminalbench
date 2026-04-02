@@ -1,0 +1,7 @@
+[
+  {
+    "type": "tool_result",
+    "tool_use_id": "toolu_bdrk_017SkUUQfdvm8zwEQbcg5jN9",
+    "content": "[exit_code=137]\n\nAlready up to date.\nbash: line 16:   452 Killed                  python3 <<'PYEOF' 2> /dev/null\nimport mteb\nimport warnings\nwarnings.filterwarnings(\"ignore\")\n\nbenchmarks = mteb.get_benchmarks()\nfor b in benchmarks:\n    if 'Scandinavian' in b.name:\n        results = b.load_results(base_results=None)\n        r0 = results[0]\n        for k in vars(r0).keys():\n            v = getattr(r0, k)\n            if k != 'task_results':\n                print(f\"{k}: {repr(v)[:200]}\")\n        break\nPYEOF"
+  }
+]

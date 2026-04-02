@@ -1,0 +1,46 @@
+{
+  "id": "gen-1775098495-n1ktzvT2KG6JIC0maVEl",
+  "container": null,
+  "content": [
+    {
+      "citations": null,
+      "text": "Now I have the full picture. Let me also verify all the other invoices to make sure no other values need fixing. Let me re-examine all files with a better extraction approach:",
+      "type": "text"
+    },
+    {
+      "id": "toolu_bdrk_01BMwi4wHeFs5B37dD2XW6cy",
+      "caller": {
+        "type": "direct"
+      },
+      "input": {
+        "command": "python3 << 'PYEOF'\nimport pytesseract\nfrom PIL import Image\nimport fitz\nimport re\nimport os\n\ndef parse_number(s):\n    \"\"\"Parse a number string that may use European formatting (spaces as thousands sep, comma as decimal)\"\"\"\n    if not s:\n        return None\n    s = s.split('\\n')[0].strip()\n    # Remove $ sign\n    s = s.replace('$', '').strip()\n    # Remove spaces (thousands separator)\n    s = s.replace(' ', '')\n    # If there's a comma, it might be decimal separator\n    # European: 6 236,77 -> 6236.77\n    # Check if comma is used as decimal (last comma with 2 digits after)\n    if ',' in s:\n        # Replace last comma with dot for decimal\n        parts = s.rsplit(',', 1)\n        if len(parts) == 2 and len(parts[1]) <= 2:\n            s = parts[0].replace(',', '') + '.' + parts[1]\n        else:\n            s = s.replace(',', '')\n    try:\n        return float(s)\n    except:\n        return None\n\ndef extract_from_text(text, fname):\n    \"\"\"Extract total_amount and vat_amount from invoice text.\"\"\"\n    total = None\n    vat = 0\n    \n    # Look for the summary VAT total line: \"$ X,XXX.XX\" after \"VAT\" section\n    # Pattern: find \"VAT\" followed by amounts, then \"$ amount\" as the VAT total\n    \n    # Strategy: Look for \"$ <number>\" patterns - these are summary totals\n    # The document structure is typically:\n    # Net worth / $ net_total\n    # VAT / $ vat_total  \n    # Gross worth / $ gross_total  (or \"Total\" / \"Amount Due\")\n    \n    lines = text.split('\\n')\n    \n    # First, let's find Gross worth total or Total or Amount Due for total_amount\n    # For VAT, find the \"$ VAT\" line\n    \n    # Approach: find all \"$ number\" lines and their context\n    dollar_amounts = []\n    for i, line in enumerate(lines):\n        m = re.match(r'^\\s*\\$\\s*([\\d\\s,.]+)', line.strip())\n        if m:\n            val = parse_number(m.group(1))\n            if val is not None:\n                # Get context: what label is above this?\n                context_lines = []\n                for j in range(max(0, i-10), i):\n                    if lines[j].strip():\n                        context_lines.append(lines[j].strip())\n                dollar_amounts.append((val, context_lines, i))\n    \n    # Look for specific patterns\n    # \"Gross worth\" then \"$ amount\" -> total\n    # \"VAT\" then \"$ amount\" -> vat\n    # \"Total\" then \"$ amount\" -> total (if no Gross worth)\n    # \"Amount Due\" -> total (lower priority than \"Total\")\n    \n    gross_worth_total = None\n    vat_total = None\n    net_worth_total = None\n    total_val = None\n    amount_due_val = None\n    \n    for val, context, line_idx in dollar_amounts:\n        context_str = ' '.join(context[-5:]).lower()\n        if 'gross worth' in context_str:\n            gross_worth_total = val\n        elif 'vat' in context_str and 'net' not in context_str:\n            vat_total = val\n        elif 'net worth' in context_str:\n            net_worth_total = val\n    \n    # Also look for \"Total\" and \"Amount Due\" patterns\n    for i, line in enumerate(lines):\n        line_stripped = line.strip()\n        # \"Total $X,XXX.XX\" or \"Total: $X,XXX.XX\"\n        m = re.match(r'^Total[:\\s]*\\$?\\s*([\\d\\s,.]+)', line_stripped, re.IGNORECASE)\n        if m:\n            v = parse_number(m.group(1))\n            if v and v > 0:\n                total_val = v\n        # \"Amount Due: $X,XXX.XX\"\n        m = re.match(r'^Amount\\s+Due[:\\s]*\\$?\\s*([\\d\\s,.]+)', line_stripped, re.IGNORECASE)\n        if m:\n            v = parse_number(m.group(1))\n            if v and v > 0:\n                amount_due_val = v\n        # \"Grand Total\" \n        m = re.match(r'^Grand\\s+Total[:\\s]*\\$?\\s*([\\d\\s,.]+)', line_stripped, re.IGNORECASE)\n        if m:\n            v = parse_number(m.group(1))\n            if v and v > 0:\n                total_val = v\n    \n    # For total: prefer gross_worth_total, then total_val, then amount_due_val\n    # Special case: if both total_val and amount_due_val present with different values, use total_val\n    if gross_worth_total:\n        total = gross_worth_total\n    elif total_val:\n        total = total_val\n    elif amount_due_val:\n        total = amount_due_val\n    \n    if vat_total:\n        vat = vat_total\n    \n    # Also look for \"VAT:\" or \"Tax:\" patterns (not just $ prefix)\n    if vat == 0:\n        for i, line in enumerate(lines):\n            m = re.match(r'^\\s*(?:VAT|Tax|GST)[:\\s]*\\$?\\s*([\\d,.]+)', line.strip(), re.IGNORECASE)\n            if m:\n                v = parse_number(m.group(1))\n                if v and v > 0:\n                    vat = v\n    \n    return total, vat\n\n# Process all invoice files\ninvoice_dir = '/app/invoices/'\nresults = []\nfor fname in sorted(os.listdir(invoice_dir)):\n    if fname == 'summary.csv':\n        continue\n    fpath = os.path.join(invoice_dir, fname)\n    \n    if fname.lower().endswith('.jpg') or fname.lower().endswith('.jpeg') or fname.lower().endswith('.png'):\n        img = Image.open(fpath)\n        text = pytesseract.image_to_string(img)\n    elif fname.lower().endswith('.pdf'):\n        doc = fitz.open(fpath)\n        text = ''\n        for page in doc:\n            text += page.get_text()\n        doc.close()\n    else:\n        continue\n    \n    total, vat = extract_from_text(text, fname)\n    results.append((fname, total, vat))\n    print(f\"{fname}: total={total}, vat={vat}\")\n\nprint(\"\\n\\nSummary:\")\ntotal_sum = sum(r[1] for r in results if r[1])\nvat_sum = sum(r[2] for r in results if r[2])\nprint(f\"Total sum: {total_sum}\")\nprint(f\"VAT sum: {vat_sum}\")\nPYEOF"
+      },
+      "name": "bash",
+      "type": "tool_use"
+    }
+  ],
+  "model": "anthropic/claude-4.6-opus-20260205",
+  "role": "assistant",
+  "stop_reason": "tool_use",
+  "stop_sequence": null,
+  "type": "message",
+  "usage": {
+    "cache_creation": null,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "inference_geo": null,
+    "input_tokens": 6640,
+    "output_tokens": 1881,
+    "server_tool_use": null,
+    "service_tier": null,
+    "speed": "standard",
+    "cost": 0.080225,
+    "is_byok": false,
+    "cost_details": {
+      "upstream_inference_cost": 0.080225,
+      "upstream_inference_prompt_cost": 0.0332,
+      "upstream_inference_completions_cost": 0.047025
+    }
+  },
+  "provider": "Amazon Bedrock"
+}

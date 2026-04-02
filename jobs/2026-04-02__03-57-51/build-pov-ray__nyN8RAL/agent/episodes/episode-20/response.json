@@ -1,0 +1,41 @@
+{
+  "id": "gen-1775108291-peUPdnADAxEieq8NhqLk",
+  "container": null,
+  "content": [
+    {
+      "id": "toolu_bdrk_015zzSzeNxAhFAKUjS7pPXWq",
+      "caller": {
+        "type": "direct"
+      },
+      "input": {
+        "command": "# Let's try more specific searches\ncurl -s \"https://archive.org/advancedsearch.php?q=povray+2.2&fl[]=identifier&fl[]=title&rows=50&output=json\" 2>/dev/null | python3 -c \"\nimport sys, json\ndata = json.load(sys.stdin)\nfor doc in data.get('response', {}).get('docs', []):\n    print(doc.get('identifier'), '---', doc.get('title'))\n\" 2>/dev/null"
+      },
+      "name": "bash",
+      "type": "tool_use"
+    }
+  ],
+  "model": "anthropic/claude-4.6-opus-20260205",
+  "role": "assistant",
+  "stop_reason": "tool_use",
+  "stop_sequence": null,
+  "type": "message",
+  "usage": {
+    "cache_creation": null,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "inference_geo": null,
+    "input_tokens": 4881,
+    "output_tokens": 176,
+    "server_tool_use": null,
+    "service_tier": null,
+    "speed": "standard",
+    "cost": 0.028805,
+    "is_byok": false,
+    "cost_details": {
+      "upstream_inference_cost": 0.028805,
+      "upstream_inference_prompt_cost": 0.024405,
+      "upstream_inference_completions_cost": 0.0044
+    }
+  },
+  "provider": "Amazon Bedrock"
+}

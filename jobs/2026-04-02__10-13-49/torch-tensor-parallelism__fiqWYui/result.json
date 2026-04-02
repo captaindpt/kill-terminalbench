@@ -1,0 +1,127 @@
+{
+    "id": "1af92894-da55-443c-acca-4742fd6b9ea1",
+    "task_name": "torch-tensor-parallelism",
+    "trial_name": "torch-tensor-parallelism__fiqWYui",
+    "trial_uri": "file:///root/kill-terminalbench/jobs/2026-04-02__10-13-49/torch-tensor-parallelism__fiqWYui",
+    "task_id": {
+        "git_url": "https://github.com/laude-institute/terminal-bench-2.git",
+        "git_commit_id": "69671fbaac6d67a7ef0dfec016cc38a64ef7a77c",
+        "path": "torch-tensor-parallelism"
+    },
+    "source": "terminal-bench",
+    "task_checksum": "2637b586b22a779d1a4f01508f5f2caeea21d0b126b53d938e06ae8e717b8d19",
+    "config": {
+        "task": {
+            "path": "torch-tensor-parallelism",
+            "git_url": "https://github.com/laude-institute/terminal-bench-2.git",
+            "git_commit_id": "69671fbaac6d67a7ef0dfec016cc38a64ef7a77c",
+            "name": null,
+            "ref": null,
+            "overwrite": false,
+            "download_dir": null,
+            "source": "terminal-bench"
+        },
+        "trial_name": "torch-tensor-parallelism__fiqWYui",
+        "trials_dir": "jobs/2026-04-02__10-13-49",
+        "timeout_multiplier": 1.0,
+        "agent_timeout_multiplier": null,
+        "verifier_timeout_multiplier": null,
+        "agent_setup_timeout_multiplier": null,
+        "environment_build_timeout_multiplier": null,
+        "agent": {
+            "name": null,
+            "import_path": "ktb.harbor_agent:OpenRouterHarborAgent",
+            "model_name": "anthropic/claude-opus-4.6",
+            "override_timeout_sec": null,
+            "override_setup_timeout_sec": null,
+            "max_timeout_sec": null,
+            "kwargs": {
+                "max_episodes": 75,
+                "temperature": 1.0,
+                "command_timeout": 700
+            },
+            "env": {}
+        },
+        "environment": {
+            "type": "docker",
+            "import_path": null,
+            "force_build": false,
+            "delete": true,
+            "override_cpus": null,
+            "override_memory_mb": null,
+            "override_storage_mb": null,
+            "override_gpus": null,
+            "suppress_override_warnings": false,
+            "mounts_json": null,
+            "env": {},
+            "kwargs": {}
+        },
+        "verifier": {
+            "override_timeout_sec": null,
+            "max_timeout_sec": null,
+            "disable": false
+        },
+        "artifacts": [],
+        "job_id": "6b7de154-57dd-4ca3-9366-f8c9af2ae628"
+    },
+    "agent_info": {
+        "name": "ktb-openrouter",
+        "version": "0.1.0",
+        "model_info": {
+            "name": "claude-opus-4.6",
+            "provider": "anthropic"
+        }
+    },
+    "agent_result": {
+        "n_input_tokens": 73942,
+        "n_cache_tokens": null,
+        "n_output_tokens": 5816,
+        "cost_usd": 0.51511,
+        "rollout_details": null,
+        "metadata": {
+            "generation_ids": [
+                "gen-1775125009-W0gt4rSek0Fszxq4KRhw",
+                "gen-1775125025-nYw3c1idmJkWzdEXywXI",
+                "gen-1775125029-q82jckahRTyaPHvw1IrA",
+                "gen-1775125039-uV2loTayeSLkTNlQglH4",
+                "gen-1775125050-g4QhDxB33IJ5MtleFBuK",
+                "gen-1775125084-ceaaPXNMLHpGK6yMhPRo",
+                "gen-1775125097-GU1UvGBqKFmEQzqv1Rjs",
+                "gen-1775125128-1hA0m0CjKnTsSdDM2P6v",
+                "gen-1775125131-dGftxxGJFagS8jNCOoiH",
+                "gen-1775125160-vonVWwLWmYYUNIQ8NsHC",
+                "gen-1775125165-O4RtrWXgtTSIZplWV7R5",
+                "gen-1775125217-p6INRwAVYo4zserYpJfH",
+                "gen-1775125240-5bSLm8VG37OgVVjRvIxE",
+                "gen-1775125247-qXtRTeO88F6H02QbAdnE",
+                "gen-1775125278-g0A2QQkVZPVcyqbf6waO",
+                "gen-1775125287-uYbyTIGFBnHOk3xKBIXa"
+            ],
+            "episodes": 16,
+            "failure_kind": "model_call_error",
+            "failure_episode": 16
+        }
+    },
+    "verifier_result": null,
+    "exception_info": {
+        "exception_type": "RuntimeError",
+        "exception_message": "Model call failed at episode 16: Request timed out or interrupted. This could be due to a network timeout, dropped connection, or request cancellation. See https://docs.anthropic.com/en/api/errors#long-requests for more details.",
+        "exception_traceback": "Traceback (most recent call last):\n  File \"/root/kill-terminalbench/.venv/lib/python3.12/site-packages/httpx/_transports/default.py\", line 101, in map_httpcore_exceptions\n    yield\n  File \"/root/kill-terminalbench/.venv/lib/python3.12/site-packages/httpx/_transports/default.py\", line 250, in handle_request\n    resp = self._pool.handle_request(req)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/root/kill-terminalbench/.venv/lib/python3.12/site-packages/httpcore/_sync/connection_pool.py\", line 256, in handle_request\n    raise exc from None\n  File \"/root/kill-terminalbench/.venv/lib/python3.12/site-packages/httpcore/_sync/connection_pool.py\", line 236, in handle_request\n    response = connection.handle_request(\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/root/kill-terminalbench/.venv/lib/python3.12/site-packages/httpcore/_sync/connection.py\", line 103, in handle_request\n    return self._connection.handle_request(request)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/root/kill-terminalbench/.venv/lib/python3.12/site-packages/httpcore/_sync/http11.py\", line 136, in handle_request\n    raise exc\n  File \"/root/kill-terminalbench/.venv/lib/python3.12/site-packages/httpcore/_sync/http11.py\", line 106, in handle_request\n    ) = self._receive_response_headers(**kwargs)\n        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/root/kill-terminalbench/.venv/lib/python3.12/site-packages/httpcore/_sync/http11.py\", line 177, in _receive_response_headers\n    event = self._receive_event(timeout=timeout)\n            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/root/kill-terminalbench/.venv/lib/python3.12/site-packages/httpcore/_sync/http11.py\", line 217, in _receive_event\n    data = self._network_stream.read(\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/root/kill-terminalbench/.venv/lib/python3.12/site-packages/httpcore/_backends/sync.py\", line 126, in read\n    with map_exceptions(exc_map):\n  File \"/usr/lib/python3.12/contextlib.py\", line 158, in __exit__\n    self.gen.throw(value)\n  File \"/root/kill-terminalbench/.venv/lib/python3.12/site-packages/httpcore/_exceptions.py\", line 14, in map_exceptions\n    raise to_exc(exc) from exc\nhttpcore.ReadTimeout: The read operation timed out\n\nThe above exception was the direct cause of the following exception:\n\nTraceback (most recent call last):\n  File \"/root/kill-terminalbench/.venv/lib/python3.12/site-packages/anthropic/_base_client.py\", line 1072, in request\n    response = self._client.send(\n               ^^^^^^^^^^^^^^^^^^\n  File \"/root/kill-terminalbench/.venv/lib/python3.12/site-packages/httpx/_client.py\", line 914, in send\n    response = self._send_handling_auth(\n               ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/root/kill-terminalbench/.venv/lib/python3.12/site-packages/httpx/_client.py\", line 942, in _send_handling_auth\n    response = self._send_handling_redirects(\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/root/kill-terminalbench/.venv/lib/python3.12/site-packages/httpx/_client.py\", line 979, in _send_handling_redirects\n    response = self._send_single_request(request)\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/root/kill-terminalbench/.venv/lib/python3.12/site-packages/httpx/_client.py\", line 1014, in _send_single_request\n    response = transport.handle_request(request)\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/root/kill-terminalbench/.venv/lib/python3.12/site-packages/httpx/_transports/default.py\", line 249, in handle_request\n    with map_httpcore_exceptions():\n  File \"/usr/lib/python3.12/contextlib.py\", line 158, in __exit__\n    self.gen.throw(value)\n  File \"/root/kill-terminalbench/.venv/lib/python3.12/site-packages/httpx/_transports/default.py\", line 118, in map_httpcore_exceptions\n    raise mapped_exc(message) from exc\nhttpx.ReadTimeout: The read operation timed out\n\nThe above exception was the direct cause of the following exception:\n\nTraceback (most recent call last):\n  File \"/root/kill-terminalbench/ktb/harbor_agent.py\", line 325, in run\n    response = self._client.messages.create(\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/root/kill-terminalbench/.venv/lib/python3.12/site-packages/anthropic/_utils/_utils.py\", line 282, in wrapper\n    return func(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^\n  File \"/root/kill-terminalbench/.venv/lib/python3.12/site-packages/anthropic/resources/messages/messages.py\", line 996, in create\n    return self._post(\n           ^^^^^^^^^^^\n  File \"/root/kill-terminalbench/.venv/lib/python3.12/site-packages/anthropic/_base_client.py\", line 1364, in post\n    return cast(ResponseT, self.request(cast_to, opts, stream=stream, stream_cls=stream_cls))\n                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/root/kill-terminalbench/.venv/lib/python3.12/site-packages/anthropic/_base_client.py\", line 1090, in request\n    raise APITimeoutError(request=request) from err\nanthropic.APITimeoutError: Request timed out or interrupted. This could be due to a network timeout, dropped connection, or request cancellation. See https://docs.anthropic.com/en/api/errors#long-requests for more details.\n\nThe above exception was the direct cause of the following exception:\n\nTraceback (most recent call last):\n  File \"/root/kill-terminalbench/.venv/lib/python3.12/site-packages/harbor/trial/trial.py\", line 538, in run\n    await self._execute_agent()\n  File \"/root/kill-terminalbench/.venv/lib/python3.12/site-packages/harbor/trial/trial.py\", line 285, in _execute_agent\n    await asyncio.wait_for(\n  File \"/usr/lib/python3.12/asyncio/tasks.py\", line 520, in wait_for\n    return await fut\n           ^^^^^^^^^\n  File \"/root/kill-terminalbench/ktb/harbor_agent.py\", line 372, in run\n    raise RuntimeError(\nRuntimeError: Model call failed at episode 16: Request timed out or interrupted. This could be due to a network timeout, dropped connection, or request cancellation. See https://docs.anthropic.com/en/api/errors#long-requests for more details.\n",
+        "occurred_at": "2026-04-02T10:25:37.656847"
+    },
+    "started_at": "2026-04-02T10:16:46.973312Z",
+    "finished_at": "2026-04-02T10:25:49.433319Z",
+    "environment_setup": {
+        "started_at": "2026-04-02T10:16:46.973802Z",
+        "finished_at": "2026-04-02T10:16:49.610442Z"
+    },
+    "agent_setup": {
+        "started_at": "2026-04-02T10:16:49.610454Z",
+        "finished_at": "2026-04-02T10:16:49.693680Z"
+    },
+    "agent_execution": {
+        "started_at": "2026-04-02T10:16:49.693740Z",
+        "finished_at": "2026-04-02T10:25:37.653150Z"
+    },
+    "verifier": null
+}

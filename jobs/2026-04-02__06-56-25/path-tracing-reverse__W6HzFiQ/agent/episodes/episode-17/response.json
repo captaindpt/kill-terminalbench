@@ -1,0 +1,41 @@
+{
+  "id": "gen-1775119087-dahaNGOsI8i2rz6cZZvJ",
+  "container": null,
+  "content": [
+    {
+      "id": "toolu_bdrk_01SgkTacyGZAmjDQezQi8aYR",
+      "caller": {
+        "type": "direct"
+      },
+      "input": {
+        "command": "perl -e '\nmy @bytes = (\n    0x01,0x00,0x02,0x00, 0x00,0x00,0x80,0x40,\n    0x6f,0x12,0x83,0x3a, 0x17,0xb7,0xd1,0x38,\n    0xcd,0xcc,0x4c,0x3e, 0x66,0x66,0x66,0x3f,\n    0xcd,0xcc,0xcc,0x3e, 0x00,0x00,0xc0,0xbf,\n    0xcd,0xcc,0x4c,0x3f, 0x00,0x00,0x00,0x4b,\n    0x71,0xfd,0x7f,0x43, 0x00,0x00,0x80,0xbf,\n    0x00,0x00,0xc8,0x42, 0x00,0x00,0x16,0x44,\n    0x00,0xc0,0x15,0x44, 0x00,0xc0,0x47,0x44,\n    0xab,0xaa,0x2a,0x40, 0xab,0xaa,0xaa,0x3f,\n    0x00,0x00,0x00,0x00, 0x00,0x00,0x80,0x3f,\n    0x00,0x00,0x40,0x40,\n);\nfor (my $i = 0; $i < scalar @bytes; $i += 4) {\n    my $packed = pack(\"C4\", @bytes[$i..$i+3]);\n    my $f = unpack(\"f\", $packed);\n    printf(\"offset +0x%02x: %g\\n\", $i, $f);\n}\n'"
+      },
+      "name": "bash",
+      "type": "tool_use"
+    }
+  ],
+  "model": "anthropic/claude-4.6-opus-20260205",
+  "role": "assistant",
+  "stop_reason": "tool_use",
+  "stop_sequence": null,
+  "type": "message",
+  "usage": {
+    "cache_creation": null,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "inference_geo": null,
+    "input_tokens": 6945,
+    "output_tokens": 537,
+    "server_tool_use": null,
+    "service_tier": null,
+    "speed": "standard",
+    "cost": 0.04815,
+    "is_byok": false,
+    "cost_details": {
+      "upstream_inference_cost": 0.04815,
+      "upstream_inference_prompt_cost": 0.034725,
+      "upstream_inference_completions_cost": 0.013425
+    }
+  },
+  "provider": "Amazon Bedrock"
+}

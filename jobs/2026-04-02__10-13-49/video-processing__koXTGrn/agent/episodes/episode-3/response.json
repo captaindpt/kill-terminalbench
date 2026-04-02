@@ -1,0 +1,41 @@
+{
+  "id": "gen-1775126529-NxaxqrQ8SrSxmATUz9wH",
+  "container": null,
+  "content": [
+    {
+      "id": "toolu_bdrk_01R5AqqJjbZvNbFzTtB3PDd2",
+      "caller": {
+        "type": "direct"
+      },
+      "input": {
+        "command": "python3 << 'PYEOF'\nimport cv2\nimport numpy as np\n\ncap = cv2.VideoCapture('/app/example_video.mp4')\n\n# Read first frame as background\nret, bg_frame = cap.read()\nbg_gray = cv2.cvtColor(bg_frame, cv2.COLOR_BGR2GRAY).astype(np.float32)\n\ntotal_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))\n\n# For each frame, compute the difference from background\n# Track: motion magnitude, vertical position of the moving object (centroid), \n# and area of moving pixels\nframe_data = []\n\nfor i in range(1, total_frames):\n    ret, frame = cap.read()\n    if not ret:\n        break\n    gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY).astype(np.float32)\n    diff = cv2.absdiff(gray, bg_gray)\n    \n    # Threshold the difference\n    _, thresh = cv2.threshold(diff, 30, 255, cv2.THRESH_BINARY)\n    thresh = thresh.astype(np.uint8)\n    \n    # Find motion pixels\n    motion_pixels = np.where(thresh > 0)\n    area = len(motion_pixels[0])\n    \n    if area > 0:\n        centroid_y = np.mean(motion_pixels[0])\n        centroid_x = np.mean(motion_pixels[1])\n        min_y = np.min(motion_pixels[0])\n        max_y = np.max(motion_pixels[0])\n        height_span = max_y - min_y\n        # Bounding box\n        min_x = np.min(motion_pixels[1])\n        max_x = np.max(motion_pixels[1])\n    else:\n        centroid_y = 0\n        centroid_x = 0\n        min_y = 0\n        max_y = 0\n        height_span = 0\n        min_x = 0\n        max_x = 0\n    \n    frame_data.append({\n        'frame': i,\n        'area': area,\n        'centroid_y': centroid_y,\n        'centroid_x': centroid_x,\n        'min_y': min_y,\n        'max_y': max_y,\n        'height_span': height_span,\n        'min_x': min_x,\n        'max_x': max_x,\n    })\n\ncap.release()\n\nprint(\"Frame, Area, CentroidY, CentroidX, MinY, MaxY, HeightSpan, MinX, MaxX\")\nfor d in frame_data:\n    print(f\"{d['frame']:3d}, {d['area']:6d}, {d['centroid_y']:7.1f}, {d['centroid_x']:7.1f}, {d['min_y']:4d}, {d['max_y']:4d}, {d['height_span']:4d}, {d['min_x']:4d}, {d['max_x']:4d}\")\nPYEOF"
+      },
+      "name": "bash",
+      "type": "tool_use"
+    }
+  ],
+  "model": "anthropic/claude-4.6-opus-20260205",
+  "role": "assistant",
+  "stop_reason": "tool_use",
+  "stop_sequence": null,
+  "type": "message",
+  "usage": {
+    "cache_creation": null,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "inference_geo": null,
+    "input_tokens": 2543,
+    "output_tokens": 817,
+    "server_tool_use": null,
+    "service_tier": null,
+    "speed": "standard",
+    "cost": 0.03314,
+    "is_byok": false,
+    "cost_details": {
+      "upstream_inference_cost": 0.03314,
+      "upstream_inference_prompt_cost": 0.012715,
+      "upstream_inference_completions_cost": 0.020425
+    }
+  },
+  "provider": "Amazon Bedrock"
+}

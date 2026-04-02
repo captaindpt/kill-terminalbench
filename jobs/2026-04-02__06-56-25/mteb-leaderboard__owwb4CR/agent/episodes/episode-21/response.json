@@ -1,0 +1,41 @@
+{
+  "id": "gen-1775117757-aLBeKT5c3hUOKopA3lTc",
+  "container": null,
+  "content": [
+    {
+      "id": "toolu_bdrk_018x8TZqgUGT6prc25XWCxH6",
+      "caller": {
+        "type": "direct"
+      },
+      "input": {
+        "command": "# Some tasks don't have 'test' split. Need to handle all splits.\n# Also MassiveIntentClassification has per-language scores - need to handle that differently\n# Let me look at the MTEB benchmark definition to understand how scores are computed\npython3 << 'PYEOF'\nimport json, os\n\nresults_dir = os.path.expanduser(\"~/.cache/mteb/results/results\")\nmodel = \"Salesforce__SFR-Embedding-2_R\"\nmodel_dir = os.path.join(results_dir, model)\nrev = os.listdir(model_dir)[0]\nrev_dir = os.path.join(model_dir, rev)\n\n# Look at tasks with non-test splits\nfor task_name in ['DanishPoliticalCommentsClassification', 'DanFeverRetrieval', 'TwitterHjerneRetrieval', 'SwednClusteringP2P', 'SwednClusteringS2S']:\n    json_file = os.path.join(rev_dir, f\"{task_name}.json\")\n    with open(json_file) as f:\n        data = json.load(f)\n    print(f\"\\n=== {task_name} ===\")\n    for split, scores in data['scores'].items():\n        print(f\"  Split: {split}\")\n        for entry in scores[:2]:\n            print(f\"    hf_subset={entry.get('hf_subset')}, main_score={entry.get('main_score')}, languages={entry.get('languages')}\")\nPYEOF"
+      },
+      "name": "bash",
+      "type": "tool_use"
+    }
+  ],
+  "model": "anthropic/claude-4.6-opus-20260205",
+  "role": "assistant",
+  "stop_reason": "tool_use",
+  "stop_sequence": null,
+  "type": "message",
+  "usage": {
+    "cache_creation": null,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "inference_geo": null,
+    "input_tokens": 10150,
+    "output_tokens": 428,
+    "server_tool_use": null,
+    "service_tier": null,
+    "speed": "standard",
+    "cost": 0.06145,
+    "is_byok": false,
+    "cost_details": {
+      "upstream_inference_cost": 0.06145,
+      "upstream_inference_prompt_cost": 0.05075,
+      "upstream_inference_completions_cost": 0.0107
+    }
+  },
+  "provider": "Amazon Bedrock"
+}

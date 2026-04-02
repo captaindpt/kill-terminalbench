@@ -1,0 +1,41 @@
+{
+  "id": "gen-1775120462-oPJcaEcGFkJO6pn9wiRH",
+  "container": null,
+  "content": [
+    {
+      "id": "toolu_bdrk_01EtsogjnAA2zRrz6k1xvPKQ",
+      "caller": {
+        "type": "direct"
+      },
+      "input": {
+        "command": "python3 -c \"\nimport urllib.request, json\n\n# Search by name\nurl = 'https://www.fpbase.org/api/proteins/?format=json&name=Clover'\nreq = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})\nwith urllib.request.urlopen(req, timeout=15) as resp:\n    data = json.loads(resp.read())\n    if isinstance(data, list):\n        for p in data:\n            if p.get('name') == 'Clover':\n                print(json.dumps({k: v for k, v in p.items() if k != 'transitions'}, indent=2)[:3000])\n                break\n\"\n"
+      },
+      "name": "bash",
+      "type": "tool_use"
+    }
+  ],
+  "model": "anthropic/claude-4.6-opus-20260205",
+  "role": "assistant",
+  "stop_reason": "tool_use",
+  "stop_sequence": null,
+  "type": "message",
+  "usage": {
+    "cache_creation": null,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "inference_geo": null,
+    "input_tokens": 13974,
+    "output_tokens": 226,
+    "server_tool_use": null,
+    "service_tier": null,
+    "speed": "standard",
+    "cost": 0.07552,
+    "is_byok": false,
+    "cost_details": {
+      "upstream_inference_cost": 0.07552,
+      "upstream_inference_prompt_cost": 0.06987,
+      "upstream_inference_completions_cost": 0.00565
+    }
+  },
+  "provider": "Amazon Bedrock"
+}

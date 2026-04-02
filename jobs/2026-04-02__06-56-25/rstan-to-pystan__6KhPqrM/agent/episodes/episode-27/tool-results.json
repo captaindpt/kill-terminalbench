@@ -1,0 +1,7 @@
+[
+  {
+    "type": "tool_result",
+    "tool_use_id": "toolu_bdrk_01WsmUCkxaGysReVseeYdiK7",
+    "content": "[exit_code=0]\n\n    def sample(self, *, num_chains=4, **kwargs) -> stan.fit.Fit:\n        \"\"\"Draw samples from the model.\n\n        Parameters in ``kwargs`` will be passed to the default sample function.\n        The default sample function is currently\n        ``stan::services::sample::hmc_nuts_diag_e_adapt``.  Parameter names are\n        identical to those used in CmdStan.  See the CmdStan documentation for\n        parameter descriptions and default values.\n\n        There is one exception:  `num_chains`. `num_chains` is a\n        PyStan-specific keyword argument. It indicates the number of\n        independent processes to use when drawing samples.\n\n\n        Returns:\n            Fit: instance of Fit allowing access to draws.\n\n        Examples:\n            User-defined initial values for parameters must be provided\n            for each chain. Typically they will be the same for each chain.\n            The following example shows how user-defined initial parameters\n            are provided:\n\n            >>> program_code = \"parameters {real y;} model {y ~ normal(0,1);}\"\n            >>> posterior = stan.build(program_code)\n            >>> fit = posterior.sample(num_chains=2, init=[{\"y\": 3}, {\"y\": 3}])\n\n        \"\"\"\n        return self.hmc_nuts_diag_e_adapt(num_chains=num_chains, **kwargs)"
+  }
+]

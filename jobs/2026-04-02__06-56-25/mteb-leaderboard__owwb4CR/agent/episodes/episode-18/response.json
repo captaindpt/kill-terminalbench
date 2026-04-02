@@ -1,0 +1,41 @@
+{
+  "id": "gen-1775117623-oskGT4JaKPKjoA8MFtdm",
+  "container": null,
+  "content": [
+    {
+      "id": "toolu_bdrk_01VgCa59LUmgNmKvHiCQ95me",
+      "caller": {
+        "type": "direct"
+      },
+      "input": {
+        "command": "# Now let's calculate the actual mean scores for all models with 28/28 tasks\npython3 << 'PYEOF'\nimport json, os\n\nresults_dir = os.path.expanduser(\"~/.cache/mteb/results/results\")\nmodels = os.listdir(results_dir)\n\nscand_tasks = ['BornholmBitextMining', 'NorwegianCourtsBitextMining', 'AngryTweetsClassification', 'DanishPoliticalCommentsClassification', 'DalajClassification', 'DKHateClassification', 'LccSentimentClassification', 'MassiveIntentClassification', 'MassiveScenarioClassification', 'NordicLangClassification', 'NoRecClassification', 'NorwegianParliamentClassification', 'ScalaClassification', 'SwedishSentimentClassification', 'SweRecClassification', 'DanFeverRetrieval', 'NorQuadRetrieval', 'SNLRetrieval', 'SwednRetrieval', 'SweFaqRetrieval', 'TV2Nordretrieval', 'TwitterHjerneRetrieval', 'SNLHierarchicalClusteringS2S', 'SNLHierarchicalClusteringP2P', 'SwednClusteringP2P', 'SwednClusteringS2S', 'VGHierarchicalClusteringS2S', 'VGHierarchicalClusteringP2P']\n\ndef get_task_score(json_file):\n    with open(json_file) as f:\n        data = json.load(f)\n    if 'scores' not in data:\n        return None\n    scores = data['scores']\n    # Try test split first, then validation\n    for split in ['test', 'validation', 'dev']:\n        if split in scores:\n            split_scores = scores[split]\n            if isinstance(split_scores, list):\n                main_scores_list = [s.get('main_score') for s in split_scores if s.get('main_score') is not None]\n                if main_scores_list:\n                    return sum(main_scores_list) / len(main_scores_list)\n    return None\n\nmodel_scores = {}\nfor model in models:\n    model_dir = os.path.join(results_dir, model)\n    if not os.path.isdir(model_dir):\n        continue\n    \n    revisions = os.listdir(model_dir)\n    for rev in revisions:\n        rev_dir = os.path.join(model_dir, rev)\n        if not os.path.isdir(rev_dir):\n            continue\n        \n        task_scores = {}\n        for task_name in scand_tasks:\n            json_file = os.path.join(rev_dir, f\"{task_name}.json\")\n            if os.path.exists(json_file):\n                score = get_task_score(json_file)\n                if score is not None:\n                    task_scores[task_name] = score\n        \n        if len(task_scores) == len(scand_tasks):\n            mean_score = sum(task_scores.values()) / len(task_scores)\n            model_name = model.replace(\"__\", \"/\")\n            if model_name not in model_scores or model_scores[model_name] < mean_score:\n                model_scores[model_name] = mean_score\n\nsorted_models = sorted(model_scores.items(), key=lambda x: x[1], reverse=True)\nprint(f\"Models with all {len(scand_tasks)} tasks scored: {len(sorted_models)}\")\nprint(\"\\nTop 30:\")\nfor name, score in sorted_models[:30]:\n    print(f\"{score:.6f} - {name}\")\nPYEOF"
+      },
+      "name": "bash",
+      "type": "tool_use"
+    }
+  ],
+  "model": "anthropic/claude-4.6-opus-20260205",
+  "role": "assistant",
+  "stop_reason": "tool_use",
+  "stop_sequence": null,
+  "type": "message",
+  "usage": {
+    "cache_creation": null,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "inference_geo": null,
+    "input_tokens": 5558,
+    "output_tokens": 994,
+    "server_tool_use": null,
+    "service_tier": null,
+    "speed": "standard",
+    "cost": 0.05264,
+    "is_byok": false,
+    "cost_details": {
+      "upstream_inference_cost": 0.05264,
+      "upstream_inference_prompt_cost": 0.02779,
+      "upstream_inference_completions_cost": 0.02485
+    }
+  },
+  "provider": "Amazon Bedrock"
+}

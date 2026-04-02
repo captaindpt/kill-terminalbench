@@ -1,0 +1,650 @@
+[exit_code=0]
+
+;; Metacircular evaluator for the Scheme-like language implemented by interp.py
+;; Reads a filename from stdin, then interprets that file
+
+;; ============================================================
+;; Tokenizer
+;; ============================================================
+
+;; Read entire file content as a list of char codes
+(define (read-file-chars filename)
+  (let ((f (fopen filename "r")))
+    (if (eq? f #f)
+        '()
+        (let ((result (read-file-chars-helper f '())))
+          (fclose f)
+          result))))
+
+(define (read-file-chars-helper f acc)
+  (let ((ch (fgetchr f)))
+    (if (= ch -1)
+        (reverse-list acc)
+        (read-file-chars-helper f (cons ch acc)))))
+
+(define (reverse-list lst)
+  (reverse-helper lst '()))
+
+(define (reverse-helper lst acc)
+  (if (null? lst)
+      acc
+      (reverse-helper (cdr lst) (cons (car lst) acc))))
+
+;; Check character types
+(define (is-whitespace ch) (if (= ch 32) #t (if (= ch 10) #t (if (= ch 13) #t (if (= ch 9) #t #f)))))
+(define (is-digit ch) (if (< ch 48) #f (if (> ch 57) #f #t)))
+(define (is-paren ch) (if (= ch 40) #t (if (= ch 41) #t #f)))
+(define (is-quote-char ch) (= ch 39))
+(define (is-semicolon ch) (= ch 59))
+(define (is-double-quote ch) (= ch 34))
+(define (is-backslash ch) (= ch 92))
+(define (is-newline ch) (= ch 10))
+(define (is-special ch) (if (is-paren ch) #t (if (is-quote-char ch) #t (if (is-semicolon ch) #t #f))))
+
+;; Token types - we represent tokens as tagged pairs
+;; (sym . chars)    - symbol token (chars is list of char codes)
+;; (num . value)    - number token
+;; (str . chars)    - string token (chars is list of char codes)
+;; (lp . 0)         - left paren
+;; (rp . 0)         - right paren
+;; (qt . 0)         - quote
+;; (bool . 0/1)     - boolean #f/#t
+
+(define (make-tok-lp) (cons 'lp 0))
+(define (make-tok-rp) (cons 'rp 0))
+(define (make-tok-qt) (cons 'qt 0))
+(define (make-tok-num n) (cons 'num n))
+(define (make-tok-sym chars) (cons 'sym chars))
+(define (make-tok-str chars) (cons 'str chars))
+(define (make-tok-bool v) (cons 'bool v))
+
+(define (tok-type t) (car t))
+(define (tok-value t) (cdr t))
+
+;; Tokenize a list of char codes into a list of tokens
+(define (tokenize chars)
+  (tokenize-helper chars '()))
+
+(define (tokenize-helper chars acc)
+  (if (null? chars)
+      (reverse-list acc)
+      (let ((ch (car chars)))
+        (cond
+         ((is-whitespace ch)
+          (tokenize-helper (cdr chars) acc))
+         ((is-semicolon ch)
+          (tokenize-helper (skip-comment (cdr chars)) acc))
+         ((= ch 40)
+          (tokenize-helper (cdr chars) (cons (make-tok-lp) acc)))
+         ((= ch 41)
+          (tokenize-helper (cdr chars) (cons (make-tok-rp) acc)))
+         ((is-quote-char ch)
+          (tokenize-helper (cdr chars) (cons (make-tok-qt) acc)))
+         ((is-double-quote ch)
+          (let ((result (read-string-token (cdr chars) '())))
+            (tokenize-helper (car result) (cons (make-tok-str (cdr result)) acc))))
+         (else
+          (let ((result (read-atom chars '())))
+            (tokenize-helper (car result) (cons (classify-atom (cdr result)) acc))))))))
+
+(define (skip-comment chars)
+  (if (null? chars) '()
+      (if (is-newline (car chars))
+          (cdr chars)
+          (skip-comment (cdr chars)))))
+
+(define (read-string-token chars acc)
+  (if (null? chars)
+      (cons '() (reverse-list acc))
+      (if (is-double-quote (car chars))
+          (cons (cdr chars) (reverse-list acc))
+          (if (is-backslash (car chars))
+              (if (null? (cdr chars))
+                  (cons '() (reverse-list acc))
+                  (read-string-token (cdr (cdr chars)) (cons (car (cdr chars)) (cons (car chars) acc))))
+              (read-string-token (cdr chars) (cons (car chars) acc))))))
+
+(define (read-atom chars acc)
+  (if (null? chars)
+      (cons '() (reverse-list acc))
+      (let ((ch (car chars)))
+        (if (is-whitespace ch)
+            (cons chars (reverse-list acc))
+            (if (is-paren ch)
+                (cons chars (reverse-list acc))
+                (if (is-quote-char ch)
+                    (cons chars (reverse-list acc))
+                    (if (is-semicolon ch)
+                        (cons chars (reverse-list acc))
+                        (read-atom (cdr chars) (cons ch acc)))))))))
+
+;; Classify an atom (list of char codes) as number, boolean, or symbol
+(define (classify-atom chars)
+  (cond
+   ((chars-equal chars '(35 116)) (make-tok-bool 1))
+   ((chars-equal chars '(35 102)) (make-tok-bool 0))
+   ((is-number-chars chars) (make-tok-num (chars-to-number chars)))
+   (else (make-tok-sym chars))))
+
+(define (chars-equal a b)
+  (cond
+   ((null? a) (null? b))
+   ((null? b) #f)
+   ((= (car a) (car b)) (chars-equal (cdr a) (cdr b)))
+   (else #f)))
+
+(define (is-number-chars chars)
+  (if (null? chars) #f
+      (if (= (car chars) 45)
+          (if (null? (cdr chars)) #f
+              (all-digits (cdr chars)))
+          (all-digits chars))))
+
+(define (all-digits chars)
+  (if (null? chars) #t
+      (if (is-digit (car chars))
+          (all-digits (cdr chars))
+          #f)))
+
+(define (chars-to-number chars)
+  (if (= (car chars) 45)
+      (- 0 (chars-to-number-pos (cdr chars) 0))
+      (chars-to-number-pos chars 0)))
+
+(define (chars-to-number-pos chars acc)
+  (if (null? chars)
+      acc
+      (chars-to-number-pos (cdr chars) (+ (* acc 10) (- (car chars) 48)))))
+
+;; Convert list of char codes to a symbol string using the built-in symbol function
+(define (chars-to-symbol chars)
+  (symbol chars))
+
+;; Convert list of char codes to a String object
+;; We need to reconstruct the string - use display tricks or build from chars
+;; Actually the interp has String objects. We can build strings by reading them.
+;; Simpler approach: store strings as tagged lists internally
+
+;; ============================================================
+;; Parser
+;; ============================================================
+
+;; parse-expr takes (tokens) returns (expr . remaining-tokens)
+(define (parse-expr tokens)
+  (if (null? tokens)
+      (cons '() '())
+      (let ((tok (car tokens))
+            (rest (cdr tokens)))
+        (cond
+         ((eq? (tok-type tok) 'lp)
+          (parse-list rest '()))
+         ((eq? (tok-type tok) 'rp)
+          (cons '() rest))
+         ((eq? (tok-type tok) 'qt)
+          (let ((sub (parse-expr rest)))
+            (cons (cons 'quote (cons (car sub) '())) (cdr sub))))
+         ((eq? (tok-type tok) 'num)
+          (cons (tok-value tok) rest))
+         ((eq? (tok-type tok) 'bool)
+          (if (= (tok-value tok) 1)
+              (cons #t rest)
+              (cons #f rest)))
+         ((eq? (tok-type tok) 'sym)
+          (cons (chars-to-symbol (tok-value tok)) rest))
+         ((eq? (tok-type tok) 'str)
+          (cons (cons '*string* (tok-value tok)) rest))
+         (else (cons '() rest))))))
+
+(define (parse-list tokens acc)
+  (if (null? tokens)
+      (cons (reverse-to-proper-list acc) '())
+      (if (eq? (tok-type (car tokens)) 'rp)
+          (cons (reverse-to-proper-list acc) (cdr tokens))
+          (let ((result (parse-expr tokens)))
+            (parse-list (cdr result) (cons (car result) acc))))))
+
+(define (reverse-to-proper-list lst)
+  (reverse-to-proper-helper lst '()))
+
+(define (reverse-to-proper-helper lst acc)
+  (if (null? lst)
+      acc
+      (reverse-to-proper-helper (cdr lst) (cons (car lst) acc))))
+
+;; ============================================================
+;; Environment
+;; ============================================================
+
+;; An environment is a pair: (bindings . parent)
+;; bindings is a list of (name . value) pairs
+
+(define (make-env parent)
+  (cons '() parent))
+
+(define (env-bindings env) (car env))
+(define (env-parent env) (cdr env))
+
+(define (env-define env name value)
+  (set-car! env (cons (cons name value) (car env))))
+
+(define (env-set env name value)
+  (let ((binding (assoc-find name (car env))))
+    (if (null? binding)
+        (if (null? (cdr env))
+            '()
+            (env-set (cdr env) name value))
+        (set-cdr! binding value))))
+
+(define (env-get env name)
+  (let ((binding (assoc-find name (car env))))
+    (if (null? binding)
+        (if (null? (cdr env))
+            (cons '*error* name)
+            (env-get (cdr env) name))
+        (cdr binding))))
+
+(define (assoc-find name bindings)
+  (if (null? bindings)
+      '()
+      (if (eq? (car (car bindings)) name)
+          (car bindings)
+          (assoc-find name (cdr bindings)))))
+
+;; ============================================================
+;; Evaluator
+;; ============================================================
+
+;; We represent closures as: (*closure* params body env)
+;; We represent primitives as: (*primitive* name)
+;; Strings internally as: (*string* . char-codes)
+
+(define (my-eval expr env)
+  (cond
+   ;; Numbers
+   ((number? expr) expr)
+   ;; Booleans
+   ((eq? expr #t) #t)
+   ((eq? expr #f) #f)
+   ;; Nil
+   ((null? expr) '())
+   ;; Symbols - variable lookup
+   ((symbol? expr)
+    (let ((val (env-get env expr)))
+      (if (pair? val)
+          (if (eq? (car val) '*error*)
+              (begin (display "Error: Undefined variable: ")
+                     (display (cdr val))
+                     (newline)
+                     '())
+              val)
+          val)))
+   ;; String literals
+   ((is-my-string expr) expr)
+   ;; Lists (special forms and applications)
+   ((pair? expr)
+    (let ((head (car expr)))
+      (cond
+       ;; quote
+       ((eq? head 'quote) (car (cdr expr)))
+       ;; if
+       ((eq? head 'if)
+        (let ((cond-val (my-eval (car (cdr expr)) env)))
+          (if (eq? cond-val #f)
+              (if (null? (cdr (cdr (cdr expr))))
+                  '()
+                  (my-eval (car (cdr (cdr (cdr expr)))) env))
+              (my-eval (car (cdr (cdr expr))) env))))
+       ;; define
+       ((eq? head 'define)
+        (let ((name-or-list (car (cdr expr))))
+          (if (pair? name-or-list)
+              ;; Function shorthand
+              (let ((name (car name-or-list))
+                    (params (cdr name-or-list))
+                    (body (cdr (cdr expr))))
+                (env-define env name (cons '*closure* (cons (pair-to-list params) (cons body env))))
+                '())
+              ;; Simple define
+              (begin
+                (env-define env name-or-list (my-eval (car (cdr (cdr expr))) env))
+                '()))))
+       ;; set!
+       ((eq? head 'set!)
+        (begin
+          (env-set env (car (cdr expr)) (my-eval (car (cdr (cdr expr))) env))
+          '()))
+       ;; lambda
+       ((eq? head 'lambda)
+        (let ((params (car (cdr expr)))
+              (body (cdr (cdr expr))))
+          (cons '*closure* (cons (pair-to-list params) (cons body env)))))
+       ;; let
+       ((eq? head 'let)
+        (let ((new-env (make-env env))
+              (bindings (car (cdr expr)))
+              (body (cdr (cdr expr))))
+          (process-let-bindings bindings env new-env)
+          (eval-body body new-env)))
+       ;; begin / progn
+       ((eq? head 'begin) (eval-body (cdr expr) env))
+       ((eq? head 'progn) (eval-body (cdr expr) env))
+       ;; cond
+       ((eq? head 'cond) (eval-cond (cdr expr) env))
+       ;; and
+       ((eq? head 'and) (eval-and (cdr expr) env))
+       ;; or
+       ((eq? head 'or) (eval-or (cdr expr) env))
+       ;; application
+       (else
+        (let ((proc (my-eval head env))
+              (args (eval-args (cdr expr) env)))
+          (my-apply proc args env))))))
+   (else expr)))
+
+(define (is-my-string x)
+  (if (pair? x)
+      (eq? (car x) '*string*)
+      #f))
+
+(define (pair-to-list p)
+  (if (null? p) '()
+      (if (pair? p)
+          (cons (car p) (pair-to-list (cdr p)))
+          (cons p '()))))
+
+(define (process-let-bindings bindings eval-env new-env)
+  (if (null? bindings) '()
+      (begin
+        (let ((binding (car bindings)))
+          (env-define new-env (car binding) (my-eval (car (cdr binding)) eval-env)))
+        (process-let-bindings (cdr bindings) eval-env new-env))))
+
+(define (eval-body body env)
+  (if (null? body) '()
+      (if (null? (cdr body))
+          (my-eval (car body) env)
+          (begin
+            (my-eval (car body) env)
+            (eval-body (cdr body) env)))))
+
+(define (eval-cond clauses env)
+  (if (null? clauses) '()
+      (let ((clause (car clauses)))
+        (let ((test (car clause)))
+          (if (eq? test 'else)
+              (eval-body (cdr clause) env)
+              (let ((result (my-eval test env)))
+                (if (eq? result #f)
+                    (eval-cond (cdr clauses) env)
+                    (eval-body (cdr clause) env))))))))
+
+(define (eval-and exprs env)
+  (if (null? exprs) #t
+      (let ((val (my-eval (car exprs) env)))
+        (if (eq? val #f)
+            #f
+            (if (null? (cdr exprs))
+                val
+                (eval-and (cdr exprs) env))))))
+
+(define (eval-or exprs env)
+  (if (null? exprs) #f
+      (let ((val (my-eval (car exprs) env)))
+        (if (eq? val #f)
+            (eval-or (cdr exprs) env)
+            val))))
+
+(define (eval-args args env)
+  (if (null? args)
+      '()
+      (cons (my-eval (car args) env) (eval-args (cdr args) env))))
+
+;; ============================================================
+;; Apply
+;; ============================================================
+
+(define (my-apply proc args env)
+  (cond
+   ((is-closure proc)
+    (let ((params (car (cdr proc)))
+          (body (car (cdr (cdr proc))))
+          (closure-env (cdr (cdr (cdr proc)))))
+      (let ((new-env (make-env closure-env)))
+        (bind-params params args new-env)
+        (eval-body body new-env))))
+   ((is-primitive proc)
+    (apply-primitive (car (cdr proc)) args))
+   (else
+    (begin
+      (display "Error: Not a procedure: ")
+      (display proc)
+      (newline)
+      '()))))
+
+(define (is-closure x)
+  (if (pair? x)
+      (eq? (car x) '*closure*)
+      #f))
+
+(define (is-primitive x)
+  (if (pair? x)
+      (eq? (car x) '*primitive*)
+      #f))
+
+(define (bind-params params args env)
+  (if (null? params) '()
+      (if (null? args) '()
+          (begin
+            (env-define env (car params) (car args))
+            (bind-params (cdr params) (cdr args) env)))))
+
+;; ============================================================
+;; Primitive operations
+;; ============================================================
+
+(define (apply-primitive name args)
+  (cond
+   ((eq? name 'plus) (prim-plus args))
+   ((eq? name 'minus)
+    (if (null? (cdr args))
+        (- 0 (car args))
+        (- (car args) (car (cdr args)))))
+   ((eq? name 'times) (prim-times args))
+   ((eq? name 'divide) (/ (car args) (car (cdr args))))
+   ((eq? name 'num-eq) (= (car args) (car (cdr args))))
+   ((eq? name 'lt) (< (car args) (car (cdr args))))
+   ((eq? name 'gt) (> (car args) (car (cdr args))))
+   ((eq? name 'le) (<= (car args) (car (cdr args))))
+   ((eq? name 'ge) (>= (car args) (car (cdr args))))
+   ((eq? name 'cons-prim) (cons (car args) (car (cdr args))))
+   ((eq? name 'car-prim) (car (car args)))
+   ((eq? name 'cdr-prim) (cdr (car args)))
+   ((eq? name 'null-q) (null? (car args)))
+   ((eq? name 'pair-q) (pair? (car args)))
+   ((eq? name 'eq-q)
+    (my-eq? (car args) (car (cdr args))))
+   ((eq? name 'equal-q)
+    (my-equal? (car args) (car (cdr args))))
+   ((eq? name 'not-prim) (eq? (car args) #f))
+   ((eq? name 'display-prim) (my-display (car args)))
+   ((eq? name 'newline-prim) (newline))
+   ((eq? name 'read-prim) (read))
+   ((eq? name 'getchr-prim) (getchr))
+   ((eq? name 'putchr-prim) (putchr (car args)))
+   ((eq? name 'chr-prim) (chr (car args)))
+   ((eq? name 'symbol-q) (symbol? (car args)))
+   ((eq? name 'string-q) (is-my-string (car args)))
+   ((eq? name 'number-q) (number? (car args)))
+   ((eq? name 'set-car-prim) (begin (set-car! (car args) (car (cdr args))) '()))
+   ((eq? name 'set-cdr-prim) (begin (set-cdr! (car args) (car (cdr args))) '()))
+   ((eq? name 'symbol-prim) (symbol (car args)))
+   ((eq? name 'fopen-prim) (fopen (my-string-to-host (car args)) (my-string-to-host (car (cdr args)))))
+   ((eq? name 'fclose-prim) (fclose (car args)))
+   ((eq? name 'fgetchr-prim) (fgetchr (car args)))
+   ((eq? name 'fputchr-prim) (fputchr (car args) (car (cdr args))))
+   ((eq? name 'fdisplay-prim) (fdisplay (car args) (car (cdr args))))
+   ((eq? name 'fread-prim) (fread (car args)))
+   (else (begin (display "Error: Unknown primitive: ") (display name) (newline) '()))))
+
+(define (prim-plus args)
+  (if (null? args) 0
+      (+ (car args) (prim-plus (cdr args)))))
+
+(define (prim-times args)
+  (if (null? args) 1
+      (* (car args) (prim-times (cdr args)))))
+
+(define (my-eq? a b)
+  (cond
+   ((null? a) (null? b))
+   ((null? b) #f)
+   ((number? a) (if (number? b) (= a b) #f))
+   ((eq? a #t) (eq? b #t))
+   ((eq? a #f) (eq? b #f))
+   ((symbol? a) (if (symbol? b) (eq? a b) #f))
+   ((is-my-string a) (if (is-my-string b) (chars-equal (cdr a) (cdr b)) #f))
+   (else (eq? a b))))
+
+(define (my-equal? a b)
+  (cond
+   ((null? a) (null? b))
+   ((null? b) #f)
+   ((number? a) (if (number? b) (= a b) #f))
+   ((eq? a #t) (eq? b #t))
+   ((eq? a #f) (eq? b #f))
+   ((symbol? a) (if (symbol? b) (eq? a b) #f))
+   ((is-my-string a) (if (is-my-string b) (chars-equal (cdr a) (cdr b)) #f))
+   ((pair? a) (if (pair? b)
+                   (if (my-equal? (car a) (car b))
+                       (my-equal? (cdr a) (cdr b))
+                       #f)
+                   #f))
+   (else (eq? a b))))
+
+;; Display a value
+(define (my-display val)
+  (cond
+   ((null? val) (display "()"))
+   ((eq? val #t) (display "#t"))
+   ((eq? val #f) (display "#f"))
+   ((number? val) (display val))
+   ((symbol? val) (display val))
+   ((is-my-string val) (display-my-string val))
+   ((is-closure val) (display "#<procedure>"))
+   ((is-primitive val) (display "#<procedure>"))
+   ((pair? val) (display-pair val))
+   (else (display val)))
+  '())
+
+(define (display-my-string val)
+  (display-char-list (cdr val)))
+
+(define (display-char-list chars)
+  (if (null? chars) '()
+      (begin
+        (putchr (car chars))
+        (display-char-list (cdr chars)))))
+
+(define (display-pair p)
+  (display "(")
+  (my-display (car p))
+  (display-pair-tail (cdr p))
+  (display ")"))
+
+(define (display-pair-tail p)
+  (cond
+   ((null? p) '())
+   ((pair? p)
+    (begin
+      (display " ")
+      (my-display (car p))
+      (display-pair-tail (cdr p))))
+   (else
+    (begin
+      (display " . ")
+      (my-display p)))))
+
+;; Convert our internal string (*string* . chars) to host string for fopen etc
+(define (my-string-to-host val)
+  (if (is-my-string val)
+      (symbol (cdr val))
+      val))
+
+;; ============================================================
+;; Global Environment Setup
+;; ============================================================
+
+(define (make-global-env)
+  (let ((env (make-env '())))
+    (env-define env '+ (cons '*primitive* (cons 'plus '())))
+    (env-define env '- (cons '*primitive* (cons 'minus '())))
+    (env-define env '* (cons '*primitive* (cons 'times '())))
+    (env-define env '/ (cons '*primitive* (cons 'divide '())))
+    (env-define env '= (cons '*primitive* (cons 'num-eq '())))
+    (env-define env '< (cons '*primitive* (cons 'lt '())))
+    (env-define env '> (cons '*primitive* (cons 'gt '())))
+    (env-define env '<= (cons '*primitive* (cons 'le '())))
+    (env-define env '>= (cons '*primitive* (cons 'ge '())))
+    (env-define env 'cons (cons '*primitive* (cons 'cons-prim '())))
+    (env-define env 'car (cons '*primitive* (cons 'car-prim '())))
+    (env-define env 'cdr (cons '*primitive* (cons 'cdr-prim '())))
+    (env-define env 'null? (cons '*primitive* (cons 'null-q '())))
+    (env-define env 'pair? (cons '*primitive* (cons 'pair-q '())))
+    (env-define env 'eq? (cons '*primitive* (cons 'eq-q '())))
+    (env-define env 'equal? (cons '*primitive* (cons 'equal-q '())))
+    (env-define env 'not (cons '*primitive* (cons 'not-prim '())))
+    (env-define env 'display (cons '*primitive* (cons 'display-prim '())))
+    (env-define env 'newline (cons '*primitive* (cons 'newline-prim '())))
+    (env-define env 'read (cons '*primitive* (cons 'read-prim '())))
+    (env-define env 'getchr (cons '*primitive* (cons 'getchr-prim '())))
+    (env-define env 'putchr (cons '*primitive* (cons 'putchr-prim '())))
+    (env-define env 'chr (cons '*primitive* (cons 'chr-prim '())))
+    (env-define env 'symbol? (cons '*primitive* (cons 'symbol-q '())))
+    (env-define env 'string? (cons '*primitive* (cons 'string-q '())))
+    (env-define env 'number? (cons '*primitive* (cons 'number-q '())))
+    (env-define env 'set-car! (cons '*primitive* (cons 'set-car-prim '())))
+    (env-define env 'set-cdr! (cons '*primitive* (cons 'set-cdr-prim '())))
+    (env-define env 'symbol (cons '*primitive* (cons 'symbol-prim '())))
+    (env-define env 'fopen (cons '*primitive* (cons 'fopen-prim '())))
+    (env-define env 'fclose (cons '*primitive* (cons 'fclose-prim '())))
+    (env-define env 'fgetchr (cons '*primitive* (cons 'fgetchr-prim '())))
+    (env-define env 'fputchr (cons '*primitive* (cons 'fputchr-prim '())))
+    (env-define env 'fdisplay (cons '*primitive* (cons 'fdisplay-prim '())))
+    (env-define env 'fread (cons '*primitive* (cons 'fread-prim '())))
+    (env-define env 'else #t)
+    (env-define env 'and (cons '*primitive* (cons 'and-prim '())))
+    (env-define env 'or (cons '*primitive* (cons 'or-prim '())))
+    env))
+
+;; ============================================================
+;; Main: Read filename, parse file, evaluate
+;; ============================================================
+
+(define (run-program filename)
+  (let ((chars (read-file-chars filename))
+        (env (make-global-env)))
+    (let ((tokens (tokenize chars)))
+      (run-tokens tokens env))))
+
+(define (run-tokens tokens env)
+  (if (null? tokens) '()
+      (let ((result (parse-expr tokens)))
+        (let ((expr (car result))
+              (rest (cdr result)))
+          (my-eval expr env)
+          (run-tokens rest env)))))
+
+;; Read filename from stdin (as a line)
+(define (read-filename)
+  (read-filename-helper '()))
+
+(define (read-filename-helper acc)
+  (let ((ch (getchr)))
+    (if (= ch 10)
+        (symbol (reverse-list acc))
+        (if (= ch 13)
+            (read-filename-helper acc)
+            (read-filename-helper (cons ch acc))))))
+
+(define filename (read-filename))
+(run-program filename)

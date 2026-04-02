@@ -1,0 +1,41 @@
+{
+  "id": "gen-1775096161-Gs5L0bwhnbA1JxDdWqYO",
+  "container": null,
+  "content": [
+    {
+      "id": "toolu_bdrk_01RyB58cA5N2YM6GhFUjTwqP",
+      "caller": {
+        "type": "direct"
+      },
+      "input": {
+        "command": "cd /app && python3 << 'EOF'\nimport pexpect, time\nfrom headless_terminal import HeadlessTerminal\n\nt = HeadlessTerminal()\n\n# Test basic command\nt.send_keystrokes('echo hello_world\\n', wait_sec=1.0)\nt._child.expect(pexpect.TIMEOUT, timeout=1)\nprint('OUTPUT:', repr(t._child.before))\n\n# Test Ctrl-C\nt.send_keystrokes('sleep 999\\n', wait_sec=0.5)\nt.send_keystrokes('\\x03', wait_sec=0.5)\nt._child.expect(pexpect.TIMEOUT, timeout=1)\nprint('AFTER CTRL-C:', repr(t._child.before))\n\n# Test interactive program and bashrc sourcing\nt.send_keystrokes('echo $BASH\\n', wait_sec=1.0)\nt._child.expect(pexpect.TIMEOUT, timeout=1)\nprint('BASH VAR:', repr(t._child.before))\n\nt.close()\nprint('All tests passed!')\nEOF\n"
+      },
+      "name": "bash",
+      "type": "tool_use"
+    }
+  ],
+  "model": "anthropic/claude-4.6-opus-20260205",
+  "role": "assistant",
+  "stop_reason": "tool_use",
+  "stop_sequence": null,
+  "type": "message",
+  "usage": {
+    "cache_creation": null,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "inference_geo": null,
+    "input_tokens": 3956,
+    "output_tokens": 319,
+    "server_tool_use": null,
+    "service_tier": null,
+    "speed": "standard",
+    "cost": 0.027755,
+    "is_byok": false,
+    "cost_details": {
+      "upstream_inference_cost": 0.027755,
+      "upstream_inference_prompt_cost": 0.01978,
+      "upstream_inference_completions_cost": 0.007975
+    }
+  },
+  "provider": "Amazon Bedrock"
+}

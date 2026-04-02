@@ -1,0 +1,41 @@
+{
+  "id": "gen-1775119671-I93W7zXxbq6UhNDcMnwx",
+  "container": null,
+  "content": [
+    {
+      "id": "toolu_bdrk_01Vyf6YQQHkZV335GrmBVms6",
+      "caller": {
+        "type": "direct"
+      },
+      "input": {
+        "command": "python3 -c \"\nimport math\n\n# Shadow width in world is 0.458, not 0.4. So either R is not exactly 0.2 or the shadow \n# geometry is more complex. Actually for a directional light, the shadow cross-section \n# perpendicular to the light direction is always 2R. But we're measuring horizontal width,\n# which depends on the ellipse orientation.\n\n# Let me think about this more carefully. The light direction L = (lx, ly, lz).\n# The shadow on the ground is an ellipse. Its widest horizontal extent might be > 2R.\n\n# OK, let me try to determine the light direction from the sphere shading.\n# \n# The normal at the brightest point is N = (0.648, 0.745, 0.159)\n# The brightest intensity is 198/255 = 0.776\n# Shading model: color = ambient + (1-ambient) * max(N\u00b7L, 0)  (for albedo=1)\n# At darkest (edge): 51/255 = 0.2 = ambient\n# At brightest: 0.776 = 0.2 + 0.8 * NL_max\n\n# The brightest pixel is the one where N\u00b7L is maximized among visible pixels.\n# NL_max = (0.776 - 0.2)/0.8 = 0.720\n\n# If L were close to (0.648, 0.745, 0.159), then N\u00b7L at that point would be ~1, giving\n# intensity 1.0 not 0.776. So L is quite different from N.\n\n# Let me try common light directions. A typical choice might be L = (1, 1, 1)/sqrt(3)\n# or L = (1, 1, 0)/sqrt(2), etc.\n\n# Let me sample several sphere pixels and compute their normals and intensities.\n\n# Sphere center: (0, -0.1, -1), R = 0.2\n# Camera at origin\n\ndef get_normal(px, py):\n    u = (2*(px+0.5)/2400 - 1) * 4/3\n    v = 1 - 2*(py+0.5)/1800\n    d = math.sqrt(u*u + v*v + 1)\n    dx, dy, dz = u/d, v/d, -1/d\n    oc_x, oc_y, oc_z = 0, 0.1, 1\n    b = 2*(dx*oc_x + dy*oc_y + dz*oc_z)\n    c = oc_x**2 + oc_y**2 + oc_z**2 - 0.04\n    disc = b*b - 4*c\n    if disc < 0:\n        return None\n    t = (-b - math.sqrt(disc)) / 2\n    hx, hy, hz = t*dx, t*dy, t*dz\n    nx = (hx - 0) / 0.2\n    ny = (hy + 0.1) / 0.2\n    nz = (hz + 1) / 0.2\n    nm = math.sqrt(nx*nx + ny*ny + nz*nz)\n    return (nx/nm, ny/nm, nz/nm)\n\n# Read image\nwith open('/app/image.ppm', 'r') as f:\n    f.readline(); f.readline(); f.readline()\n    values = []\n    for line in f:\n        values.extend(int(x) for x in line.split())\nw = 2400\n\n# Sample various sphere pixels\nsamples = []\nfor py in range(820, 1170, 20):\n    for px in range(1040, 1380, 20):\n        idx = (py * w + px) * 3\n        r, g, b = values[idx], values[idx+1], values[idx+2]\n        # Check if this is a sphere pixel (reddish, not sky or checker)\n        if r > 50 and g < r/2 and b < r/2:\n            n = get_normal(px, py)\n            if n:\n                intensity = r / 255.0\n                nl = (intensity - 0.2) / 0.8\n                if nl > 0:\n                    samples.append((n, nl, px, py, r))\n\nprint(f'Got {len(samples)} sphere samples')\n\n# For each sample: N\u00b7L = nl\n# We need to find L = (lx, ly, lz) unit vector such that for all samples,\n# nx*lx + ny*ly + nz*lz \u2248 nl\n\n# This is a linear system: [N matrix] * L = [nl vector]\n# Solve by least squares.\n\n# Build the system\nN_mat = []\nnl_vec = []\nfor n, nl, px, py, r in samples:\n    N_mat.append(n)\n    nl_vec.append(nl)\n\n# Least squares: (N^T N) L = N^T nl\nNtN = [[0]*3 for _ in range(3)]\nNtnl = [0]*3\nfor i in range(len(N_mat)):\n    for j in range(3):\n        for k in range(3):\n            NtN[j][k] += N_mat[i][j] * N_mat[i][k]\n        Ntnl[j] += N_mat[i][j] * nl_vec[i]\n\n# Solve 3x3 system using Cramer's rule\ndef det3(m):\n    return (m[0][0]*(m[1][1]*m[2][2]-m[1][2]*m[2][1])\n           -m[0][1]*(m[1][0]*m[2][2]-m[1][2]*m[2][0])\n           +m[0][2]*(m[1][0]*m[2][1]-m[1][1]*m[2][0]))\n\nD = det3(NtN)\nL = []\nfor col in range(3):\n    m = [row[:] for row in NtN]\n    for row in range(3):\n        m[row][col] = Ntnl[row]\n    L.append(det3(m) / D)\n\nLm = math.sqrt(sum(x*x for x in L))\nL = [x/Lm for x in L]\nprint(f'Light direction L = ({L[0]:.5f}, {L[1]:.5f}, {L[2]:.5f})')\nprint(f'|L| = {Lm:.5f}')\n\n# Verify on some samples\nprint()\nprint('Verification:')\nmax_err = 0\nfor n, nl, px, py, r in samples[:10]:\n    nl_pred = n[0]*L[0] + n[1]*L[1] + n[2]*L[2]\n    err = abs(nl_pred - nl)\n    max_err = max(max_err, err)\n    print(f'  ({px},{py}): r={r}, nl_actual={nl:.4f}, nl_pred={nl_pred:.4f}, err={err:.4f}')\n\n# Also check the brightest\nn = get_normal(1320, 854)\nnl_pred = n[0]*L[0] + n[1]*L[1] + n[2]*L[2]\nprint(f'Brightest (1320,854): N=({n[0]:.4f},{n[1]:.4f},{n[2]:.4f}), NL={nl_pred:.4f}')\n\n# Print some common light directions for comparison\nfor name, ldir in [('(1,1,1)', (1,1,1)), ('(1,1,0)', (1,1,0)), ('(1,1,-1)', (1,1,-1)),\n                     ('(0,1,0)', (0,1,0)), ('(-1,1,0)', (-1,1,0)), ('(-1,1,-1)', (-1,1,-1))]:\n    lm = math.sqrt(sum(x*x for x in ldir))\n    ln = tuple(x/lm for x in ldir)\n    dot = sum(ln[i]*L[i] for i in range(3))\n    print(f'  {name} normalized: ({ln[0]:.4f},{ln[1]:.4f},{ln[2]:.4f}), dot with L: {dot:.4f}')\n\" 2>&1\n"
+      },
+      "name": "bash",
+      "type": "tool_use"
+    }
+  ],
+  "model": "anthropic/claude-4.6-opus-20260205",
+  "role": "assistant",
+  "stop_reason": "tool_use",
+  "stop_sequence": null,
+  "type": "message",
+  "usage": {
+    "cache_creation": null,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "inference_geo": null,
+    "input_tokens": 17716,
+    "output_tokens": 2171,
+    "server_tool_use": null,
+    "service_tier": null,
+    "speed": "standard",
+    "cost": 0.142855,
+    "is_byok": false,
+    "cost_details": {
+      "upstream_inference_cost": 0.142855,
+      "upstream_inference_prompt_cost": 0.08858,
+      "upstream_inference_completions_cost": 0.054275
+    }
+  },
+  "provider": "Amazon Bedrock"
+}

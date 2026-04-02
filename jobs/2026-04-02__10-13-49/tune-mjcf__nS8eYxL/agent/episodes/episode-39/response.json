@@ -1,0 +1,41 @@
+{
+  "id": "gen-1775126430-Bflyj0SLmiQASrMkpB8W",
+  "container": null,
+  "content": [
+    {
+      "id": "toolu_bdrk_014Qw8yrKktMjqU7Z5V7pVMZ",
+      "caller": {
+        "type": "direct"
+      },
+      "input": {
+        "command": "cd /app && python -c \"\nimport mujoco, numpy as np, time\n\nm = mujoco.MjModel.from_xml_path('model_ref.xml')\nm.opt.jacobian = 0\nm.opt.disableflags |= mujoco.mjtDisableBit.mjDSBL_ACTUATION\nm.opt.disableflags |= mujoco.mjtDisableBit.mjDSBL_SENSOR  \nm.opt.disableflags |= mujoco.mjtDisableBit.mjDSBL_WARMSTART\nm.opt.disableflags |= mujoco.mjtDisableBit.mjDSBL_REFSAFE\nm.opt.disableflags |= mujoco.mjtDisableBit.mjDSBL_CONTACT\nm.opt.iterations = 1\nm.opt.ls_iterations = 1\n\n# Instead of timers, let me profile which sub-functions are expensive\nd = mujoco.MjData(m)\nr = np.random.default_rng(42)\nd.qpos += r.normal(0, 0.01, size=d.qpos.shape)\nmujoco.mj_forward(m, d)\n\n# Time individual phases\ndef time_fn(fn, n=1000):\n    d2 = mujoco.MjData(m)\n    r2 = np.random.default_rng(42)\n    d2.qpos += r2.normal(0, 0.01, size=d2.qpos.shape)\n    mujoco.mj_forward(m, d2)\n    t0 = time.perf_counter()\n    for _ in range(n):\n        fn(m, d2)\n    t1 = time.perf_counter()\n    return (t1-t0)*1000\n\n# Can't easily time sub-phases without mj_step decomposition\n# Let me check: what about opt.sdf_iterations?\nprint(f'sdf_iterations: {m.opt.sdf_iterations}')\nprint(f'sdf_initpoints: {m.opt.sdf_initpoints}')\nprint(f'nconmax: {m.opt.nconmax}')\n\n# Check model size info\nprint(f'nq: {m.nq}, nv: {m.nv}, nu: {m.nu}')\nprint(f'nbody: {m.nbody}, njnt: {m.njnt}, ngeom: {m.ngeom}')\nprint(f'neq: {m.neq}, ntendon: {m.ntendon}')\nprint(f'nsensor: {m.nsensor}, nsensordata: {m.nsensordata}')\nprint(f'nplugin: {m.nplugin}')\nprint(f'nM: {m.nM}')\n\n# Check what fraction of time is in mj_forward vs mj_step\nd3 = mujoco.MjData(m)\nr3 = np.random.default_rng(42)\nd3.qpos += r3.normal(0, 0.01, size=d3.qpos.shape)\nmujoco.mj_forward(m, d3)\n\n# Time just the position phase\nt0 = time.perf_counter()\nfor _ in range(1000):\n    mujoco.mj_fwdPosition(m, d3)\nt1 = time.perf_counter()\nprint(f'mj_fwdPosition x1000: {(t1-t0)*1000:.1f}ms')\n\nt0 = time.perf_counter()\nfor _ in range(1000):\n    mujoco.mj_fwdVelocity(m, d3)\nt1 = time.perf_counter()\nprint(f'mj_fwdVelocity x1000: {(t1-t0)*1000:.1f}ms')\n\nt0 = time.perf_counter()\nfor _ in range(1000):\n    mujoco.mj_fwdActuation(m, d3)\nt1 = time.perf_counter()\nprint(f'mj_fwdActuation x1000: {(t1-t0)*1000:.1f}ms')\n\nt0 = time.perf_counter()\nfor _ in range(1000):\n    mujoco.mj_fwdAcceleration(m, d3)\nt1 = time.perf_counter()\nprint(f'mj_fwdAcceleration x1000: {(t1-t0)*1000:.1f}ms')\n\nt0 = time.perf_counter()\nfor _ in range(1000):\n    mujoco.mj_fwdConstraint(m, d3)\nt1 = time.perf_counter()\nprint(f'mj_fwdConstraint x1000: {(t1-t0)*1000:.1f}ms')\n\n# What about mj_Euler?\nt0 = time.perf_counter()\nfor _ in range(1000):\n    mujoco.mj_Euler(m, d3)\nt1 = time.perf_counter()\nprint(f'mj_Euler x1000: {(t1-t0)*1000:.1f}ms')\n\" 2>&1"
+      },
+      "name": "bash",
+      "type": "tool_use"
+    }
+  ],
+  "model": "anthropic/claude-4.6-opus-20260205",
+  "role": "assistant",
+  "stop_reason": "tool_use",
+  "stop_sequence": null,
+  "type": "message",
+  "usage": {
+    "cache_creation": null,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "inference_geo": null,
+    "input_tokens": 10183,
+    "output_tokens": 1393,
+    "server_tool_use": null,
+    "service_tier": null,
+    "speed": "standard",
+    "cost": 0.08574,
+    "is_byok": false,
+    "cost_details": {
+      "upstream_inference_cost": 0.08574,
+      "upstream_inference_prompt_cost": 0.050915,
+      "upstream_inference_completions_cost": 0.034825
+    }
+  },
+  "provider": "Amazon Bedrock"
+}

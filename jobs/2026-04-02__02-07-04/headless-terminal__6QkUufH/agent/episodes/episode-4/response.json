@@ -1,0 +1,46 @@
+{
+  "id": "gen-1775096153-dovKWHGyFFIp2ptP0EJo",
+  "container": null,
+  "content": [
+    {
+      "citations": null,
+      "text": "Now let me verify it works:",
+      "type": "text"
+    },
+    {
+      "id": "toolu_bdrk_01MfEoX44q6X58dcsicS11QV",
+      "caller": {
+        "type": "direct"
+      },
+      "input": {
+        "command": "cd /app && python3 -c \"\nfrom headless_terminal import HeadlessTerminal\nimport time\n\nt = HeadlessTerminal()\n\n# Test basic command\nt.send_keystrokes('echo hello_world\\n', wait_sec=1.0)\n\n# Read what's in the buffer\nt._child.expect(pexpect.TIMEOUT, timeout=1)\nprint('OUTPUT:', repr(t._child.before))\n\n# Test Ctrl-C\nt.send_keystrokes('sleep 999\\n', wait_sec=0.5)\nt.send_keystrokes('\\x03', wait_sec=0.5)\nt._child.expect(pexpect.TIMEOUT, timeout=1)\nprint('AFTER CTRL-C:', repr(t._child.before))\n\n# Test that bashrc was sourced (check for PS1 or similar)\nt.send_keystrokes('echo \\$BASH\\n', wait_sec=1.0)\nt._child.expect(pexpect.TIMEOUT, timeout=1)\nprint('BASH VAR:', repr(t._child.before))\n\nt.close()\nprint('All tests passed!')\n\" 2>&1\nimport pexpect"
+      },
+      "name": "bash",
+      "type": "tool_use"
+    }
+  ],
+  "model": "anthropic/claude-4.6-opus-20260205",
+  "role": "assistant",
+  "stop_reason": "tool_use",
+  "stop_sequence": null,
+  "type": "message",
+  "usage": {
+    "cache_creation": null,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "inference_geo": null,
+    "input_tokens": 3516,
+    "output_tokens": 346,
+    "server_tool_use": null,
+    "service_tier": null,
+    "speed": "standard",
+    "cost": 0.02623,
+    "is_byok": false,
+    "cost_details": {
+      "upstream_inference_cost": 0.02623,
+      "upstream_inference_prompt_cost": 0.01758,
+      "upstream_inference_completions_cost": 0.00865
+    }
+  },
+  "provider": "Amazon Bedrock"
+}

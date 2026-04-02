@@ -1,0 +1,7 @@
+[
+  {
+    "type": "tool_result",
+    "tool_use_id": "toolu_bdrk_01LAZuemfbsmSHMFwxxCwtpK",
+    "content": "[exit_code=0]\n\n        \n        /* Make the syscall */\n        \"syscall\\n\\t\"\n        \n        /* Get the return value */\n        \"move %0, $v0\"\n        \n        /* Output parameter */\n        : \"=r\" (result)\n        \n        /* Input parameters */\n        : \"r\" (syscall_num),\n          \"r\" (arg1),\n          \"r\" (arg2),\n          \"r\" (arg3),\n          \"r\" (arg4),\n          \"r\" (arg5),\n          \"r\" (arg6)\n        \n        /* Clobbered registers */\n        : \"v0\", \"a0\", \"a1\", \"a2\", \"a3\", \"t0\", \"t1\", \"memory\"\n    );\n    \n    /* \n     * MIPS typically uses negative return values for errors\n     * and sets errno accordingly\n     */\n    if (result < 0) {\n        errno = -result;\n        return -1;\n    }\n    \n    return result;\n}\n#endif\n\n#if 0\n// Constants for file operations\n#define MAX_PATH_LENGTH 256\n#define MAX_FILES 1024"
+  }
+]

@@ -1,0 +1,52 @@
+{
+  "id": "gen-1775115338-Rknu2ykxlpYhX5xLr8rj",
+  "container": null,
+  "content": [
+    {
+      "id": "toolu_bdrk_01QAFgNC2FHn5zD7SwAyL1rL",
+      "caller": {
+        "type": "direct"
+      },
+      "input": {
+        "command": "R -e 'installed.packages()[,\"Package\"]' 2>/dev/null | grep -i stan"
+      },
+      "name": "bash",
+      "type": "tool_use"
+    },
+    {
+      "id": "toolu_bdrk_011A8R3BNx2oPM5Gejem2XPk",
+      "caller": {
+        "type": "direct"
+      },
+      "input": {
+        "command": "R -e 'library(rstan); sessionInfo()' 2>&1 | head -20"
+      },
+      "name": "bash",
+      "type": "tool_use"
+    }
+  ],
+  "model": "anthropic/claude-4.6-opus-20260205",
+  "role": "assistant",
+  "stop_reason": "tool_use",
+  "stop_sequence": null,
+  "type": "message",
+  "usage": {
+    "cache_creation": null,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "inference_geo": null,
+    "input_tokens": 2546,
+    "output_tokens": 130,
+    "server_tool_use": null,
+    "service_tier": null,
+    "speed": "standard",
+    "cost": 0.01598,
+    "is_byok": false,
+    "cost_details": {
+      "upstream_inference_cost": 0.01598,
+      "upstream_inference_prompt_cost": 0.01273,
+      "upstream_inference_completions_cost": 0.00325
+    }
+  },
+  "provider": "Amazon Bedrock"
+}

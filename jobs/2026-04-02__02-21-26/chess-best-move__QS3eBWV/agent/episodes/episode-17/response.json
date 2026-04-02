@@ -1,0 +1,41 @@
+{
+  "id": "gen-1775097259-WY0seRelowTaXqCkwR68",
+  "container": null,
+  "content": [
+    {
+      "id": "toolu_bdrk_019C7Agg1CYFmc3RDmVT18QN",
+      "caller": {
+        "type": "direct"
+      },
+      "input": {
+        "command": "python3 << 'PYEOF'\nimport chess\n\nfen = \"r1bq1r2/1p3pp1/p1n1p3/3nPkbP/8/P1N5/1P2QPP1/R1B1K2R w KQ - 0 1\"\nboard = chess.Board(fen)\n\n# Verify the two checkmates\nfor move_str in ['e2e4', 'g2g4']:\n    move = chess.Move.from_uci(move_str)\n    board.push(move)\n    print(f\"After {move_str}:\")\n    print(board)\n    print(f\"Is checkmate: {board.is_checkmate()}\")\n    # Show why it's checkmate - what are black's legal moves?\n    print(f\"Black legal moves: {list(board.legal_moves)}\")\n    print()\n    board.pop()\n\nPYEOF"
+      },
+      "name": "bash",
+      "type": "tool_use"
+    }
+  ],
+  "model": "anthropic/claude-4.6-opus-20260205",
+  "role": "assistant",
+  "stop_reason": "tool_use",
+  "stop_sequence": null,
+  "type": "message",
+  "usage": {
+    "cache_creation": null,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "inference_geo": null,
+    "input_tokens": 9064,
+    "output_tokens": 277,
+    "server_tool_use": null,
+    "service_tier": null,
+    "speed": "standard",
+    "cost": 0.052245,
+    "is_byok": false,
+    "cost_details": {
+      "upstream_inference_cost": 0.052245,
+      "upstream_inference_prompt_cost": 0.04532,
+      "upstream_inference_completions_cost": 0.006925
+    }
+  },
+  "provider": "Amazon Bedrock"
+}

@@ -1,0 +1,41 @@
+{
+  "id": "gen-1775101280-IAc9AWHR7oGjvDSWyFTd",
+  "container": null,
+  "content": [
+    {
+      "id": "toolu_bdrk_01CBySFgNd8eL8wDkZDvrbNd",
+      "caller": {
+        "type": "direct"
+      },
+      "input": {
+        "command": "# Full end-to-end test\ncd /app\n\n# Compress\nuv run python compress.py c4_sample /tmp/resharded_test 2>&1\n\necho \"---\"\n\n# Check constraints\necho \"Root entries: $(ls /tmp/resharded_test/ | wc -l)\"\nfor d in /tmp/resharded_test/*/; do\n    count=$(ls \"$d\" 2>/dev/null | wc -l)\n    echo \"  $(basename $d): $count entries\"\ndone\n\n# Check max file size\nmax_size=$(find /tmp/resharded_test -type f -exec stat --format='%s' {} + | sort -n | tail -1)\necho \"Max file size: $max_size bytes (limit: $((15*1024*1024)))\""
+      },
+      "name": "bash",
+      "type": "tool_use"
+    }
+  ],
+  "model": "anthropic/claude-4.6-opus-20260205",
+  "role": "assistant",
+  "stop_reason": "tool_use",
+  "stop_sequence": null,
+  "type": "message",
+  "usage": {
+    "cache_creation": null,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "inference_geo": null,
+    "input_tokens": 8220,
+    "output_tokens": 239,
+    "server_tool_use": null,
+    "service_tier": null,
+    "speed": "standard",
+    "cost": 0.047075,
+    "is_byok": false,
+    "cost_details": {
+      "upstream_inference_cost": 0.047075,
+      "upstream_inference_prompt_cost": 0.0411,
+      "upstream_inference_completions_cost": 0.005975
+    }
+  },
+  "provider": "Amazon Bedrock"
+}

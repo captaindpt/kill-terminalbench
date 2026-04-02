@@ -1,0 +1,41 @@
+{
+  "id": "gen-1775105379-vlgS77Y9e69rdMrY8eXE",
+  "container": null,
+  "content": [
+    {
+      "id": "toolu_bdrk_01M3tBs1oTCMRJSSna9FciU4",
+      "caller": {
+        "type": "direct"
+      },
+      "input": {
+        "command": "tail -5 /app/vocab.bpe && echo \"---\" && python3 -c \"\n# Let's check the file size and understand the format\n# The ckpt is raw float32 weights concatenated in a specific order\nimport struct\nwith open('/app/gpt2-124M.ckpt','rb') as f:\n    data = f.read(16)\n    vals = struct.unpack('4f', data)\n    print('First 4 floats:', vals)\n    f.seek(0,2)\n    total = f.tell()\n    print('Total bytes:', total)\n    print('Total float32s:', total//4)\n\""
+      },
+      "name": "bash",
+      "type": "tool_use"
+    }
+  ],
+  "model": "anthropic/claude-4.6-opus-20260205",
+  "role": "assistant",
+  "stop_reason": "tool_use",
+  "stop_sequence": null,
+  "type": "message",
+  "usage": {
+    "cache_creation": null,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "inference_geo": null,
+    "input_tokens": 5035,
+    "output_tokens": 207,
+    "server_tool_use": null,
+    "service_tier": null,
+    "speed": "standard",
+    "cost": 0.03035,
+    "is_byok": false,
+    "cost_details": {
+      "upstream_inference_cost": 0.03035,
+      "upstream_inference_prompt_cost": 0.025175,
+      "upstream_inference_completions_cost": 0.005175
+    }
+  },
+  "provider": "Amazon Bedrock"
+}

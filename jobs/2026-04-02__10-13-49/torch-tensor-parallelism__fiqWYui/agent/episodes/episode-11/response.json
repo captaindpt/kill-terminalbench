@@ -1,0 +1,46 @@
+{
+  "id": "gen-1775125217-p6INRwAVYo4zserYpJfH",
+  "container": null,
+  "content": [
+    {
+      "citations": null,
+      "text": "Now let me write a quick test to verify correctness:",
+      "type": "text"
+    },
+    {
+      "id": "toolu_bdrk_017j8qFAkvqHGzQ1MG5fXG1s",
+      "caller": {
+        "type": "direct"
+      },
+      "input": {
+        "command": "cat > /tmp/test_parallel.py << 'PYEOF'\nimport os\nimport torch\nimport torch.distributed as dist\n\ndef test():\n    dist.init_process_group(backend=\"gloo\")\n    rank = dist.get_rank()\n    world_size = dist.get_world_size()\n\n    from parallel_linear import ColumnParallelLinear, RowParallelLinear\n\n    torch.manual_seed(42)\n    in_f, out_f = 8, 4\n    master_weight = torch.randn(out_f, in_f)\n    x = torch.randn(2, in_f)\n\n    # Test ColumnParallelLinear\n    col_layer = ColumnParallelLinear(in_f, out_f, bias=False, master_weight=master_weight)\n    \n    # Verify weight sharding\n    expected_shard = torch.chunk(master_weight, world_size, dim=0)[rank]\n    assert torch.allclose(col_layer.weight.data, expected_shard), \\\n        f\"Rank {rank}: Column weight mismatch\"\n\n    out_col = col_layer(x)\n    expected_out = x @ master_weight.T\n    assert torch.allclose(out_col, expected_out, atol=1e-5), \\\n        f\"Rank {rank}: Column output mismatch: {out_col} vs {expected_out}\"\n\n    # Test RowParallelLinear\n    row_layer = RowParallelLinear(in_f, out_f, bias=False, master_weight=master_weight)\n    \n    expected_shard_row = torch.chunk(master_weight, world_size, dim=1)[rank]\n    assert torch.allclose(row_layer.weight.data, expected_shard_row), \\\n        f\"Rank {rank}: Row weight mismatch\"\n\n    # For row parallel, input should be sharded along last dim\n    x_chunks = torch.chunk(x, world_size, dim=-1)\n    x_local = x_chunks[rank]\n    out_row = row_layer(x_local)\n    expected_out_row = x @ master_weight.T\n    assert torch.allclose(out_row, expected_out_row, atol=1e-5), \\\n        f\"Rank {rank}: Row output mismatch: {out_row} vs {expected_out_row}\"\n\n    # Test with bias\n    col_bias = ColumnParallelLinear(in_f, out_f, bias=True, master_weight=master_weight)\n    assert col_bias.bias is not None\n    assert col_bias.bias.shape == (out_f // world_size,)\n    assert torch.all(col_bias.bias == 0)\n\n    row_bias = RowParallelLinear(in_f, out_f, bias=True, master_weight=master_weight)\n    assert row_bias.bias is not None\n    assert row_bias.bias.shape == (out_f,)\n    assert torch.all(row_bias.bias == 0)\n\n    # Test gradients\n    col_layer2 = ColumnParallelLinear(in_f, out_f, bias=True, master_weight=master_weight)\n    x2 = torch.randn(2, in_f, requires_grad=True)\n    out2 = col_layer2(x2)\n    loss = out2.sum()\n    loss.backward()\n    assert col_layer2.weight.grad is not None, \"Column weight grad is None\"\n    assert col_layer2.bias.grad is not None, \"Column bias grad is None\"\n\n    row_layer2 = RowParallelLinear(in_f, out_f, bias=True, master_weight=master_weight)\n    x3 = torch.randn(2, in_f // world_size, requires_grad=True)\n    out3 = row_layer2(x3)\n    loss3 = out3.sum()\n    loss3.backward()\n    assert row_layer2.weight.grad is not None, \"Row weight grad is None\"\n    assert row_layer2.bias.grad is not None, \"Row bias grad is None\"\n\n    if rank == 0:\n        print(\"ALL TESTS PASSED!\")\n    \n    dist.destroy_process_group()\n\nif __name__ == \"__main__\":\n    test()\nPYEOF\n\ncd /app && python3 -m torch.distributed.run --nproc_per_node=2 --master_port=29500 /tmp/test_parallel.py"
+      },
+      "name": "bash",
+      "type": "tool_use"
+    }
+  ],
+  "model": "anthropic/claude-4.6-opus-20260205",
+  "role": "assistant",
+  "stop_reason": "tool_use",
+  "stop_sequence": null,
+  "type": "message",
+  "usage": {
+    "cache_creation": null,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "inference_geo": null,
+    "input_tokens": 4902,
+    "output_tokens": 1187,
+    "server_tool_use": null,
+    "service_tier": null,
+    "speed": "standard",
+    "cost": 0.054185,
+    "is_byok": false,
+    "cost_details": {
+      "upstream_inference_cost": 0.054185,
+      "upstream_inference_prompt_cost": 0.02451,
+      "upstream_inference_completions_cost": 0.029675
+    }
+  },
+  "provider": "Amazon Bedrock"
+}

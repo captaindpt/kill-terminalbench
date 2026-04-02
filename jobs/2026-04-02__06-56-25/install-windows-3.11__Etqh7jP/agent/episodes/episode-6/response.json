@@ -1,0 +1,41 @@
+{
+  "id": "gen-1775113540-QRl9ZQXIysc2yw7Raz90",
+  "container": null,
+  "content": [
+    {
+      "id": "toolu_bdrk_01V7WvNeoVNHrSgcCrLa8rMN",
+      "caller": {
+        "type": "direct"
+      },
+      "input": {
+        "command": "# Configure nginx as reverse proxy on port 80 for the noVNC web interface\ncat > /etc/nginx/sites-available/novnc <<'EOF'\nserver {\n    listen 80 default_server;\n    listen [::]:80 default_server;\n    server_name _;\n\n    location / {\n        proxy_pass http://127.0.0.1:6080/;\n        proxy_http_version 1.1;\n        proxy_set_header Upgrade $http_upgrade;\n        proxy_set_header Connection \"upgrade\";\n        proxy_set_header Host $host;\n        proxy_read_timeout 86400;\n    }\n}\nEOF\n\n# Remove default and enable our config\nrm -f /etc/nginx/sites-enabled/default\nln -sf /etc/nginx/sites-available/novnc /etc/nginx/sites-enabled/novnc\n\n# Test and start nginx\nnginx -t && nginx\nss -tlnp | grep ':80 '"
+      },
+      "name": "bash",
+      "type": "tool_use"
+    }
+  ],
+  "model": "anthropic/claude-4.6-opus-20260205",
+  "role": "assistant",
+  "stop_reason": "tool_use",
+  "stop_sequence": null,
+  "type": "message",
+  "usage": {
+    "cache_creation": null,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "inference_geo": null,
+    "input_tokens": 3772,
+    "output_tokens": 282,
+    "server_tool_use": null,
+    "service_tier": null,
+    "speed": "standard",
+    "cost": 0.02591,
+    "is_byok": false,
+    "cost_details": {
+      "upstream_inference_cost": 0.02591,
+      "upstream_inference_prompt_cost": 0.01886,
+      "upstream_inference_completions_cost": 0.00705
+    }
+  },
+  "provider": "Amazon Bedrock"
+}

@@ -1,0 +1,41 @@
+{
+  "id": "gen-1775100422-KUkEzpwZzAmwU3Bogrto",
+  "container": null,
+  "content": [
+    {
+      "id": "toolu_bdrk_01Dg7GjPAswLRdqjPtBMGKdK",
+      "caller": {
+        "type": "direct"
+      },
+      "input": {
+        "command": "# Launch QEMU with serial console on telnet port 6665, no graphics\nsetsid qemu-system-x86_64 \\\n  -m 512 \\\n  -cdrom /app/alpine.iso \\\n  -boot d \\\n  -nographic \\\n  -serial telnet:127.0.0.1:6665,server,nowait \\\n  -display none \\\n  </dev/null >/tmp/qemu.log 2>&1 &\n\necho \"QEMU PID: $!\""
+      },
+      "name": "bash",
+      "type": "tool_use"
+    }
+  ],
+  "model": "anthropic/claude-4.6-opus-20260205",
+  "role": "assistant",
+  "stop_reason": "tool_use",
+  "stop_sequence": null,
+  "type": "message",
+  "usage": {
+    "cache_creation": null,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "inference_geo": null,
+    "input_tokens": 1954,
+    "output_tokens": 175,
+    "server_tool_use": null,
+    "service_tier": null,
+    "speed": "standard",
+    "cost": 0.014145,
+    "is_byok": false,
+    "cost_details": {
+      "upstream_inference_cost": 0.014145,
+      "upstream_inference_prompt_cost": 0.00977,
+      "upstream_inference_completions_cost": 0.004375
+    }
+  },
+  "provider": "Amazon Bedrock"
+}

@@ -1,0 +1,41 @@
+{
+  "id": "gen-1775095776-zrMAJ4JLg7zG2VKDRTvn",
+  "container": null,
+  "content": [
+    {
+      "id": "toolu_bdrk_013PzQq94pSnhoh1RgotRCru",
+      "caller": {
+        "type": "direct"
+      },
+      "input": {
+        "command": "# Create document root and HTML files\nmkdir -p /var/www/html\n\necho \"Welcome to the benchmark webserver\" > /var/www/html/index.html\necho \"Page not found - Please check your URL\" > /var/www/html/404.html\n\n# Remove default site\nrm -f /etc/nginx/sites-enabled/default\n\n# Write updated nginx.conf with custom log format and rate limiting zone\ncat > /etc/nginx/nginx.conf << 'EOF'\nuser www-data;\nworker_processes auto;\npid /run/nginx.pid;\nerror_log /var/log/nginx/error.log;\ninclude /etc/nginx/modules-enabled/*.conf;\n\nevents {\n\tworker_connections 768;\n}\n\nhttp {\n\tsendfile on;\n\ttcp_nopush on;\n\ttypes_hash_max_size 2048;\n\n\tinclude /etc/nginx/mime.types;\n\tdefault_type application/octet-stream;\n\n\t# Custom log format\n\tlog_format benchmark '$time_local $request_method $status \"$http_user_agent\"';\n\n\t# Rate limiting zone\n\tlimit_req_zone $binary_remote_addr zone=benchmark_limit:10m rate=10r/s;\n\n\taccess_log /var/log/nginx/access.log;\n\n\tgzip on;\n\n\tinclude /etc/nginx/conf.d/*.conf;\n\tinclude /etc/nginx/sites-enabled/*;\n}\nEOF\n\n# Write server block configuration\ncat > /etc/nginx/conf.d/benchmark-site.conf << 'EOF'\nserver {\n    listen 8080;\n\n    root /var/www/html;\n    index index.html;\n\n    access_log /var/log/nginx/benchmark-access.log benchmark;\n    error_log /var/log/nginx/benchmark-error.log;\n\n    limit_req zone=benchmark_limit burst=10;\n\n    error_page 404 /404.html;\n    location = /404.html {\n        internal;\n    }\n\n    location / {\n        try_files $uri $uri/ =404;\n    }\n}\nEOF\n\necho \"Config files written.\""
+      },
+      "name": "bash",
+      "type": "tool_use"
+    }
+  ],
+  "model": "anthropic/claude-4.6-opus-20260205",
+  "role": "assistant",
+  "stop_reason": "tool_use",
+  "stop_sequence": null,
+  "type": "message",
+  "usage": {
+    "cache_creation": null,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "inference_geo": null,
+    "input_tokens": 2982,
+    "output_tokens": 562,
+    "server_tool_use": null,
+    "service_tier": null,
+    "speed": "standard",
+    "cost": 0.02896,
+    "is_byok": false,
+    "cost_details": {
+      "upstream_inference_cost": 0.02896,
+      "upstream_inference_prompt_cost": 0.01491,
+      "upstream_inference_completions_cost": 0.01405
+    }
+  },
+  "provider": "Amazon Bedrock"
+}

@@ -1,0 +1,41 @@
+{
+  "id": "gen-1775114279-UCcmRvVSPiVgNU9iCmVU",
+  "container": null,
+  "content": [
+    {
+      "id": "toolu_bdrk_01FNFFH9Kn5VyjZ6XpZqQ7Em",
+      "caller": {
+        "type": "direct"
+      },
+      "input": {
+        "command": "# Use Python requests or urllib instead\npython3 -c \"\nimport urllib.request, json, base64\n\ncreds = base64.b64encode(b'restadmin:restpass').decode()\nheaders = {'Authorization': f'Basic {creds}', 'Content-Type': 'application/x-www-form-urlencoded'}\n\n# Check domains\nreq = urllib.request.Request('http://localhost:8001/3.1/domains', headers=headers)\ntry:\n    resp = urllib.request.urlopen(req)\n    print('Domains:', resp.read().decode())\nexcept Exception as e:\n    print('Error getting domains:', e)\n\" 2>&1"
+      },
+      "name": "bash",
+      "type": "tool_use"
+    }
+  ],
+  "model": "anthropic/claude-4.6-opus-20260205",
+  "role": "assistant",
+  "stop_reason": "tool_use",
+  "stop_sequence": null,
+  "type": "message",
+  "usage": {
+    "cache_creation": null,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "inference_geo": null,
+    "input_tokens": 3561,
+    "output_tokens": 211,
+    "server_tool_use": null,
+    "service_tier": null,
+    "speed": "standard",
+    "cost": 0.02308,
+    "is_byok": false,
+    "cost_details": {
+      "upstream_inference_cost": 0.02308,
+      "upstream_inference_prompt_cost": 0.017805,
+      "upstream_inference_completions_cost": 0.005275
+    }
+  },
+  "provider": "Amazon Bedrock"
+}

@@ -1,0 +1,46 @@
+{
+  "id": "gen-1775113365-m1dEl1SqMrYA5gQRf5pb",
+  "container": null,
+  "content": [
+    {
+      "citations": null,
+      "text": "No test scripts found. Let me run a comprehensive set of edge cases:",
+      "type": "text"
+    },
+    {
+      "id": "toolu_bdrk_012cQ3vxPCUPGM5ABm2F5FRu",
+      "caller": {
+        "type": "direct"
+      },
+      "input": {
+        "command": "cat > /tmp/edge_test.html << 'HTML'\n<html>\n<body>\n<!-- Test 1: Mixed case script tags -->\n<SCRIPT>alert(1)</SCRIPT>\n<ScRiPt>alert(2)</ScRiPt>\n<!-- Test 2: javascript: with tabs and newlines -->\n<a href=\"java\tscript:alert(1)\">tab in proto</a>\n<!-- Test 3: javascript: with hex entities -->\n<a href=\"&#x6A;avascript:alert(1)\">hex entity</a>\n<!-- Test 4: Multiple entities -->\n<a href=\"&#106;&#97;&#118;&#97;&#115;&#99;&#114;&#105;&#112;&#116;&#58;alert(1)\">all entities</a>\n<!-- Test 5: vbscript: -->\n<a href=\"vbscript:msgbox('xss')\">vbscript</a>\n<!-- Test 6: Event with newline -->\n<img src=valid.png onload\n=\"alert(1)\">\n<!-- Test 7: SVG event -->\n<svg><rect onmouseover=\"alert(1)\"/></svg>\n<!-- Test 8: Preserve normal attributes -->\n<div class=\"container\" id=\"main\" style=\"color: red; font-size: 14px\" data-value=\"test\">Keep this</div>\n<!-- Test 9: Preserve table structure -->\n<table border=\"1\">\n<tr><th>Header</th></tr>\n<tr><td>Data</td></tr>\n</table>\n<!-- Test 10: data: URI with script -->\n<a href=\"data:text/html;base64,PHNjcmlwdD5hbGVydCgxKTwvc2NyaXB0Pg==\">data URI</a>\n</body>\n</html>\nHTML\ncp /tmp/edge_test.html /tmp/edge_test_run.html\npython3 /app/filter.py /tmp/edge_test_run.html\necho \"=== RESULT ===\"\ncat /tmp/edge_test_run.html"
+      },
+      "name": "bash",
+      "type": "tool_use"
+    }
+  ],
+  "model": "anthropic/claude-4.6-opus-20260205",
+  "role": "assistant",
+  "stop_reason": "tool_use",
+  "stop_sequence": null,
+  "type": "message",
+  "usage": {
+    "cache_creation": null,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "inference_geo": null,
+    "input_tokens": 6462,
+    "output_tokens": 576,
+    "server_tool_use": null,
+    "service_tier": null,
+    "speed": "standard",
+    "cost": 0.04671,
+    "is_byok": false,
+    "cost_details": {
+      "upstream_inference_cost": 0.04671,
+      "upstream_inference_prompt_cost": 0.03231,
+      "upstream_inference_completions_cost": 0.0144
+    }
+  },
+  "provider": "Amazon Bedrock"
+}

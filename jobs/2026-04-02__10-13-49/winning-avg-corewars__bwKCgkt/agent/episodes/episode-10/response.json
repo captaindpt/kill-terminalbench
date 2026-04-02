@@ -1,0 +1,41 @@
+{
+  "id": "gen-1775126918-wV7rmmLipH6ywVkNgow9",
+  "container": null,
+  "content": [
+    {
+      "id": "toolu_bdrk_01KJVuLdVBGR8zRiKybq7ejp",
+      "caller": {
+        "type": "direct"
+      },
+      "input": {
+        "command": "# The boot is broken. Let me go with a simpler approach that I know works.\n# Let me use a direct scan-clear without booting, but with SPL protection.\n\ncat > my_warrior.red << 'EOF'\n;redcode-94\n;name MyWarrior\n;author AI\n;strategy CMP scanner to core clear, with SPL protection\n\nstep    equ 3030\n\n        spl 1, <-5000       ; SPL protection against bombers\n        spl 1, <-5000       ; Creates 4 processes\n\n; Scanner\nscan    add.f inc, ptr\n        seq *ptr, @ptr\n        jmp attack\n        add.f inc, ptr\n        seq *ptr, @ptr\n        jmp attack\n        add.f inc, ptr\n        seq *ptr, @ptr\n        jmp attack\n        jmp scan\n\ninc     dat #step, #step\nptr     dat #step, #step*2\n\n; Attack - bomb around target then clear\nattack  mov bomb, *ptr\n        add #4, ptr\n        mov bomb, *ptr \n        sub #8, ptr\n        mov bomb, *ptr\n        jmp clear\n\nbomb    dat >2667, >5334\n\ngate    dat #0, #0\nclear   mov bomb, >gate\n        djn.f clear, >gate\n\n        end scan\nEOF\npmars -b -r 100 -f my_warrior.red warriors/stone.red 2>&1 | tail -2\npmars -b -r 100 -f my_warrior.red warriors/paper.red 2>&1 | tail -2\npmars -b -r 100 -f my_warrior.red warriors/vampire.red 2>&1 | tail -2\npmars -b -r 100 -f my_warrior.red warriors/snake.red 2>&1 | tail -2\npmars -b -r 100 -f my_warrior.red warriors/g2-clear.red 2>&1 | tail -2"
+      },
+      "name": "bash",
+      "type": "tool_use"
+    }
+  ],
+  "model": "anthropic/claude-4.6-opus-20260205",
+  "role": "assistant",
+  "stop_reason": "tool_use",
+  "stop_sequence": null,
+  "type": "message",
+  "usage": {
+    "cache_creation": null,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "inference_geo": null,
+    "input_tokens": 12355,
+    "output_tokens": 523,
+    "server_tool_use": null,
+    "service_tier": null,
+    "speed": "standard",
+    "cost": 0.07485,
+    "is_byok": false,
+    "cost_details": {
+      "upstream_inference_cost": 0.07485,
+      "upstream_inference_prompt_cost": 0.061775,
+      "upstream_inference_completions_cost": 0.013075
+    }
+  },
+  "provider": "Amazon Bedrock"
+}

@@ -1,0 +1,41 @@
+{
+  "id": "gen-1775097234-GoQHeF3MqY79nHWkmM8J",
+  "container": null,
+  "content": [
+    {
+      "id": "toolu_bdrk_0157vUaJUn76JCi49PPiBfKe",
+      "caller": {
+        "type": "direct"
+      },
+      "input": {
+        "command": "python3 << 'PYEOF'\nimport chess\n\nfen = \"r1bq1r2/1p3pp1/p1n1p3/3nPkbP/8/P1N5/1P2QPP1/R1B1K2R w KQ - 0 1\"\nboard = chess.Board(fen)\nprint(board)\nprint(f\"\\nIs valid: {board.is_valid()}\")\nif board.is_valid():\n    print(f\"Legal moves: {[m.uci() for m in board.legal_moves]}\")\n    # Check for checks and captures\n    for move in board.legal_moves:\n        board.push(move)\n        if board.is_checkmate():\n            print(f\"CHECKMATE: {move.uci()}\")\n        elif board.is_check():\n            print(f\"Check: {move.uci()}\")\n        board.pop()\nPYEOF"
+      },
+      "name": "bash",
+      "type": "tool_use"
+    }
+  ],
+  "model": "anthropic/claude-4.6-opus-20260205",
+  "role": "assistant",
+  "stop_reason": "tool_use",
+  "stop_sequence": null,
+  "type": "message",
+  "usage": {
+    "cache_creation": null,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "inference_geo": null,
+    "input_tokens": 16671,
+    "output_tokens": 280,
+    "server_tool_use": null,
+    "service_tier": null,
+    "speed": "standard",
+    "cost": 0.090355,
+    "is_byok": false,
+    "cost_details": {
+      "upstream_inference_cost": 0.090355,
+      "upstream_inference_prompt_cost": 0.083355,
+      "upstream_inference_completions_cost": 0.007
+    }
+  },
+  "provider": "Amazon Bedrock"
+}

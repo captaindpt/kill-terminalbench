@@ -1,0 +1,41 @@
+{
+  "id": "gen-1775108187-rFYNNi9lxDLCZANLJeWN",
+  "container": null,
+  "content": [
+    {
+      "id": "toolu_bdrk_01Nr8LEnZqjtjFeB612b8rri",
+      "caller": {
+        "type": "direct"
+      },
+      "input": {
+        "command": "# Let me try multiple well-known mirrors and download locations for POV-Ray 2.2\ncd /tmp\n\n# The original POV-Ray 2.2 Unix distribution files\nfor url in \\\n  \"https://www.retro.co.za/archive/povray/Old-Versions/Official-2.2/SrcUnix/povuni_s.tgz\" \\\n  \"http://ftp.icm.edu.pl/pub/graphics/povray/Old-Versions/Official-2.2/SrcUnix/povuni_s.tgz\" \\\n  \"https://fossies.org/linux/misc/old/povuni_s.tgz\" \\\n  \"https://ftp.snt.utwente.nl/pub/software/povray/Old-Versions/Official-2.2/SrcUnix/povuni_s.tgz\" \\\n  \"http://ftp.mirrorservice.org/sites/ftp.povray.org/pub/povray/Old-Versions/Official-2.2/SrcUnix/povuni_s.tgz\" \\\n  \"https://ftp.lip6.fr/pub/graphics/povray/Old-Versions/Official-2.2/SrcUnix/povuni_s.tgz\"; do\n  echo \"Trying $url ...\"\n  wget -q --timeout=10 \"$url\" -O povuni_s.tgz 2>&1 && { echo \"SUCCESS\"; file povuni_s.tgz; break; } || echo \"Failed\"\ndone"
+      },
+      "name": "bash",
+      "type": "tool_use"
+    }
+  ],
+  "model": "anthropic/claude-4.6-opus-20260205",
+  "role": "assistant",
+  "stop_reason": "tool_use",
+  "stop_sequence": null,
+  "type": "message",
+  "usage": {
+    "cache_creation": null,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "inference_geo": null,
+    "input_tokens": 9599,
+    "output_tokens": 430,
+    "server_tool_use": null,
+    "service_tier": null,
+    "speed": "standard",
+    "cost": 0.058745,
+    "is_byok": false,
+    "cost_details": {
+      "upstream_inference_cost": 0.058745,
+      "upstream_inference_prompt_cost": 0.047995,
+      "upstream_inference_completions_cost": 0.01075
+    }
+  },
+  "provider": "Amazon Bedrock"
+}

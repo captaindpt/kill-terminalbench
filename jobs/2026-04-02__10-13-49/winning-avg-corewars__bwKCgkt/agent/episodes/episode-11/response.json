@@ -1,0 +1,41 @@
+{
+  "id": "gen-1775126941-YoFlGxTRCUI0I0pOE7op",
+  "container": null,
+  "content": [
+    {
+      "id": "toolu_bdrk_01CtZY4uJZtrRqxKn8jZg7Xh",
+      "caller": {
+        "type": "direct"
+      },
+      "input": {
+        "command": "# Not good enough. The SPL processes actually slow down the scanner.\n# Let me try a different approach entirely. Let me try a two-component warrior:\n# Component 1: A fast scanner/bomber\n# Component 2: An imp spiral as insurance\n\n# Actually, let me think about what works:\n# To beat stone at 75%: I need to survive being bombed. Replicators do this.\n# To beat paper at 75%: I need to kill replicators. Core clears do this.\n# These two are somewhat contradictory...\n# \n# Unless I use a VERY fast scanner that finds stone quickly and kills it before\n# it bombs me, AND the same scanner kills paper replicators via clear.\n#\n# Let me look at known successful warrior designs...\n# A \"oneshot\" is a scan-bomb that fires once then clears. Very fast.\n# The key is the qscan (quick scan) uses a large number of parallel SEQ checks.\n\ncat > my_warrior.red << 'EOF'\n;redcode-94\n;name Reaper\n;author AI\n;strategy Oneshot scanner into core clear\n\nstep    equ 2365\ncnt     equ 14\n\n; Quick parallel scan\n        seq step*1+100,  step*1+100+2400\n        jmp f1\n        seq step*2+100,  step*2+100+2400\n        jmp f2\n        seq step*3+100,  step*3+100+2400\n        jmp f3\n        seq step*4+100,  step*4+100+2400\n        jmp f4\n        seq step*5+100,  step*5+100+2400\n        jmp f5\n        seq step*6+100,  step*6+100+2400\n        jmp f6\n        seq step*7+100,  step*7+100+2400\n        jmp f7\n        seq step*8+100,  step*8+100+2400\n        jmp f8\n        seq step*9+100,  step*9+100+2400\n        jmp f9\n        seq step*10+100, step*10+100+2400\n        jmp f10\n        seq step*11+100, step*11+100+2400\n        jmp f11\n        seq step*12+100, step*12+100+2400\n        jmp f12\n        seq step*13+100, step*13+100+2400\n        jmp f13\n        seq step*14+100, step*14+100+2400\n        jmp f14\n        jmp clear       ; Nothing found, go to clear\n\n; Found handlers\nf1      mov #step*1+100-10, ptr\n        jmp attack\nf2      mov #step*2+100-10, ptr\n        jmp attack\nf3      mov #step*3+100-10, ptr\n        jmp attack\nf4      mov #step*4+100-10, ptr\n        jmp attack\nf5      mov #step*5+100-10, ptr\n        jmp attack\nf6      mov #step*6+100-10, ptr\n        jmp attack\nf7      mov #step*7+100-10, ptr\n        jmp attack\nf8      mov #step*8+100-10, ptr\n        jmp attack\nf9      mov #step*9+100-10, ptr\n        jmp attack\nf10     mov #step*10+100-10, ptr\n        jmp attack\nf11     mov #step*11+100-10, ptr\n        jmp attack\nf12     mov #step*12+100-10, ptr\n        jmp attack\nf13     mov #step*13+100-10, ptr\n        jmp attack\nf14     mov #step*14+100-10, ptr\n        jmp attack\n\n; Attack - bomb the general area\nattack  mov bomb, @ptr\n        add #4, ptr\n        mov bomb, @ptr\n        add #4, ptr\n        mov bomb, @ptr\n        add #4, ptr\n        mov bomb, @ptr\n        add #4, ptr\n        mov bomb, @ptr\n        \n; Core clear\nclear   mov bomb, >gate \n        djn.f clear, >gate\n\nbomb    dat >2667, >5334\ngate    dat #0, #0\nptr     dat #0, #0\n\n        end 0\nEOF\npmars -b -r 100 -f my_warrior.red warriors/stone.red 2>&1 | tail -2\npmars -b -r 100 -f my_warrior.red warriors/paper.red 2>&1 | tail -2\npmars -b -r 100 -f my_warrior.red warriors/vampire.red 2>&1 | tail -2\npmars -b -r 100 -f my_warrior.red warriors/snake.red 2>&1 | tail -2\npmars -b -r 100 -f my_warrior.red warriors/g2-clear.red 2>&1 | tail -2"
+      },
+      "name": "bash",
+      "type": "tool_use"
+    }
+  ],
+  "model": "anthropic/claude-4.6-opus-20260205",
+  "role": "assistant",
+  "stop_reason": "tool_use",
+  "stop_sequence": null,
+  "type": "message",
+  "usage": {
+    "cache_creation": null,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "inference_geo": null,
+    "input_tokens": 13002,
+    "output_tokens": 1251,
+    "server_tool_use": null,
+    "service_tier": null,
+    "speed": "standard",
+    "cost": 0.096285,
+    "is_byok": false,
+    "cost_details": {
+      "upstream_inference_cost": 0.096285,
+      "upstream_inference_prompt_cost": 0.06501,
+      "upstream_inference_completions_cost": 0.031275
+    }
+  },
+  "provider": "Amazon Bedrock"
+}

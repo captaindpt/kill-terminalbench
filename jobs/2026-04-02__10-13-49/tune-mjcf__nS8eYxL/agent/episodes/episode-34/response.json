@@ -1,0 +1,41 @@
+{
+  "id": "gen-1775126290-J4eNQ9HaJ9wZNRX4knCG",
+  "container": null,
+  "content": [
+    {
+      "id": "toolu_bdrk_01LoupockWVVCqAxS22D5Vep",
+      "caller": {
+        "type": "direct"
+      },
+      "input": {
+        "command": "cd /app && python -c \"\nimport mujoco, numpy as np, time\n\n# Test PASSIVE disable - this might disable plugin passive forces too!\n# That would break correctness. But let's check.\n# Also test various other flags individually with dense jacobian\n\nref_model = mujoco.MjModel.from_xml_path('model_ref.xml')\nref_data = mujoco.MjData(ref_model)\nrng = np.random.default_rng(42)\nref_data.qpos += rng.normal(0, 0.01, size=ref_data.qpos.shape)\nmujoco.mj_forward(ref_model, ref_data)\nfor _ in range(1000):\n    mujoco.mj_step(ref_model, ref_data)\n\nfull_physics = mujoco.mjtState.mjSTATE_FULLPHYSICS\nref_state = np.zeros(mujoco.mj_stateSize(ref_model, full_physics))\nmujoco.mj_getState(ref_model, ref_data, ref_state, full_physics)\n\n# Ref timing\nref_times = []\nfor _ in range(5):\n    d = mujoco.MjData(ref_model)\n    r = np.random.default_rng(42)\n    d.qpos += r.normal(0, 0.01, size=d.qpos.shape)\n    mujoco.mj_forward(ref_model, d)\n    t0 = time.perf_counter()\n    for _ in range(1000):\n        mujoco.mj_step(ref_model, d)\n    t1 = time.perf_counter()\n    ref_times.append(t1-t0)\nref_time = np.median(ref_times)\n\n# Test various flags individually\nflags_to_test = [\n    ('PASSIVE', mujoco.mjtDisableBit.mjDSBL_PASSIVE),\n    ('GRAVITY', mujoco.mjtDisableBit.mjDSBL_GRAVITY),\n    ('ACTUATION', mujoco.mjtDisableBit.mjDSBL_ACTUATION),\n    ('SENSOR', mujoco.mjtDisableBit.mjDSBL_SENSOR),\n    ('WARMSTART', mujoco.mjtDisableBit.mjDSBL_WARMSTART),\n    ('REFSAFE', mujoco.mjtDisableBit.mjDSBL_REFSAFE),\n]\n\nfor name, flag in flags_to_test:\n    m = mujoco.MjModel.from_xml_path('model_ref.xml')\n    m.opt.jacobian = 0  # dense\n    m.opt.disableflags |= flag\n    \n    d = mujoco.MjData(m)\n    r = np.random.default_rng(42)\n    d.qpos += r.normal(0, 0.01, size=d.qpos.shape)\n    mujoco.mj_forward(m, d)\n    for _ in range(1000):\n        mujoco.mj_step(m, d)\n    \n    state = np.zeros(mujoco.mj_stateSize(m, full_physics))\n    mujoco.mj_getState(m, d, state, full_physics)\n    diff = np.max(np.abs(ref_state - state))\n    \n    # Time it\n    times = []\n    for _ in range(3):\n        d2 = mujoco.MjData(m)\n        r2 = np.random.default_rng(42)\n        d2.qpos += r2.normal(0, 0.01, size=d2.qpos.shape)\n        mujoco.mj_forward(m, d2)\n        t0 = time.perf_counter()\n        for _ in range(1000):\n            mujoco.mj_step(m, d2)\n        t1 = time.perf_counter()\n        times.append(t1-t0)\n    \n    ratio = np.median(times) / ref_time * 100\n    print(f'{name:15s}: ratio={ratio:.1f}%, max_diff={diff:.2e}')\n\" 2>&1"
+      },
+      "name": "bash",
+      "type": "tool_use"
+    }
+  ],
+  "model": "anthropic/claude-4.6-opus-20260205",
+  "role": "assistant",
+  "stop_reason": "tool_use",
+  "stop_sequence": null,
+  "type": "message",
+  "usage": {
+    "cache_creation": null,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "inference_geo": null,
+    "input_tokens": 7763,
+    "output_tokens": 1121,
+    "server_tool_use": null,
+    "service_tier": null,
+    "speed": "standard",
+    "cost": 0.06684,
+    "is_byok": false,
+    "cost_details": {
+      "upstream_inference_cost": 0.06684,
+      "upstream_inference_prompt_cost": 0.038815,
+      "upstream_inference_completions_cost": 0.028025
+    }
+  },
+  "provider": "Amazon Bedrock"
+}

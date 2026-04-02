@@ -1,0 +1,41 @@
+{
+  "id": "gen-1775119707-94PQano0Hlgnq90AWkzI",
+  "container": null,
+  "content": [
+    {
+      "id": "toolu_bdrk_01474ymzJUiPPAiBHcsnkU4F",
+      "caller": {
+        "type": "direct"
+      },
+      "input": {
+        "command": "python3 -c \"\nimport math\n\n# Light direction L \u2248 (0.5764, 0.5768, -0.5789) which is VERY close to (1, 1, -1)/sqrt(3)\n# The dot product with (1,1,-1)/sqrt(3) is 1.0000!\n\n# So the light direction is L = normalize(1, 1, -1) = (1/sqrt(3), 1/sqrt(3), -1/sqrt(3))\n\n# This makes sense: light comes from upper-right-behind the camera \n# (positive x, positive y, negative z means toward the camera)\n\n# Now let me verify the shading model more carefully.\n# Ambient = 0.2, diffuse = 0.8\n# Sphere color_r = 255 * (0.2 + 0.8 * max(N\u00b7L, 0))\n# Sphere color_g = 255 * 0.196 * (0.2 + 0.8 * max(N\u00b7L, 0))\n\n# Let me check the green channel too\n# At (1320, 854): r=198, g=39. g/r = 39/198 = 0.197\n# albedo_g \u2248 0.2 (let's check: 10/51 = 0.196, 39/198 = 0.197)\n\n# Now let me verify the shadow geometry with L = (1,1,-1)/sqrt(3).\n# Shadow center on ground:\n# S_shadow = Sphere_center + ((-0.3 - (-0.1)) / (1/sqrt(3))) * (1/sqrt(3), 1/sqrt(3), -1/sqrt(3))\n# t_shadow = -0.2 / (1/sqrt(3)) = -0.2*sqrt(3) = -0.3464\n\n# Actually, the shadow center is found by tracing from sphere center in the -L direction to the ground.\n# Point = sphere_center + t * (-L) = (0, -0.1, -1) + t * (-1/\u221a3, -1/\u221a3, 1/\u221a3)\n# y = -0.1 - t/\u221a3 = -0.3 \u2192 t/\u221a3 = 0.2 \u2192 t = 0.2*\u221a3 = 0.3464\n# x = 0 - t/\u221a3 = -0.2\n# z = -1 + t/\u221a3 = -1 + 0.2 = -0.8\n# Shadow center: (-0.2, -0.3, -0.8)\n\nprint('Shadow center on ground: (-0.2, -0.3, -0.8)')\n\n# Now let me check the shadow boundary.\n# For a directional light L, the shadow boundary on the ground is the set of points P where\n# the ray from P in direction L is tangent to the sphere.\n# This means: min distance from sphere center to the line (P + t*L) = R\n\n# The shadow is a circle of radius R in the plane perp to L, projected onto the ground.\n# In the ground plane, this becomes an ellipse.\n\n# The shadow semi-axes can be computed:\n# Let L_ground = projection of L onto ground = (lx, 0, lz) normalized\n# L_perp = perpendicular to L_ground in ground plane\n# Shadow semi-axis along L_perp = R = 0.2\n# Shadow semi-axis along L_ground = R / sin(elevation) = R / ly = 0.2 / (1/\u221a3) = 0.2\u221a3 \u2248 0.3464\n\n# elevation angle = arcsin(ly) = arcsin(1/\u221a3) \u2248 35.26\u00b0\n# The semi-axis along L_ground is R/sin(elev) = 0.2 * \u221a3 \u2248 0.3464\n# Wait, that doesn't seem right either. Let me compute properly.\n\n# For directional light L = (a, b, c)/|L| with b > 0 (upward component):\n# The cylinder of shadow rays has radius R and axis direction L.\n# The intersection of this cylinder with the plane y = -0.3 is an ellipse.\n# \n# Parameterize the circle perp to L: center C_shadow + R*(e1*cos(\u03b8) + e2*sin(\u03b8))\n# where e1, e2 are unit vectors perpendicular to L.\n# Project onto ground plane by following L direction from each point.\n# Point on circle: Q = C_sphere + R*(e1*cos(\u03b8) + e2*sin(\u03b8))\n# Shadow of Q on ground: Q + t*(-L) where Q.y + t*(-ly) = -0.3\n# t = (Q.y + 0.3)/ly\n\n# Ground point: P = Q + t*(-L)\n# P.x = Q.x - (Q.y+0.3)/ly * lx\n# P.z = Q.z - (Q.y+0.3)/ly * lz\n\n# This is an affine transformation of the circle, so it's an ellipse.\n\n# Let me just verify numerically. With L = (1,1,-1)/\u221a3:\nsq3 = math.sqrt(3)\nlx, ly, lz = 1/sq3, 1/sq3, -1/sq3\nprint(f'L = ({lx:.5f}, {ly:.5f}, {lz:.5f})')\n\n# Sphere center\nsx, sy, sz = 0, -0.1, -1\nR = 0.2\n\n# Choose two perpendicular unit vectors to L:\n# L = (1,1,-1)/\u221a3\n# e1 can be (1,-1,0)/\u221a2 (perpendicular to L: (1*1+(-1)*1+0*(-1))/\u221a6 = 0 \u2713)\n# e2 = L \u00d7 e1 = (1,1,-1)/\u221a3 \u00d7 (1,-1,0)/\u221a2\n# = 1/(\u221a6) * (1*0-(-1)*(-1), (-1)*1-1*0, 1*(-1)-1*1) = 1/\u221a6 * (-1, -1, -2)\ne1 = (1/math.sqrt(2), -1/math.sqrt(2), 0)\ne2_x = ly*e1[2] - lz*e1[1]\ne2_y = lz*e1[0] - lx*e1[2]\ne2_z = lx*e1[1] - ly*e1[0]\ne2m = math.sqrt(e2_x**2 + e2_y**2 + e2_z**2)\ne2 = (e2_x/e2m, e2_y/e2m, e2_z/e2m)\nprint(f'e1 = ({e1[0]:.4f}, {e1[1]:.4f}, {e1[2]:.4f})')\nprint(f'e2 = ({e2[0]:.4f}, {e2[1]:.4f}, {e2[2]:.4f})')\n\n# Shadow boundary points\nshadow_pts = []\nfor i in range(360):\n    theta = i * math.pi / 180\n    # Point on sphere boundary circle (perp to L)\n    qx = sx + R*(e1[0]*math.cos(theta) + e2[0]*math.sin(theta))\n    qy = sy + R*(e1[1]*math.cos(theta) + e2[1]*math.sin(theta))\n    qz = sz + R*(e1[2]*math.cos(theta) + e2[2]*math.sin(theta))\n    \n    # Project to ground along -L\n    t = (qy + 0.3) / ly  # qy + t*(-ly) = -0.3 \u2192 t = (qy + 0.3)/ly\n    px = qx - t*lx\n    pz = qz - t*lz\n    shadow_pts.append((px, -0.3, pz))\n\n# Find shadow extent in x and z\nmin_x = min(p[0] for p in shadow_pts)\nmax_x = max(p[0] for p in shadow_pts)\nmin_z = min(p[2] for p in shadow_pts)\nmax_z = max(p[2] for p in shadow_pts)\nprint(f'Shadow extent: x=[{min_x:.4f}, {max_x:.4f}], z=[{min_z:.4f}, {max_z:.4f}]')\nprint(f'Shadow center: x={(min_x+max_x)/2:.4f}, z={(min_z+max_z)/2:.4f}')\nprint(f'Shadow width: x={max_x-min_x:.4f}, z={max_z-min_z:.4f}')\n\" 2>&1\n"
+      },
+      "name": "bash",
+      "type": "tool_use"
+    }
+  ],
+  "model": "anthropic/claude-4.6-opus-20260205",
+  "role": "assistant",
+  "stop_reason": "tool_use",
+  "stop_sequence": null,
+  "type": "message",
+  "usage": {
+    "cache_creation": null,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "inference_geo": null,
+    "input_tokens": 20559,
+    "output_tokens": 2281,
+    "server_tool_use": null,
+    "service_tier": null,
+    "speed": "standard",
+    "cost": 0.15982,
+    "is_byok": false,
+    "cost_details": {
+      "upstream_inference_cost": 0.15982,
+      "upstream_inference_prompt_cost": 0.102795,
+      "upstream_inference_completions_cost": 0.057025
+    }
+  },
+  "provider": "Amazon Bedrock"
+}

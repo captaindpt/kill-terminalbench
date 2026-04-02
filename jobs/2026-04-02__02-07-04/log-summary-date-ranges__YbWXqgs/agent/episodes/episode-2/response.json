@@ -1,0 +1,41 @@
+{
+  "id": "gen-1775096208-emdykBvHgyGnQCL9Gdbg",
+  "container": null,
+  "content": [
+    {
+      "id": "toolu_bdrk_014r9aMmQ3KqPFn1dmxkCWVB",
+      "caller": {
+        "type": "direct"
+      },
+      "input": {
+        "command": "cat << 'SCRIPT' > /tmp/analyze.py\nimport os\nimport re\nfrom datetime import date, timedelta\nfrom collections import defaultdict\n\nref = date(2025, 8, 12)\nlast7_start = ref - timedelta(days=6)\nlast30_start = ref - timedelta(days=29)\nmonth_start = date(ref.year, ref.month, 1)\n\nlogdir = \"/app/logs\"\n\n# date -> {severity -> count}\ndate_counts = defaultdict(lambda: defaultdict(int))\n\nfor fname in os.listdir(logdir):\n    m = re.match(r'(\\d{4}-\\d{2}-\\d{2})_.*\\.log$', fname)\n    if not m:\n        continue\n    file_date_str = m.group(1)\n    y, mo, d = map(int, file_date_str.split('-'))\n    file_date = date(y, mo, d)\n    \n    path = os.path.join(logdir, fname)\n    with open(path) as f:\n        for line in f:\n            for sev in ('ERROR', 'WARNING', 'INFO'):\n                if f'[{sev}]' in line:\n                    date_counts[file_date][sev] += 1\n                    break\n\nperiods = {\n    'today': lambda d: d == ref,\n    'last_7_days': lambda d: last7_start <= d <= ref,\n    'last_30_days': lambda d: last30_start <= d <= ref,\n    'month_to_date': lambda d: month_start <= d <= ref,\n    'total': lambda d: True,\n}\n\nsevs = ['ERROR', 'WARNING', 'INFO']\n\nwith open('/app/summary.csv', 'w') as out:\n    out.write('period,severity,count\\n')\n    for period, check in periods.items():\n        totals = {s: 0 for s in sevs}\n        for d, counts in date_counts.items():\n            if check(d):\n                for s in sevs:\n                    totals[s] += counts[s]\n        for s in sevs:\n            out.write(f'{period},{s},{totals[s]}\\n')\n\nprint(\"Done\")\nSCRIPT\npython3 /tmp/analyze.py"
+      },
+      "name": "bash",
+      "type": "tool_use"
+    }
+  ],
+  "model": "anthropic/claude-4.6-opus-20260205",
+  "role": "assistant",
+  "stop_reason": "tool_use",
+  "stop_sequence": null,
+  "type": "message",
+  "usage": {
+    "cache_creation": null,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "inference_geo": null,
+    "input_tokens": 3041,
+    "output_tokens": 620,
+    "server_tool_use": null,
+    "service_tier": null,
+    "speed": "standard",
+    "cost": 0.030705,
+    "is_byok": false,
+    "cost_details": {
+      "upstream_inference_cost": 0.030705,
+      "upstream_inference_prompt_cost": 0.015205,
+      "upstream_inference_completions_cost": 0.0155
+    }
+  },
+  "provider": "Amazon Bedrock"
+}

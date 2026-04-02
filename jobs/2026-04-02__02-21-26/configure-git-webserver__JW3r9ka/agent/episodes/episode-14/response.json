@@ -1,0 +1,35 @@
+{
+  "id": "gen-1775097593-iJ4EohbZNsT2RfH8vvHL",
+  "container": null,
+  "content": [
+    {
+      "citations": null,
+      "text": "Everything is configured. Here's a summary of what was set up:\n\n1. **Bare git repository** at `/git/server` \u2014 accepts pushes via SSH (`user@server:/git/server`)\n2. **Post-receive hook** at `/git/server/hooks/post-receive` \u2014 on every push, checks out the latest `master` branch content to `/var/www/git-web/`\n3. **Nginx web server** on port **8080** \u2014 serves files from `/var/www/git-web/`\n4. **SSH server** on port **22** \u2014 ready for the user to set up authentication\n5. **`user` account** created with a home directory and git safe.directory configured\n\nThe workflow: `git push` \u2192 triggers post-receive hook \u2192 checks out files to web root \u2192 nginx serves them on port 8080.",
+      "type": "text"
+    }
+  ],
+  "model": "anthropic/claude-4.6-opus-20260205",
+  "role": "assistant",
+  "stop_reason": "end_turn",
+  "stop_sequence": null,
+  "type": "message",
+  "usage": {
+    "cache_creation": null,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "inference_geo": null,
+    "input_tokens": 6721,
+    "output_tokens": 194,
+    "server_tool_use": null,
+    "service_tier": null,
+    "speed": "standard",
+    "cost": 0.038455,
+    "is_byok": false,
+    "cost_details": {
+      "upstream_inference_cost": 0.038455,
+      "upstream_inference_prompt_cost": 0.033605,
+      "upstream_inference_completions_cost": 0.00485
+    }
+  },
+  "provider": "Amazon Bedrock"
+}

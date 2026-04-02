@@ -1,0 +1,41 @@
+{
+  "id": "gen-1775098982-ox738vKzU3OFbjFEsmdb",
+  "container": null,
+  "content": [
+    {
+      "id": "toolu_bdrk_01AMug4HzwFDeomFKxL1kqoS",
+      "caller": {
+        "type": "direct"
+      },
+      "input": {
+        "command": "cat > /app/check_cert.py << 'PYTHON'\n#!/usr/bin/env python3\nimport ssl\nimport datetime\nimport sys\nimport os\n\nCERT_PATH = \"/app/ssl/server.crt\"\nKEY_PATH = \"/app/ssl/server.key\"\n\ndef check_certificate():\n    # Verify that the certificate file exists\n    if not os.path.exists(CERT_PATH):\n        print(f\"Error: Certificate file not found at {CERT_PATH}\")\n        sys.exit(1)\n\n    if not os.path.exists(KEY_PATH):\n        print(f\"Error: Key file not found at {KEY_PATH}\")\n        sys.exit(1)\n\n    try:\n        # Load and parse the certificate using the ssl module\n        cert_dict = ssl._ssl._test_decode_cert(CERT_PATH)\n    except Exception as e:\n        print(f\"Error: Could not load certificate: {e}\")\n        sys.exit(1)\n\n    # Extract Common Name from subject\n    common_name = None\n    for rdn in cert_dict.get(\"subject\", ()):\n        for attr_type, attr_value in rdn:\n            if attr_type == \"commonName\":\n                common_name = attr_value\n\n    # Extract expiration date\n    not_after = cert_dict.get(\"notAfter\", \"\")\n    # Parse the date string (format: \"Mon DD HH:MM:SS YYYY GMT\")\n    expiration = datetime.datetime.strptime(not_after, \"%b %d %H:%M:%S %Y %Z\")\n    expiration_str = expiration.strftime(\"%Y-%m-%d\")\n\n    print(f\"Common Name: {common_name}\")\n    print(f\"Expiration Date: {expiration_str}\")\n\n    # Verify the certificate hasn't expired\n    now = datetime.datetime.utcnow()\n    if expiration < now:\n        print(\"Error: Certificate has expired!\")\n        sys.exit(1)\n\n    print(\"Certificate verification successful\")\n\nif __name__ == \"__main__\":\n    check_certificate()\nPYTHON\nchmod +x /app/check_cert.py\npython3 /app/check_cert.py\n"
+      },
+      "name": "bash",
+      "type": "tool_use"
+    }
+  ],
+  "model": "anthropic/claude-4.6-opus-20260205",
+  "role": "assistant",
+  "stop_reason": "tool_use",
+  "stop_sequence": null,
+  "type": "message",
+  "usage": {
+    "cache_creation": null,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "inference_geo": null,
+    "input_tokens": 2543,
+    "output_tokens": 579,
+    "server_tool_use": null,
+    "service_tier": null,
+    "speed": "standard",
+    "cost": 0.02719,
+    "is_byok": false,
+    "cost_details": {
+      "upstream_inference_cost": 0.02719,
+      "upstream_inference_prompt_cost": 0.012715,
+      "upstream_inference_completions_cost": 0.014475
+    }
+  },
+  "provider": "Amazon Bedrock"
+}

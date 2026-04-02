@@ -1,0 +1,41 @@
+{
+  "id": "gen-1775126669-3YDLAKRYBXM7YsF7Jmpt",
+  "container": null,
+  "content": [
+    {
+      "id": "toolu_bdrk_01MqQSPKM2TmGMQnTT8Nvcwr",
+      "caller": {
+        "type": "direct"
+      },
+      "input": {
+        "command": "# Let me try a proper paper replicator that drops SPL bombs\ncat > my_warrior.red << 'EOF'\n;redcode-94\n;name MyPaper\n;author AI\n;strategy Paper replicator with SPL bombs\n\nstep    equ 2667\n\n        spl 1, 0\n        \nloop    mov cp, *ptr\n        add #1, ptr\n        mov cp, @ptr\n        add #step, ptr\n        jmp loop\n\ncp      spl 0, 0\nptr     dat step, step*2\n\n        end loop\nEOF\npmars -b -r 100 -f my_warrior.red warriors/stone.red\npmars -b -r 100 -f my_warrior.red warriors/paper.red  \npmars -b -r 100 -f my_warrior.red warriors/vampire.red\npmars -b -r 100 -f my_warrior.red warriors/snake.red\npmars -b -r 100 -f my_warrior.red warriors/g2-clear.red"
+      },
+      "name": "bash",
+      "type": "tool_use"
+    }
+  ],
+  "model": "anthropic/claude-4.6-opus-20260205",
+  "role": "assistant",
+  "stop_reason": "tool_use",
+  "stop_sequence": null,
+  "type": "message",
+  "usage": {
+    "cache_creation": null,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "inference_geo": null,
+    "input_tokens": 6221,
+    "output_tokens": 297,
+    "server_tool_use": null,
+    "service_tier": null,
+    "speed": "standard",
+    "cost": 0.03853,
+    "is_byok": false,
+    "cost_details": {
+      "upstream_inference_cost": 0.03853,
+      "upstream_inference_prompt_cost": 0.031105,
+      "upstream_inference_completions_cost": 0.007425
+    }
+  },
+  "provider": "Amazon Bedrock"
+}

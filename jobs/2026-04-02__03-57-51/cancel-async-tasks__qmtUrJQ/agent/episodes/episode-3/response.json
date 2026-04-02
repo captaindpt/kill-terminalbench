@@ -1,0 +1,41 @@
+{
+  "id": "gen-1775109125-SHkh397nEuQ2HH1FACHN",
+  "container": null,
+  "content": [
+    {
+      "id": "toolu_bdrk_01GhwY7AcnKdPst7mQPKu1NY",
+      "caller": {
+        "type": "direct"
+      },
+      "input": {
+        "command": "cd /app && python3 << 'TEST'\nimport asyncio\nimport os\nimport signal\n\nfrom run import run_tasks\n\n# Test 2: KeyboardInterrupt allows cleanup code to run\nasync def test_interrupt():\n    cleanup_ran = []\n\n    async def slow_task():\n        try:\n            await asyncio.sleep(10)\n        except asyncio.CancelledError:\n            # Cleanup code\n            cleanup_ran.append(True)\n            raise\n\n    async def send_sigint():\n        await asyncio.sleep(0.1)\n        os.kill(os.getpid(), signal.SIGINT)\n\n    tasks = [slow_task, slow_task, slow_task]\n\n    # Schedule the SIGINT\n    asyncio.get_running_loop().create_task(send_sigint())\n\n    try:\n        await run_tasks(tasks, max_concurrent=3)\n        assert False, \"Should have raised KeyboardInterrupt\"\n    except KeyboardInterrupt:\n        pass\n\n    assert len(cleanup_ran) == 3, f\"Expected 3 cleanups, got {len(cleanup_ran)}\"\n    print(f\"Test 2 passed: {len(cleanup_ran)} cleanup handlers ran after interrupt\")\n\nasyncio.run(test_interrupt())\nTEST\n"
+      },
+      "name": "bash",
+      "type": "tool_use"
+    }
+  ],
+  "model": "anthropic/claude-4.6-opus-20260205",
+  "role": "assistant",
+  "stop_reason": "tool_use",
+  "stop_sequence": null,
+  "type": "message",
+  "usage": {
+    "cache_creation": null,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "inference_geo": null,
+    "input_tokens": 2665,
+    "output_tokens": 357,
+    "server_tool_use": null,
+    "service_tier": null,
+    "speed": "standard",
+    "cost": 0.02225,
+    "is_byok": false,
+    "cost_details": {
+      "upstream_inference_cost": 0.02225,
+      "upstream_inference_prompt_cost": 0.013325,
+      "upstream_inference_completions_cost": 0.008925
+    }
+  },
+  "provider": "Amazon Bedrock"
+}

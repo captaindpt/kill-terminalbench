@@ -1,0 +1,41 @@
+{
+  "id": "gen-1775097542-Jd4z8u4VCrf78D0MByXV",
+  "container": null,
+  "content": [
+    {
+      "id": "toolu_bdrk_01XTYTUzYgrU8Ah4DYBX7RhF",
+      "caller": {
+        "type": "direct"
+      },
+      "input": {
+        "command": "# Fix the safe.directory issue for git and test as user\ngit config --global --add safe.directory /git/server\n\n# Clean up test data and redo - reset the bare repo first\ncd /git/server\ngit update-ref -d refs/heads/master 2>/dev/null\n\n# Now push as user\ncd /tmp\nrm -rf test-local\nsudo -u user bash -c '\n  git config --global --add safe.directory /git/server\n  cd /tmp\n  mkdir test-local && cd test-local\n  git init\n  git config user.email \"test@test.com\"\n  git config user.name \"Test\"\n  echo \"hello world\" > hello.html\n  git add hello.html\n  git commit -m \"add hello.html\"\n  git remote add origin /git/server\n  git push origin master\n'\necho \"---\"\ncat /var/www/git-web/hello.html\necho \"---\"\ncurl -s http://localhost:8080/hello.html"
+      },
+      "name": "bash",
+      "type": "tool_use"
+    }
+  ],
+  "model": "anthropic/claude-4.6-opus-20260205",
+  "role": "assistant",
+  "stop_reason": "tool_use",
+  "stop_sequence": null,
+  "type": "message",
+  "usage": {
+    "cache_creation": null,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "inference_geo": null,
+    "input_tokens": 5481,
+    "output_tokens": 287,
+    "server_tool_use": null,
+    "service_tier": null,
+    "speed": "standard",
+    "cost": 0.03458,
+    "is_byok": false,
+    "cost_details": {
+      "upstream_inference_cost": 0.03458,
+      "upstream_inference_prompt_cost": 0.027405,
+      "upstream_inference_completions_cost": 0.007175
+    }
+  },
+  "provider": "Amazon Bedrock"
+}

@@ -1,0 +1,41 @@
+{
+  "id": "gen-1775126706-aWk1qtyCaePakMeaej2Y",
+  "container": null,
+  "content": [
+    {
+      "id": "toolu_bdrk_016Pz96oivgiNqQ36kpDuf7w",
+      "caller": {
+        "type": "direct"
+      },
+      "input": {
+        "command": "# Let me think about what I need:\n# - Beat stone 75%+ : Need paper-like replicator or scanner\n# - Beat paper 75%+ : Need something that kills replicators (imp spirals, or scan-clear)\n# - Beat vampire 75%+: Need to avoid JMP traps (replicator helps) or fast bomber\n# - Beat snake 33%+ : Need resilience against imp spirals (replicator ties are OK? Need 33 wins)\n# - Beat g2-clear 33%+: Need speed or resilience\n\n# The key insight: I need a program that can beat very different opponents.\n# A common approach is to use a \"oneshot\" scanner that finds the enemy quickly and clears them.\n\n# Let me try a qscan (quick scan) + clear warrior\n# qscan uses repeated SEQ/SNE to find enemy fast, then bombs/clears\n\ncat > my_warrior.red << 'EOF'\n;redcode-94\n;name QScanClear\n;author AI\n;strategy Quick scan with core clear\n\n; Boot the clear routine away first\nboot    mov cend, far+7\n        mov cend-1, far+6\n        mov cend-2, far+5\n        mov cend-3, far+4\n        mov cend-4, far+3\n        mov cend-5, far+2\n        mov cend-6, far+1\n        mov cend-7, far\n\n; Quick scan with SEQ\ns1      seq 100, 100+2400\n        jmp f1\ns2      seq 200, 200+2400\n        jmp f2\ns3      seq 300, 300+2400\n        jmp f3\ns4      seq 400, 400+2400\n        jmp f4\ns5      seq 500, 500+2400\n        jmp f5\ns6      seq 600, 600+2400\n        jmp f6\ns7      seq 700, 700+2400\n        jmp f7\ns8      seq 800, 800+2400\n        jmp f8\n        add #800, s1\n        add #800, s2\n        add #800, s3\n        add #800, s4\n        add #800, s5\n        add #800, s6\n        add #800, s7\n        add #800, s8\n        djn s1, #-1\n\n; Found handlers - calculate target and bomb, then clear\nf1      sub #200, s1\n        mov s1, s2\n        jmp attack\nf2      sub #200, s2\n        jmp attack\nf3      sub #200, s3\n        mov s3, s2\n        jmp attack\nf4      sub #200, s4\n        mov s4, s2\n        jmp attack\nf5      sub #200, s5\n        mov s5, s2\n        jmp attack\nf6      sub #200, s6\n        mov s6, s2\n        jmp attack\nf7      sub #200, s7\n        mov s7, s2\n        jmp attack\nf8      sub #200, s8\n        mov s8, s2\n        jmp attack\n\n; Attack: bomb target area then start clear\nattack  mov bomb, @s2\n        add #4, s2\n        mov bomb, @s2\n        add #4, s2\n        mov bomb, @s2\n        jmp far\n\nbomb    dat >2, >-2\n\n; Clear routine (booted to 'far')\nfar     equ 4000\n\nclear   mov dbomb, >cptr\n        mov dbomb, >cptr\n        djn clear, #-1\ncptr    dat #0, #4-far-3\ndbomb   dat #0, #0\n        dat #0, #0\n        dat #0, #0\n        dat #0, #0\ncend    nop\n\n        end boot\nEOF\npmars -b -r 100 -f my_warrior.red warriors/stone.red\npmars -b -r 100 -f my_warrior.red warriors/paper.red  \npmars -b -r 100 -f my_warrior.red warriors/vampire.red\npmars -b -r 100 -f my_warrior.red warriors/snake.red\npmars -b -r 100 -f my_warrior.red warriors/g2-clear.red"
+      },
+      "name": "bash",
+      "type": "tool_use"
+    }
+  ],
+  "model": "anthropic/claude-4.6-opus-20260205",
+  "role": "assistant",
+  "stop_reason": "tool_use",
+  "stop_sequence": null,
+  "type": "message",
+  "usage": {
+    "cache_creation": null,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "inference_geo": null,
+    "input_tokens": 7812,
+    "output_tokens": 1100,
+    "server_tool_use": null,
+    "service_tier": null,
+    "speed": "standard",
+    "cost": 0.06656,
+    "is_byok": false,
+    "cost_details": {
+      "upstream_inference_cost": 0.06656,
+      "upstream_inference_prompt_cost": 0.03906,
+      "upstream_inference_completions_cost": 0.0275
+    }
+  },
+  "provider": "Amazon Bedrock"
+}

@@ -1,0 +1,132 @@
+{
+    "id": "534d059d-9333-4e9d-aa32-e415142a77d0",
+    "task_name": "winning-avg-corewars",
+    "trial_name": "winning-avg-corewars__bwKCgkt",
+    "trial_uri": "file:///root/kill-terminalbench/jobs/2026-04-02__10-13-49/winning-avg-corewars__bwKCgkt",
+    "task_id": {
+        "git_url": "https://github.com/laude-institute/terminal-bench-2.git",
+        "git_commit_id": "69671fbaac6d67a7ef0dfec016cc38a64ef7a77c",
+        "path": "winning-avg-corewars"
+    },
+    "source": "terminal-bench",
+    "task_checksum": "693d17797b3d2920f9f0316b3f758aee6b228e816c78bab22b75eae684853f13",
+    "config": {
+        "task": {
+            "path": "winning-avg-corewars",
+            "git_url": "https://github.com/laude-institute/terminal-bench-2.git",
+            "git_commit_id": "69671fbaac6d67a7ef0dfec016cc38a64ef7a77c",
+            "name": null,
+            "ref": null,
+            "overwrite": false,
+            "download_dir": null,
+            "source": "terminal-bench"
+        },
+        "trial_name": "winning-avg-corewars__bwKCgkt",
+        "trials_dir": "jobs/2026-04-02__10-13-49",
+        "timeout_multiplier": 1.0,
+        "agent_timeout_multiplier": null,
+        "verifier_timeout_multiplier": null,
+        "agent_setup_timeout_multiplier": null,
+        "environment_build_timeout_multiplier": null,
+        "agent": {
+            "name": null,
+            "import_path": "ktb.harbor_agent:OpenRouterHarborAgent",
+            "model_name": "anthropic/claude-opus-4.6",
+            "override_timeout_sec": null,
+            "override_setup_timeout_sec": null,
+            "max_timeout_sec": null,
+            "kwargs": {
+                "max_episodes": 75,
+                "temperature": 1.0,
+                "command_timeout": 700
+            },
+            "env": {}
+        },
+        "environment": {
+            "type": "docker",
+            "import_path": null,
+            "force_build": false,
+            "delete": true,
+            "override_cpus": null,
+            "override_memory_mb": null,
+            "override_storage_mb": null,
+            "override_gpus": null,
+            "suppress_override_warnings": false,
+            "mounts_json": null,
+            "env": {},
+            "kwargs": {}
+        },
+        "verifier": {
+            "override_timeout_sec": null,
+            "max_timeout_sec": null,
+            "disable": false
+        },
+        "artifacts": [],
+        "job_id": "6b7de154-57dd-4ca3-9366-f8c9af2ae628"
+    },
+    "agent_info": {
+        "name": "ktb-openrouter",
+        "version": "0.1.0",
+        "model_info": {
+            "name": "claude-opus-4.6",
+            "provider": "anthropic"
+        }
+    },
+    "agent_result": {
+        "n_input_tokens": 192520,
+        "n_cache_tokens": null,
+        "n_output_tokens": 18935,
+        "cost_usd": 1.435975,
+        "rollout_details": null,
+        "metadata": {
+            "generation_ids": [
+                "gen-1775126595-pNYL4yDCy21NjXPGprdn",
+                "gen-1775126600-WgS0NCrROZLtaqaCPBeG",
+                "gen-1775126622-ePDLFLUxffF3OnTxff39",
+                "gen-1775126641-6hwsGYCy6LsauEN22QiO",
+                "gen-1775126669-3YDLAKRYBXM7YsF7Jmpt",
+                "gen-1775126675-Gvvb9Ho25clMiazi1ZtG",
+                "gen-1775126706-aWk1qtyCaePakMeaej2Y",
+                "gen-1775126801-eubvE9ppN0cDynY40RkI",
+                "gen-1775126834-RxBQapHB7sPOmSwsAQd2",
+                "gen-1775126858-xxCr19QnVgk8XiInUxjp",
+                "gen-1775126918-wV7rmmLipH6ywVkNgow9",
+                "gen-1775126941-YoFlGxTRCUI0I0pOE7op",
+                "gen-1775126984-2mQH6QGkIOLYkDEIC7Is",
+                "gen-1775127073-vZDWq3ViRcrUKASSSjtP",
+                "gen-1775127105-1E3I9FXgClcwW2VEyot4",
+                "gen-1775127111-PnJko2QRq8Mc0xD7tQKK",
+                "gen-1775127195-d1jmzRtMatd030etcOVg",
+                "gen-1775127376-1DE72gcaVYtE7jA2Am76",
+                "gen-1775127446-kXqjt80hc61u0EZ7ZCTI",
+                "gen-1775127575-JN9h12W6KekufvxCrgIV",
+                "gen-1775127610-moB3k6Eyth5IiBWqhRh3"
+            ],
+            "episodes": 21,
+            "failure_kind": "model_call_error",
+            "failure_episode": 21
+        }
+    },
+    "verifier_result": null,
+    "exception_info": {
+        "exception_type": "RuntimeError",
+        "exception_message": "Model call failed at episode 21: Error code: 402 - {'error': {'message': 'This request requires more credits, or fewer max_tokens. You requested up to 16000 tokens, but can only afford 12054. To increase, visit https://openrouter.ai/settings/keys and create a key with a higher total limit', 'code': 402, 'metadata': {'provider_name': None}}, 'user_id': 'user_2vhXw9P4VILSQQKypQIyPHoVKAo'}",
+        "exception_traceback": "Traceback (most recent call last):\n  File \"/root/kill-terminalbench/ktb/harbor_agent.py\", line 325, in run\n    response = self._client.messages.create(\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/root/kill-terminalbench/.venv/lib/python3.12/site-packages/anthropic/_utils/_utils.py\", line 282, in wrapper\n    return func(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^\n  File \"/root/kill-terminalbench/.venv/lib/python3.12/site-packages/anthropic/resources/messages/messages.py\", line 996, in create\n    return self._post(\n           ^^^^^^^^^^^\n  File \"/root/kill-terminalbench/.venv/lib/python3.12/site-packages/anthropic/_base_client.py\", line 1364, in post\n    return cast(ResponseT, self.request(cast_to, opts, stream=stream, stream_cls=stream_cls))\n                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/root/kill-terminalbench/.venv/lib/python3.12/site-packages/anthropic/_base_client.py\", line 1137, in request\n    raise self._make_status_error_from_response(err.response) from None\nanthropic.APIStatusError: Error code: 402 - {'error': {'message': 'This request requires more credits, or fewer max_tokens. You requested up to 16000 tokens, but can only afford 12054. To increase, visit https://openrouter.ai/settings/keys and create a key with a higher total limit', 'code': 402, 'metadata': {'provider_name': None}}, 'user_id': 'user_2vhXw9P4VILSQQKypQIyPHoVKAo'}\n\nThe above exception was the direct cause of the following exception:\n\nTraceback (most recent call last):\n  File \"/root/kill-terminalbench/.venv/lib/python3.12/site-packages/harbor/trial/trial.py\", line 538, in run\n    await self._execute_agent()\n  File \"/root/kill-terminalbench/.venv/lib/python3.12/site-packages/harbor/trial/trial.py\", line 285, in _execute_agent\n    await asyncio.wait_for(\n  File \"/usr/lib/python3.12/asyncio/tasks.py\", line 520, in wait_for\n    return await fut\n           ^^^^^^^^^\n  File \"/root/kill-terminalbench/ktb/harbor_agent.py\", line 372, in run\n    raise RuntimeError(\nRuntimeError: Model call failed at episode 21: Error code: 402 - {'error': {'message': 'This request requires more credits, or fewer max_tokens. You requested up to 16000 tokens, but can only afford 12054. To increase, visit https://openrouter.ai/settings/keys and create a key with a higher total limit', 'code': 402, 'metadata': {'provider_name': None}}, 'user_id': 'user_2vhXw9P4VILSQQKypQIyPHoVKAo'}\n",
+        "occurred_at": "2026-04-02T11:00:44.020949"
+    },
+    "started_at": "2026-04-02T10:43:00.294417Z",
+    "finished_at": "2026-04-02T11:00:55.453648Z",
+    "environment_setup": {
+        "started_at": "2026-04-02T10:43:00.295146Z",
+        "finished_at": "2026-04-02T10:43:15.664547Z"
+    },
+    "agent_setup": {
+        "started_at": "2026-04-02T10:43:15.664561Z",
+        "finished_at": "2026-04-02T10:43:15.755431Z"
+    },
+    "agent_execution": {
+        "started_at": "2026-04-02T10:43:15.755495Z",
+        "finished_at": "2026-04-02T11:00:44.020049Z"
+    },
+    "verifier": null
+}

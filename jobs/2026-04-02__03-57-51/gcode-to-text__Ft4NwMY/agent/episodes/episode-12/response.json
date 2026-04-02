@@ -1,0 +1,41 @@
+{
+  "id": "gen-1775104528-EopBAicMMmpZIDItU2GO",
+  "container": null,
+  "content": [
+    {
+      "id": "toolu_bdrk_01Y7nDbsmwVMwiJJ7bmhRKyM",
+      "caller": {
+        "type": "direct"
+      },
+      "input": {
+        "command": "python3 << 'PYEOF'\nimport re\nimport numpy as np\n\nlines = open('/app/text.gcode').readlines()\n\ncurrent_x = 0\ncurrent_y = 0\ncurrent_z = 0\nactive_object = -1\ntext_segments = []\n\nfor line in lines:\n    line = line.strip()\n    m = re.match(r'M486\\s+S(-?\\d+)', line)\n    if m:\n        active_object = int(m.group(1))\n        continue\n    m = re.match(r'G[01]\\s', line)\n    if m:\n        params = {}\n        for pm in re.finditer(r'([XYZEF])(-?[\\d.]+)', line):\n            params[pm.group(1)] = float(pm.group(2))\n        new_x = params.get('X', current_x)\n        new_y = params.get('Y', current_y)\n        new_z = params.get('Z', current_z)\n        has_e = 'E' in params\n        e_val = params.get('E', 0)\n        if has_e and e_val > 0 and (new_x != current_x or new_y != current_y):\n            if active_object == 0:\n                text_segments.append((current_x, current_y, new_x, new_y, current_z))\n        current_x = new_x\n        current_y = new_y\n        current_z = new_z\n\nz_levels = sorted(set(s[4] for s in text_segments))\ntarget_z = z_levels[len(z_levels)//2]\nprint(f\"Using Z={target_z}\")\n\nlayer_segs = [s for s in text_segments if abs(s[4] - target_z) < 0.01]\nprint(f\"Segments in layer: {len(layer_segs)}\")\n\nxs = [s[0] for s in layer_segs] + [s[2] for s in layer_segs]\nys = [s[1] for s in layer_segs] + [s[3] for s in layer_segs]\nxmin, xmax = min(xs), max(xs)\nymin, ymax = min(ys), max(ys)\n\nwidth = 200\nheight = int(width * (ymax - ymin) / (xmax - xmin)) if xmax > xmin else 50\nimg = np.zeros((height, width), dtype=float)\n\nfor x1, y1, x2, y2, z in layer_segs:\n    px1 = (x1 - xmin) / (xmax - xmin) * (width - 1)\n    py1 = (y1 - ymin) / (ymax - ymin) * (height - 1)\n    px2 = (x2 - xmin) / (xmax - xmin) * (width - 1)\n    py2 = (y2 - ymin) / (ymax - ymin) * (height - 1)\n    \n    steps = max(int(abs(px2-px1)), int(abs(py2-py1)), 1) * 2\n    for i in range(steps + 1):\n        t = i / steps\n        px = int(px1 + t * (px2 - px1))\n        py = int(py1 + t * (py2 - py1))\n        if 0 <= px < width and 0 <= py < height:\n            img[py][px] = 1\n\n# Print ASCII\nascii_w = 140\nascii_h = max(int(ascii_w * height / width / 2), 1)\n\nprint(f\"Image: {width}x{height}, ASCII: {ascii_w}x{ascii_h}\")\nprint()\n\nfor row in range(ascii_h - 1, -1, -1):\n    line = \"\"\n    for col in range(ascii_w):\n        iy = int(row * height / ascii_h)\n        ix = int(col * width / ascii_w)\n        # Check a small neighborhood\n        val = 0\n        for dy in range(-1, 2):\n            for dx in range(-1, 2):\n                ny, nx = iy+dy, ix+dx\n                if 0 <= ny < height and 0 <= nx < width:\n                    val += img[ny][nx]\n        if val > 0:\n            line += \"#\"\n        else:\n            line += \" \"\n    print(line.rstrip())\n\nPYEOF"
+      },
+      "name": "bash",
+      "type": "tool_use"
+    }
+  ],
+  "model": "anthropic/claude-4.6-opus-20260205",
+  "role": "assistant",
+  "stop_reason": "tool_use",
+  "stop_sequence": null,
+  "type": "message",
+  "usage": {
+    "cache_creation": null,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "inference_geo": null,
+    "input_tokens": 6661,
+    "output_tokens": 1173,
+    "server_tool_use": null,
+    "service_tier": null,
+    "speed": "standard",
+    "cost": 0.06263,
+    "is_byok": false,
+    "cost_details": {
+      "upstream_inference_cost": 0.06263,
+      "upstream_inference_prompt_cost": 0.033305,
+      "upstream_inference_completions_cost": 0.029325
+    }
+  },
+  "provider": "Amazon Bedrock"
+}

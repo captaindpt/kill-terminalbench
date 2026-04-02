@@ -1,0 +1,41 @@
+{
+  "id": "gen-1775121564-rS1yjExMj2YGu9TagvLA",
+  "container": null,
+  "content": [
+    {
+      "id": "toolu_bdrk_01KpzZV1eHbyevSeJ1K9hLa1",
+      "caller": {
+        "type": "direct"
+      },
+      "input": {
+        "command": "python3 << 'EOF'\n# Verify our encoded proteins match PDB FASTA (with proper transformations)\n\n# 5WJ2 (Clover): PDB has His-tag prefix + X (chromophore)\n# Full PDB: MGSSHHHHHHSSGENLYFQGHMVSKGEELFTGVVPILVELDGDVNGHKFSVRGEGEGDATNGKLTLKFICTTGKLPVPWPTLVTTFXVACFSRYPDHMK...\n# Clover protein starts at MVSKGEE... (after His-tag MGSSHHHHHHSSGENLYFQGH)\n# The X at position 66 of the Clover portion should be GYG (3 aa replacing 1 character)\n\npdb_5wj2_full = \"MGSSHHHHHHSSGENLYFQGHMVSKGEELFTGVVPILVELDGDVNGHKFSVRGEGEGDATNGKLTLKFICTTGKLPVPWPTLVTTFXVACFSRYPDHMKQHDFFKSAMPEGYVQERTISFKDDGTYKTRAEVKFEGDTLVNRIELKGIDFKEDGNILGHKLEYNFNSHNVYITADKQKNGIKANFKIRHNVEDGSVQLADHYQQNTPIGDGPVLLPDNHYLSHQSALSKDPNEKRDHMVLLEFVTAAGITHGMDELYK\"\n# Remove His-tag (first 21 chars: MGSSHHHHHHSSGENLYFQGH)\nclover_pdb = pdb_5wj2_full[21:]  # MVSKGEE...\n# Remove N-terminal M\nclover_pdb_no_m = clover_pdb[1:]  # VSKGEE...\n# Replace X with GYG\nclover_pdb_fixed = clover_pdb_no_m.replace('X', 'GYG')\n\nour_clover = \"VSKGEELFTGVVPILVELDGDVNGHKFSVRGEGEGDATNGKLTLKFICTTGKLPVPWPTLVTTFGYGVACFSRYPDHMKQHDFFKSAMPEGYVQERTISFKDDGTYKTRAEVKFEGDTLVNRIELKGIDFKEDGNILGHKLEYNFNSHNVYITADKQKNGIKANFKIRHNVEDGSVQLADHYQQNTPIGDGPVLLPDNHYLSHQSALSKDPNEKRDHMVLLEFVTAAGITHGMDELYK\"\n\nprint(f\"Clover match: {clover_pdb_fixed == our_clover}\")\nif clover_pdb_fixed != our_clover:\n    for i, (a, b) in enumerate(zip(clover_pdb_fixed, our_clover)):\n        if a != b:\n            print(f\"  Mismatch at {i}: PDB={a}, ours={b}\")\n    print(f\"  Lengths: PDB={len(clover_pdb_fixed)}, ours={len(our_clover)}\")\n\n# 2H5Q (mCherry): X -> MYG\npdb_2h5q = \"MVSKGEEDNMAIIKEFMRFKVHMEGSVNGHEFEIEGEGEGRPYEGTQTAKLKVTKGGPLPFAWDILSPQFXSKAYVKHPADIPDYLKLSFPEGFKWERVMNFEDGGVVTVTQDSSLQDGEFIYKVKLRGTNFPSDGPVMQKKTMGWEASSERMYPEDGALKGEIKQRLKLKDGGHYDAEVKTTYKAKKPVQLPGAYNVNIKLDITSHNEDYTIVEQYERAEGRHSTGGMDELYK\"\nmcherry_pdb_no_m = pdb_2h5q[1:]\nmcherry_pdb_fixed = mcherry_pdb_no_m.replace('X', 'MYG')\n\nour_mcherry = \"VSKGEEDNMAIIKEFMRFKVHMEGSVNGHEFEIEGEGEGRPYEGTQTAKLKVTKGGPLPFAWDILSPQFMYGSKAYVKHPADIPDYLKLSFPEGFKWERVMNFEDGGVVTVTQDSSLQDGEFIYKVKLRGTNFPSDGPVMQKKTMGWEASSERMYPEDGALKGEIKQRLKLKDGGHYDAEVKTTYKAKKPVQLPGAYNVNIKLDITSHNEDYTIVEQYERAEGRHSTGGMDELYK\"\n\nprint(f\"mCherry match: {mcherry_pdb_fixed == our_mcherry}\")\nif mcherry_pdb_fixed != our_mcherry:\n    for i, (a, b) in enumerate(zip(mcherry_pdb_fixed, our_mcherry)):\n        if a != b:\n            print(f\"  Mismatch at {i}: PDB={a}, ours={b}\")\n    print(f\"  Lengths: PDB={len(mcherry_pdb_fixed)}, ours={len(our_mcherry)}\")\n\n# 3KZY (SNAP-tag): no X, no M to remove (starts with G)\npdb_3kzy = \"GPGSDKDCEMKRTTLDSPLGKLELSGCEQGLHEIIFLGKGTSAADAVEVPAPAAVLGGPEPLMQATAWLNAYFHQPEAIEEFPVPALHHPVFQQESFTRQVLWKLLKVVKFGEVISYSHLAALAGNPAATAAVKTALSGNPVPILIPCHRVVQGDLDVGGYEGGLAVKEWLLAHEGHRLGKR\"\nour_snap = \"GPGSDKDCEMKRTTLDSPLGKLELSGCEQGLHEIIFLGKGTSAADAVEVPAPAAVLGGPEPLMQATAWLNAYFHQPEAIEEFPVPALHHPVFQQESFTRQVLWKLLKVVKFGEVISYSHLAALAGNPAATAAVKTALSGNPVPILIPCHRVVQGDLDVGGYEGGLAVKEWLLAHEGHRLGKR\"\n\nprint(f\"SNAP-tag match: {pdb_3kzy == our_snap}\")\n\n# DHFR from plasmid\nfrom Bio import SeqIO\nrecord = SeqIO.read(\"/app/plasmid.gb\", \"genbank\")\nfor feature in record.features:\n    if feature.type == \"CDS\":\n        dhfr_dna = feature.location.extract(record.seq)\n        dhfr_protein = str(dhfr_dna.translate())\n        if dhfr_protein.endswith('*'):\n            dhfr_protein = dhfr_protein[:-1]\n        dhfr_no_m = dhfr_protein[1:]  # remove N-terminal M\n        break\n\nour_dhfr = \"ISLIAALAVDRVIGMENAMPWNLPADLAWFKRNTLNKPVIMGRHTWESIGRPLPGRKNIILSSQPGTDDRVTWVKSVDEAIAACGDVPEIMVIGGGRVYEQFLPKAQKLYLTHIDAEVEGDTHFPDYEPDDWESVFSEFHDADAQNSHSYCFEILERR\"\nprint(f\"DHFR match: {dhfr_no_m == our_dhfr}\")\n\n# FLAG tag\nour_flag = \"DYKDDDDK\"\nprint(f\"FLAG tag: {our_flag}\")\n\nprint(\"\\nAll checks passed!\" if all([\n    clover_pdb_fixed == our_clover,\n    mcherry_pdb_fixed == our_mcherry,\n    pdb_3kzy == our_snap,\n    dhfr_no_m == our_dhfr\n]) else \"SOME CHECKS FAILED!\")\n\nEOF\n"
+      },
+      "name": "bash",
+      "type": "tool_use"
+    }
+  ],
+  "model": "anthropic/claude-4.6-opus-20260205",
+  "role": "assistant",
+  "stop_reason": "tool_use",
+  "stop_sequence": null,
+  "type": "message",
+  "usage": {
+    "cache_creation": null,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "inference_geo": null,
+    "input_tokens": 12567,
+    "output_tokens": 2019,
+    "server_tool_use": null,
+    "service_tier": null,
+    "speed": "standard",
+    "cost": 0.11331,
+    "is_byok": false,
+    "cost_details": {
+      "upstream_inference_cost": 0.11331,
+      "upstream_inference_prompt_cost": 0.062835,
+      "upstream_inference_completions_cost": 0.050475
+    }
+  },
+  "provider": "Amazon Bedrock"
+}

@@ -1,0 +1,41 @@
+{
+  "id": "gen-1775100161-MHB19ACbL6uOaAvO2ADJ",
+  "container": null,
+  "content": [
+    {
+      "id": "toolu_bdrk_01KfsVyKFjCVqvqZcsvwAhTN",
+      "caller": {
+        "type": "direct"
+      },
+      "input": {
+        "command": "# Let's use expect to interact with the QEMU VM\ncat > /tmp/setup_alpine.exp << 'EXPECT_SCRIPT'\n#!/usr/bin/expect -f\n\nset timeout 120\n\n# Start QEMU\nspawn qemu-system-x86_64 \\\n  -m 512 \\\n  -cdrom /app/alpine.iso \\\n  -boot d \\\n  -nographic \\\n  -net nic \\\n  -net user,hostfwd=tcp::2222-:22\n\n# Wait for boot prompt and press Enter\nexpect {\n    \"boot:\" {\n        send \"\\r\"\n    }\n    timeout {\n        puts \"TIMEOUT waiting for boot prompt\"\n        exit 1\n    }\n}\n\n# Wait for login prompt\nexpect {\n    \"localhost login:\" {\n        send \"root\\r\"\n    }\n    timeout {\n        puts \"TIMEOUT waiting for login\"\n        exit 1\n    }\n}\n\n# Wait for shell prompt\nexpect {\n    -re {[#\\$] } {\n        send \"\\r\"\n    }\n    timeout {\n        puts \"TIMEOUT waiting for shell\"\n        exit 1\n    }\n}\n\n# Now set up SSH\n# First, set root password\nexpect -re {[#\\$] }\nsend \"echo 'root:password123' | chpasswd\\r\"\n\nexpect -re {[#\\$] }\n# Generate host keys and start sshd\nsend \"ssh-keygen -A\\r\"\n\nexpect -re {[#\\$] }\n# Configure sshd to allow root login with password\nsend \"echo 'PermitRootLogin yes' >> /etc/ssh/sshd_config\\r\"\n\nexpect -re {[#\\$] }\nsend \"echo 'PasswordAuthentication yes' >> /etc/ssh/sshd_config\\r\"\n\nexpect -re {[#\\$] }\n# Start the SSH daemon\nsend \"/usr/sbin/sshd\\r\"\n\nexpect -re {[#\\$] }\nsend \"echo 'SSH setup complete'\\r\"\n\nexpect \"SSH setup complete\"\nputs \"\\n\\nALPINE VM SSH SETUP COMPLETE\"\n\n# Keep the expect script running so QEMU stays alive\n# Detach by interacting forever\ninteract\nEXPECT_SCRIPT\nchmod +x /tmp/setup_alpine.exp"
+      },
+      "name": "bash",
+      "type": "tool_use"
+    }
+  ],
+  "model": "anthropic/claude-4.6-opus-20260205",
+  "role": "assistant",
+  "stop_reason": "tool_use",
+  "stop_sequence": null,
+  "type": "message",
+  "usage": {
+    "cache_creation": null,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "inference_geo": null,
+    "input_tokens": 2843,
+    "output_tokens": 613,
+    "server_tool_use": null,
+    "service_tier": null,
+    "speed": "standard",
+    "cost": 0.02954,
+    "is_byok": false,
+    "cost_details": {
+      "upstream_inference_cost": 0.02954,
+      "upstream_inference_prompt_cost": 0.014215,
+      "upstream_inference_completions_cost": 0.015325
+    }
+  },
+  "provider": "Amazon Bedrock"
+}

@@ -1,0 +1,35 @@
+{
+  "id": "gen-1775096799-uSnmkZtQhy5Hi5YAt4lN",
+  "container": null,
+  "content": [
+    {
+      "citations": null,
+      "text": "The test passes. The solution works by exploiting a parsing differential between BeautifulSoup's `html.parser` and the browser's HTML parser:\n\n- **BeautifulSoup** treats `<style>` inside `<svg>` as containing raw text, so it sees `</svg><img src=x onerror=alert(1)>` as just text content of the style element \u2014 never parsing the `onerror` as an attribute to remove.\n- **The browser** handles `<style>` in SVG foreign content differently \u2014 `</svg>` exits the foreign content, and then `<img src=x onerror=alert(1)>` is parsed as a real HTML `<img>` element that triggers the alert.",
+      "type": "text"
+    }
+  ],
+  "model": "anthropic/claude-4.6-opus-20260205",
+  "role": "assistant",
+  "stop_reason": "end_turn",
+  "stop_sequence": null,
+  "type": "message",
+  "usage": {
+    "cache_creation": null,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "inference_geo": null,
+    "input_tokens": 7950,
+    "output_tokens": 169,
+    "server_tool_use": null,
+    "service_tier": null,
+    "speed": "standard",
+    "cost": 0.043975,
+    "is_byok": false,
+    "cost_details": {
+      "upstream_inference_cost": 0.043975,
+      "upstream_inference_prompt_cost": 0.03975,
+      "upstream_inference_completions_cost": 0.004225
+    }
+  },
+  "provider": "Amazon Bedrock"
+}

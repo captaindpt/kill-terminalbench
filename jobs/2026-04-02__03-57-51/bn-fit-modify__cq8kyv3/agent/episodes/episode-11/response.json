@@ -1,0 +1,46 @@
+{
+  "id": "gen-1775107619-E0RGarUEfTLgGC78exLT",
+  "container": null,
+  "content": [
+    {
+      "citations": null,
+      "text": "Good, the regressions confirm the DAG structure. Now let me save the DAG and proceed with the full pipeline:",
+      "type": "text"
+    },
+    {
+      "id": "toolu_bdrk_014AyDzmHMVQbovnrumyDnDE",
+      "caller": {
+        "type": "direct"
+      },
+      "input": {
+        "command": "python3 << 'PYEOF'\nimport pandas as pd\nimport numpy as np\nfrom pgmpy.models import LinearGaussianBayesianNetwork\nfrom pgmpy.factors.continuous import LinearGaussianCPD\nfrom sklearn.linear_model import LinearRegression\n\ndf = pd.read_csv('/app/bn_sample_10k.csv')\n\n# DAG edges (to, from): child, parent\n# U->Y, U->D, U->R, U->M, D->Y, R->M\nedges = [\n    (\"Y\", \"U\"),   # U -> Y\n    (\"D\", \"U\"),   # U -> D\n    (\"R\", \"U\"),   # U -> R\n    (\"M\", \"U\"),   # U -> M\n    (\"Y\", \"D\"),   # D -> Y\n    (\"M\", \"R\"),   # R -> M\n]\n\n# Save learned_dag.csv\ndag_df = pd.DataFrame(edges, columns=[\"to\", \"from\"])\ndag_df.to_csv('/app/learned_dag.csv', index=False)\nprint(\"Saved learned_dag.csv\")\nprint(dag_df)\n\n# Now learn the BN parameters using linear Gaussian model\n# Fit each node's CPD\n\n# U: no parents, Gaussian\nu_mean = df['U'].mean()\nu_std = df['U'].std(ddof=0)\nprint(f\"\\nU: mean={u_mean:.6f}, var={u_std**2:.6f}\")\n\n# R = beta_R_U * U + intercept_R + noise_R\nreg_R = LinearRegression().fit(df[['U']], df['R'])\nresid_R = df['R'] - reg_R.predict(df[['U']])\nvar_R = np.var(resid_R, ddof=0)\nprint(f\"R: intercept={reg_R.intercept_:.6f}, beta_U={reg_R.coef_[0]:.6f}, var={var_R:.6f}\")\n\n# D = beta_D_U * U + intercept_D + noise_D\nreg_D = LinearRegression().fit(df[['U']], df['D'])\nresid_D = df['D'] - reg_D.predict(df[['U']])\nvar_D = np.var(resid_D, ddof=0)\nprint(f\"D: intercept={reg_D.intercept_:.6f}, beta_U={reg_D.coef_[0]:.6f}, var={var_D:.6f}\")\n\n# Y = beta_Y_U * U + beta_Y_D * D + intercept_Y + noise_Y\nreg_Y = LinearRegression().fit(df[['U', 'D']], df['Y'])\nresid_Y = df['Y'] - reg_Y.predict(df[['U', 'D']])\nvar_Y = np.var(resid_Y, ddof=0)\nprint(f\"Y: intercept={reg_Y.intercept_:.6f}, beta_U={reg_Y.coef_[0]:.6f}, beta_D={reg_Y.coef_[1]:.6f}, var={var_Y:.6f}\")\n\n# M = beta_M_U * U + beta_M_R * R + intercept_M + noise_M\nreg_M = LinearRegression().fit(df[['U', 'R']], df['M'])\nresid_M = df['M'] - reg_M.predict(df[['U', 'R']])\nvar_M = np.var(resid_M, ddof=0)\nprint(f\"M: intercept={reg_M.intercept_:.6f}, beta_U={reg_M.coef_[0]:.6f}, beta_R={reg_M.coef_[1]:.6f}, var={var_M:.6f}\")\n\n# Now do the causal intervention: set Y = 0.0\n# When we intervene on Y, we remove all edges pointing TO Y (i.e., U->Y and D->Y)\n# Y becomes a constant 0.0 (or very small variance around 0)\n# All other CPDs remain the same\n# Y has no children in our DAG, so setting Y=0 doesn't affect anything else\n\n# Intervened DAG: remove edges to Y\nintervened_edges = [\n    (\"D\", \"U\"),   # U -> D\n    (\"R\", \"U\"),   # U -> R\n    (\"M\", \"U\"),   # U -> M\n    (\"M\", \"R\"),   # R -> M\n]\n\nintervened_dag_df = pd.DataFrame(intervened_edges, columns=[\"to\", \"from\"])\nintervened_dag_df.to_csv('/app/intervened_dag.csv', index=False)\nprint(\"\\nSaved intervened_dag.csv\")\nprint(intervened_dag_df)\n\n# Sample from the intervened BN\nnp.random.seed(42)\nn = 10000\n\n# Sample U\nU = np.random.normal(u_mean, u_std, n)\n\n# Sample R given U\nR = reg_R.intercept_ + reg_R.coef_[0] * U + np.random.normal(0, np.sqrt(var_R), n)\n\n# Sample D given U\nD = reg_D.intercept_ + reg_D.coef_[0] * U + np.random.normal(0, np.sqrt(var_D), n)\n\n# Y is intervened to 0.0\nY = np.full(n, 0.0)\n\n# Sample M given U, R\nM = reg_M.intercept_ + reg_M.coef_[0] * U + reg_M.coef_[1] * R + np.random.normal(0, np.sqrt(var_M), n)\n\n# Create dataframe with same column order\nresult_df = pd.DataFrame({'U': U, 'Y': Y, 'R': R, 'D': D, 'M': M})\nresult_df.to_csv('/app/final_bn_sample.csv', index=False)\nprint(f\"\\nSaved final_bn_sample.csv with shape {result_df.shape}\")\nprint(result_df.describe())\n\nPYEOF"
+      },
+      "name": "bash",
+      "type": "tool_use"
+    }
+  ],
+  "model": "anthropic/claude-4.6-opus-20260205",
+  "role": "assistant",
+  "stop_reason": "tool_use",
+  "stop_sequence": null,
+  "type": "message",
+  "usage": {
+    "cache_creation": null,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "inference_geo": null,
+    "input_tokens": 9278,
+    "output_tokens": 1607,
+    "server_tool_use": null,
+    "service_tier": null,
+    "speed": "standard",
+    "cost": 0.086565,
+    "is_byok": false,
+    "cost_details": {
+      "upstream_inference_cost": 0.086565,
+      "upstream_inference_prompt_cost": 0.04639,
+      "upstream_inference_completions_cost": 0.040175
+    }
+  },
+  "provider": "Amazon Bedrock"
+}

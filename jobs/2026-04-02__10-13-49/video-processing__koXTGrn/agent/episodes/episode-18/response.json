@@ -1,0 +1,46 @@
+{
+  "id": "gen-1775127080-vPWLvrFZGj4Ky8pSHgHs",
+  "container": null,
+  "content": [
+    {
+      "citations": null,
+      "text": "Now let me write the script with a robust algorithm that should work across different test videos:",
+      "type": "text"
+    },
+    {
+      "id": "toolu_bdrk_014FHP4UtF5vzzu9NfcDGShb",
+      "caller": {
+        "type": "direct"
+      },
+      "input": {
+        "command": "cat > /app/jump_analyzer.py << 'PYEOF'\nimport sys\nimport cv2\nimport numpy as np\nimport toml\n\n\ndef analyze_jump(video_path):\n    cap = cv2.VideoCapture(video_path)\n    if not cap.isOpened():\n        raise RuntimeError(f\"Cannot open video: {video_path}\")\n\n    # Read first frame as background (guaranteed no runner)\n    ret, bg_frame = cap.read()\n    if not ret:\n        raise RuntimeError(\"Cannot read first frame\")\n\n    bg_gray = cv2.cvtColor(bg_frame, cv2.COLOR_BGR2GRAY).astype(np.float32)\n    bg_blur = cv2.GaussianBlur(bg_gray, (5, 5), 0)\n\n    total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))\n\n    # Collect per-frame metrics\n    frame_data = []  # list of (frame_idx, max_y, p95_y, fg_count, mean_x)\n\n    for i in range(total_frames):\n        ret, frame = cap.read()\n        if not ret:\n            break\n\n        gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY).astype(np.float32)\n        gray_blur = cv2.GaussianBlur(gray, (5, 5), 0)\n\n        diff = cv2.absdiff(gray_blur, bg_blur)\n        _, thresh = cv2.threshold(diff, 50, 255, cv2.THRESH_BINARY)\n        thresh = thresh.astype(np.uint8)\n\n        # Morphological operations to clean up noise\n        kernel_open = np.ones((3, 3), np.uint8)\n        kernel_close = np.ones((7, 7), np.uint8)\n        thresh = cv2.morphologyEx(thresh, cv2.MORPH_OPEN, kernel_open)\n        thresh = cv2.morphologyEx(thresh, cv2.MORPH_CLOSE, kernel_close)\n\n        ys, xs = np.where(thresh > 0)\n        fg_count = len(ys)\n\n        if fg_count < 100:\n            frame_data.append((i, None, None, fg_count, None))\n            continue\n\n        max_y = float(np.max(ys))\n        p95_y = float(np.percentile(ys, 95))\n        mean_x = float(np.mean(xs))\n\n        frame_data.append((i, max_y, p95_y, fg_count, mean_x))\n\n    cap.release()\n\n    # Filter to frames where runner is detected (fg_count >= 100)\n    active_frames = [(f, my, p95, fg, mx) for f, my, p95, fg, mx in frame_data\n                     if my is not None]\n\n    if len(active_frames) < 5:\n        raise RuntimeError(\"Not enough frames with runner detected\")\n\n    # Extract arrays\n    frame_indices = np.array([f[0] for f in active_frames])\n    max_ys = np.array([f[1] for f in active_frames])\n    p95_ys = np.array([f[2] for f in active_frames])\n    fg_counts = np.array([f[3] for f in active_frames])\n    mean_xs = np.array([f[4] for f in active_frames])\n\n    # Establish ground level from the first few frames of running\n    # (before the jump). Use frames where the runner is visible\n    # and moving at a relatively constant speed.\n    # Ground level = max of max_y values from early running frames.\n    \n    # Take the first ~30% of active frames to estimate ground level\n    n_ground = max(3, len(active_frames) // 4)\n    ground_level = np.percentile(max_ys[:n_ground], 80)\n\n    # The jump is characterized by max_y dropping significantly below ground level.\n    # We define \"airborne\" as max_y < ground_level - threshold\n    airborne_threshold = 25  # pixels\n    ground_threshold = 15  # pixels - to detect landing\n\n    # Find frames where the runner is airborne\n    airborne_mask = max_ys < (ground_level - airborne_threshold)\n\n    if not np.any(airborne_mask):\n        raise RuntimeError(\"No airborne frames detected\")\n\n    # Find the first and last airborne frame indices\n    airborne_indices = np.where(airborne_mask)[0]\n    first_airborne_idx = airborne_indices[0]\n    last_airborne_idx = airborne_indices[-1]\n\n    # Takeoff frame: the frame just before the first airborne frame\n    # (or the first airborne frame itself if it's the first active frame)\n    # We want the frame where the jump BEGINS - so we look back from the\n    # first airborne frame to find where the descent in max_y starts.\n    \n    # Look backward from first_airborne_idx to find when max_y started dropping\n    takeoff_idx = first_airborne_idx\n    for j in range(first_airborne_idx - 1, -1, -1):\n        if max_ys[j] >= ground_level - ground_threshold:\n            # This frame is still at ground level\n            takeoff_idx = j + 1\n            break\n    else:\n        takeoff_idx = 0\n\n    # Landing frame: the first frame at/near ground level after the airborne phase\n    landing_idx = last_airborne_idx\n    for j in range(last_airborne_idx + 1, len(active_frames)):\n        if max_ys[j] >= ground_level - ground_threshold:\n            landing_idx = j\n            break\n    else:\n        landing_idx = len(active_frames) - 1\n\n    takeoff_frame = int(frame_indices[takeoff_idx])\n    landing_frame = int(frame_indices[landing_idx])\n\n    return takeoff_frame, landing_frame\n\n\ndef main():\n    if len(sys.argv) < 2:\n        print(\"Usage: python jump_analyzer.py <video_path>\")\n        sys.exit(1)\n\n    video_path = sys.argv[1]\n    takeoff_frame, landing_frame = analyze_jump(video_path)\n\n    output = {\n        'jump_takeoff_frame_number': takeoff_frame,\n        'jump_land_frame_number': landing_frame,\n    }\n\n    output_path = '/app/output.toml'\n    with open(output_path, 'w') as f:\n        toml.dump(output, f)\n\n    print(f\"Takeoff frame: {takeoff_frame}\")\n    print(f\"Landing frame: {landing_frame}\")\n    print(f\"Output written to {output_path}\")\n\n\nif __name__ == '__main__':\n    main()\nPYEOF"
+      },
+      "name": "bash",
+      "type": "tool_use"
+    }
+  ],
+  "model": "anthropic/claude-4.6-opus-20260205",
+  "role": "assistant",
+  "stop_reason": "tool_use",
+  "stop_sequence": null,
+  "type": "message",
+  "usage": {
+    "cache_creation": null,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "inference_geo": null,
+    "input_tokens": 11882,
+    "output_tokens": 1773,
+    "server_tool_use": null,
+    "service_tier": null,
+    "speed": "standard",
+    "cost": 0.103735,
+    "is_byok": false,
+    "cost_details": {
+      "upstream_inference_cost": 0.103735,
+      "upstream_inference_prompt_cost": 0.05941,
+      "upstream_inference_completions_cost": 0.044325
+    }
+  },
+  "provider": "Amazon Bedrock"
+}

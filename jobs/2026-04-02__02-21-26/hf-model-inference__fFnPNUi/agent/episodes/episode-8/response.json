@@ -1,0 +1,41 @@
+{
+  "id": "gen-1775098746-E2QwyqvkTJz9P3bu5808",
+  "container": null,
+  "content": [
+    {
+      "id": "toolu_bdrk_01FezdYQ1q5gF81RDDvcR3y2",
+      "caller": {
+        "type": "direct"
+      },
+      "input": {
+        "command": "python3 -c \"\nimport urllib.request, json\n\ndef test(payload, label=''):\n    req = urllib.request.Request('http://localhost:5000/sentiment',\n        data=json.dumps(payload).encode(),\n        headers={'Content-Type': 'application/json'},\n        method='POST')\n    try:\n        resp = urllib.request.urlopen(req)\n        print(f'{label} [{resp.status}]:', json.loads(resp.read()))\n    except urllib.error.HTTPError as e:\n        print(f'{label} [{e.code}]:', json.loads(e.read()))\n\ntest({'text': 'I love this movie, it is fantastic!'}, 'Positive')\ntest({'text': 'This is terrible and I hate it.'}, 'Negative')\ntest({'nottext': 'hello'}, 'Error-missing')\ntest({'text': ''}, 'Error-empty')\n\""
+      },
+      "name": "bash",
+      "type": "tool_use"
+    }
+  ],
+  "model": "anthropic/claude-4.6-opus-20260205",
+  "role": "assistant",
+  "stop_reason": "tool_use",
+  "stop_sequence": null,
+  "type": "message",
+  "usage": {
+    "cache_creation": null,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "inference_geo": null,
+    "input_tokens": 3936,
+    "output_tokens": 273,
+    "server_tool_use": null,
+    "service_tier": null,
+    "speed": "standard",
+    "cost": 0.026505,
+    "is_byok": false,
+    "cost_details": {
+      "upstream_inference_cost": 0.026505,
+      "upstream_inference_prompt_cost": 0.01968,
+      "upstream_inference_completions_cost": 0.006825
+    }
+  },
+  "provider": "Amazon Bedrock"
+}

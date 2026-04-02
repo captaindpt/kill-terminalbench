@@ -1,0 +1,41 @@
+{
+  "id": "gen-1775120288-MfDSjMpbY06Lgw5JLhJJ",
+  "container": null,
+  "content": [
+    {
+      "id": "toolu_bdrk_01FfYzjfoDyJVCkdMTxwceAQ",
+      "caller": {
+        "type": "direct"
+      },
+      "input": {
+        "command": "python3 -c \"\nimport urllib.request, json\n\nurl = 'https://www.fpbase.org/api/proteins/?format=json&limit=200'\nreq = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})\nwith urllib.request.urlopen(req, timeout=30) as resp:\n    data = json.loads(resp.read())\n    \ncount = data.get('count', 0)\nprint(f'Total proteins: {count}')\nfor p in data['results']:\n    for state in p.get('states', []):\n        ex = state.get('ex_max')\n        em = state.get('em_max')\n        if ex and em:\n            if abs(ex - 505) <= 2 or abs(em - 610) <= 2:\n                print(f'{p[\\\"name\\\"]} (slug:{p[\\\"slug\\\"]}, id:{p[\\\"uuid\\\"]}) - ex:{ex} em:{em}')\n\"\n"
+      },
+      "name": "bash",
+      "type": "tool_use"
+    }
+  ],
+  "model": "anthropic/claude-4.6-opus-20260205",
+  "role": "assistant",
+  "stop_reason": "tool_use",
+  "stop_sequence": null,
+  "type": "message",
+  "usage": {
+    "cache_creation": null,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "inference_geo": null,
+    "input_tokens": 7171,
+    "output_tokens": 293,
+    "server_tool_use": null,
+    "service_tier": null,
+    "speed": "standard",
+    "cost": 0.04318,
+    "is_byok": false,
+    "cost_details": {
+      "upstream_inference_cost": 0.04318,
+      "upstream_inference_prompt_cost": 0.035855,
+      "upstream_inference_completions_cost": 0.007325
+    }
+  },
+  "provider": "Amazon Bedrock"
+}

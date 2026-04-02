@@ -1,0 +1,41 @@
+{
+  "id": "gen-1775126649-kiWEtyYkiG6k2Dpf6UoM",
+  "container": null,
+  "content": [
+    {
+      "id": "toolu_bdrk_01TefcdXHih4sERM9ZQjp2nE",
+      "caller": {
+        "type": "direct"
+      },
+      "input": {
+        "command": "python3 << 'PYEOF'\nimport cv2\nimport numpy as np\n\n# The contour approach is giving very noisy results because the blob is fragmented.\n# Let me try a different strategy. Instead of looking at contours, let me:\n# 1. Track the runner's position using the column with most motion\n# 2. Look at the vertical distribution of motion in that column range\n# \n# Actually, let me rethink this. The runner runs from right to left.\n# The jump happens over a hurdle. During the jump:\n# - The runner's bottom (feet) lifts significantly above the ground level\n# - Then comes back down\n#\n# Let me use a simpler approach: for each frame, find all motion pixels\n# and compute the bottom percentile (95th) and the top (5th percentile)\n# Also track the centroid X to know runner position\n\ncap = cv2.VideoCapture('/app/example_video.mp4')\nret, bg_frame = cap.read()\nbg_gray = cv2.cvtColor(bg_frame, cv2.COLOR_BGR2GRAY).astype(np.float32)\n\ntotal_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))\nheight = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))\n\n# Build a better background model using median of first few frames\n# Actually we know frame 0 is background, let's just use it better\n\n# Use frame-to-frame difference combined with background subtraction\n# to get better runner isolation\n\n# Let me try: for each frame, compute bg diff, then find the runner's \n# bounding box using the most dense region\n\nresults = []\n\nfor i in range(1, total_frames):\n    cap.set(cv2.CAP_PROP_POS_FRAMES, i)\n    ret, frame = cap.read()\n    if not ret:\n        break\n    gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY).astype(np.float32)\n    \n    diff = cv2.absdiff(gray, bg_gray)\n    _, thresh = cv2.threshold(diff, 25, 255, cv2.THRESH_BINARY)\n    thresh = thresh.astype(np.uint8)\n    \n    # Apply morphological operations\n    kernel = np.ones((3,3), np.uint8)\n    thresh = cv2.morphologyEx(thresh, cv2.MORPH_OPEN, kernel)\n    kernel2 = np.ones((11,11), np.uint8) \n    thresh = cv2.morphologyEx(thresh, cv2.MORPH_CLOSE, kernel2)\n    \n    ys, xs = np.where(thresh > 0)\n    \n    if len(ys) < 200:\n        results.append({'frame': i, 'area': len(ys)})\n        continue\n    \n    # Use histogram approach: find the x-range with most motion\n    x_hist = np.zeros(960, dtype=int)\n    for x in xs:\n        x_hist[x] += 1\n    \n    # Find the peak x region (where the runner is)\n    # Smooth the histogram\n    from numpy import convolve\n    kernel_smooth = np.ones(50) / 50\n    x_hist_smooth = np.convolve(x_hist.astype(float), kernel_smooth, mode='same')\n    peak_x = np.argmax(x_hist_smooth)\n    \n    # Define runner x range as peak_x +/- 75\n    x_min = max(0, peak_x - 75)\n    x_max = min(959, peak_x + 75)\n    \n    # Filter motion pixels to runner's x range\n    mask = (xs >= x_min) & (xs <= x_max)\n    runner_ys = ys[mask]\n    runner_xs = xs[mask]\n    \n    if len(runner_ys) < 100:\n        results.append({'frame': i, 'area': len(runner_ys)})\n        continue\n    \n    # Get vertical extent of runner\n    bottom = np.percentile(runner_ys, 98)\n    top = np.percentile(runner_ys, 2)\n    centroid_y = np.mean(runner_ys)\n    centroid_x = np.mean(runner_xs)\n    \n    results.append({\n        'frame': i, 'area': len(runner_ys),\n        'top': top, 'bottom': bottom,\n        'cy': centroid_y, 'cx': centroid_x,\n        'peak_x': peak_x\n    })\n\ncap.release()\n\nprint(\"Frame, Area, Top, Bottom, CY, CX, PeakX\")\nfor d in results:\n    if d['area'] > 200 and 'top' in d:\n        print(f\"{d['frame']:3d}, {d['area']:5d}, {d['top']:6.1f}, {d['bottom']:6.1f}, {d['cy']:7.1f}, {d['cx']:7.1f}, {d['peak_x']:4d}\")\nPYEOF"
+      },
+      "name": "bash",
+      "type": "tool_use"
+    }
+  ],
+  "model": "anthropic/claude-4.6-opus-20260205",
+  "role": "assistant",
+  "stop_reason": "tool_use",
+  "stop_sequence": null,
+  "type": "message",
+  "usage": {
+    "cache_creation": null,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "inference_geo": null,
+    "input_tokens": 17682,
+    "output_tokens": 1312,
+    "server_tool_use": null,
+    "service_tier": null,
+    "speed": "standard",
+    "cost": 0.12121,
+    "is_byok": false,
+    "cost_details": {
+      "upstream_inference_cost": 0.12121,
+      "upstream_inference_prompt_cost": 0.08841,
+      "upstream_inference_completions_cost": 0.0328
+    }
+  },
+  "provider": "Amazon Bedrock"
+}

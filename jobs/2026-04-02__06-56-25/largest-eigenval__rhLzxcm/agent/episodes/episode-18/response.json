@@ -1,0 +1,41 @@
+{
+  "id": "gen-1775114029-RFUgdNqI7jtu7wapid0Y",
+  "container": null,
+  "content": [
+    {
+      "id": "toolu_bdrk_01JXfmPnybw5hsJ7sLGvfksJ",
+      "caller": {
+        "type": "direct"
+      },
+      "input": {
+        "command": "# Also test with some edge cases: identity matrix, diagonal matrix, matrix with complex eigenvalues\ncd /app && python3 -c \"\nimport numpy as np\nfrom eigen import find_dominant_eigenvalue_and_eigenvector\n\n# Identity matrix\nA = np.eye(5)\nval, vec = find_dominant_eigenvalue_and_eigenvector(A)\nassert np.allclose(A @ vec, val * vec), 'Identity failed'\nassert abs(abs(val) - 1.0) < 1e-10, f'Identity eigenvalue wrong: {val}'\n\n# Diagonal matrix\nA = np.diag([1.0, -3.0, 2.0, 0.5])\nval, vec = find_dominant_eigenvalue_and_eigenvector(A)\nassert np.allclose(A @ vec, val * vec), 'Diagonal failed'\nassert abs(abs(val) - 3.0) < 1e-10, f'Diagonal eigenvalue wrong: {val}'\n\n# Matrix with known complex eigenvalues: rotation matrix\ntheta = np.pi/4\nA = np.array([[np.cos(theta), -np.sin(theta)], [np.sin(theta), np.cos(theta)]])\nval, vec = find_dominant_eigenvalue_and_eigenvector(A)\nassert np.allclose(A @ vec, val * vec), f'Rotation failed, residual={np.linalg.norm(A@vec - val*vec)}'\n\n# 1x1 doesn't seem needed per the problem but let's test 2x2 with repeated eigenvalues\nA = np.array([[2.0, 1.0], [0.0, 2.0]])  # defective matrix\nval, vec = find_dominant_eigenvalue_and_eigenvector(A)\nassert np.allclose(A @ vec, val * vec), 'Defective matrix failed'\n\nprint('All edge cases passed!')\n\""
+      },
+      "name": "bash",
+      "type": "tool_use"
+    }
+  ],
+  "model": "anthropic/claude-4.6-opus-20260205",
+  "role": "assistant",
+  "stop_reason": "tool_use",
+  "stop_sequence": null,
+  "type": "message",
+  "usage": {
+    "cache_creation": null,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "inference_geo": null,
+    "input_tokens": 5549,
+    "output_tokens": 519,
+    "server_tool_use": null,
+    "service_tier": null,
+    "speed": "standard",
+    "cost": 0.04072,
+    "is_byok": false,
+    "cost_details": {
+      "upstream_inference_cost": 0.04072,
+      "upstream_inference_prompt_cost": 0.027745,
+      "upstream_inference_completions_cost": 0.012975
+    }
+  },
+  "provider": "Amazon Bedrock"
+}

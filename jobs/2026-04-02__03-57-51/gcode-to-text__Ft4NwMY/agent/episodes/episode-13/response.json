@@ -1,0 +1,41 @@
+{
+  "id": "gen-1775104541-dCt9xh5r4dabdAOMmVZI",
+  "container": null,
+  "content": [
+    {
+      "id": "toolu_bdrk_01Cr9DvCzg16J2ocFdfpmYQf",
+      "caller": {
+        "type": "direct"
+      },
+      "input": {
+        "command": "# This looks like it might be individual letters. Let me try a different approach - \n# look at the XY footprint across ALL layers (project everything down to 2D)\npython3 << 'PYEOF'\nimport re\nimport numpy as np\nfrom PIL import Image\n\nlines = open('/app/text.gcode').readlines()\n\ncurrent_x = 0\ncurrent_y = 0\ncurrent_z = 0\nactive_object = -1\ntext_segments = []\n\nfor line in lines:\n    line = line.strip()\n    m = re.match(r'M486\\s+S(-?\\d+)', line)\n    if m:\n        active_object = int(m.group(1))\n        continue\n    m = re.match(r'G[01]\\s', line)\n    if m:\n        params = {}\n        for pm in re.finditer(r'([XYZEF])(-?[\\d.]+)', line):\n            params[pm.group(1)] = float(pm.group(2))\n        new_x = params.get('X', current_x)\n        new_y = params.get('Y', current_y)\n        new_z = params.get('Z', current_z)\n        has_e = 'E' in params\n        e_val = params.get('E', 0)\n        if has_e and e_val > 0 and (new_x != current_x or new_y != current_y):\n            if active_object == 0:\n                text_segments.append((current_x, current_y, new_x, new_y))\n        current_x = new_x\n        current_y = new_y\n        current_z = new_z\n\nprint(f\"Total text segments: {len(text_segments)}\")\n\nxs = [s[0] for s in text_segments] + [s[2] for s in text_segments]\nys = [s[1] for s in text_segments] + [s[3] for s in text_segments]\nxmin, xmax = min(xs), max(xs)\nymin, ymax = min(ys), max(ys)\nprint(f\"X: {xmin:.1f} - {xmax:.1f}\")\nprint(f\"Y: {ymin:.1f} - {ymax:.1f}\")\n\n# Create high-res image\nscale = 5  # pixels per mm\nwidth = int((xmax - xmin) * scale) + 2\nheight = int((ymax - ymin) * scale) + 2\nimg = np.zeros((height, width), dtype=np.uint8)\n\nfor x1, y1, x2, y2 in text_segments:\n    px1 = (x1 - xmin) * scale\n    py1 = (y1 - ymin) * scale\n    px2 = (x2 - xmin) * scale\n    py2 = (y2 - ymin) * scale\n    \n    dist = max(abs(px2-px1), abs(py2-py1), 1)\n    steps = int(dist * 2)\n    for i in range(steps + 1):\n        t = i / max(steps, 1)\n        px = int(px1 + t * (px2 - px1))\n        py = int(py1 + t * (py2 - py1))\n        if 0 <= px < width and 0 <= py < height:\n            img[py][px] = 255\n            # Thicken\n            for dy in range(-1, 2):\n                for dx in range(-1, 2):\n                    ny, nx = py+dy, px+dx\n                    if 0 <= ny < height and 0 <= nx < width:\n                        img[ny][nx] = 255\n\n# Save image\nim = Image.fromarray(img)\nim = im.transpose(Image.FLIP_TOP_BOTTOM)\nim.save('/tmp/text_preview.png')\nprint(f\"Saved image: {width}x{height}\")\n\n# Now render as ASCII with better resolution\nascii_w = 160\nascii_h = max(int(ascii_w * height / width / 2.2), 1)\n\n# Flip the image array for display\nimg_flipped = np.flipud(img)\n\nprint(f\"ASCII: {ascii_w}x{ascii_h}\")\nprint()\nfor row in range(ascii_h):\n    line = \"\"\n    for col in range(ascii_w):\n        iy_start = int(row * height / ascii_h)\n        iy_end = int((row+1) * height / ascii_h)\n        ix_start = int(col * width / ascii_w)\n        ix_end = int((col+1) * width / ascii_w)\n        block = img_flipped[iy_start:max(iy_end,iy_start+1), ix_start:max(ix_end,ix_start+1)]\n        if block.mean() > 20:\n            line += \"#\"\n        else:\n            line += \" \"\n    print(line.rstrip())\n\nPYEOF"
+      },
+      "name": "bash",
+      "type": "tool_use"
+    }
+  ],
+  "model": "anthropic/claude-4.6-opus-20260205",
+  "role": "assistant",
+  "stop_reason": "tool_use",
+  "stop_sequence": null,
+  "type": "message",
+  "usage": {
+    "cache_creation": null,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "inference_geo": null,
+    "input_tokens": 8527,
+    "output_tokens": 1301,
+    "server_tool_use": null,
+    "service_tier": null,
+    "speed": "standard",
+    "cost": 0.07516,
+    "is_byok": false,
+    "cost_details": {
+      "upstream_inference_cost": 0.07516,
+      "upstream_inference_prompt_cost": 0.042635,
+      "upstream_inference_completions_cost": 0.032525
+    }
+  },
+  "provider": "Amazon Bedrock"
+}

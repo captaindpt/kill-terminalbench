@@ -1,0 +1,41 @@
+{
+  "id": "gen-1775108452-4g382u0qVIZYQxQgXv32",
+  "container": null,
+  "content": [
+    {
+      "id": "toolu_bdrk_01GP5gAxAUPBqmbAu9NyFCZK",
+      "caller": {
+        "type": "direct"
+      },
+      "input": {
+        "command": "# Check the GitHub search results more carefully  \ncurl -sL \"https://api.github.com/search/repositories?q=povray+2.2\" 2>/dev/null | python3 -c \"\nimport sys, json\nd = json.load(sys.stdin)\nfor r in d.get('items', []):\n    print(r['html_url'], '|', r.get('description',''))\n\" 2>/dev/null | head -20"
+      },
+      "name": "bash",
+      "type": "tool_use"
+    }
+  ],
+  "model": "anthropic/claude-4.6-opus-20260205",
+  "role": "assistant",
+  "stop_reason": "tool_use",
+  "stop_sequence": null,
+  "type": "message",
+  "usage": {
+    "cache_creation": null,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "inference_geo": null,
+    "input_tokens": 5111,
+    "output_tokens": 159,
+    "server_tool_use": null,
+    "service_tier": null,
+    "speed": "standard",
+    "cost": 0.02953,
+    "is_byok": false,
+    "cost_details": {
+      "upstream_inference_cost": 0.02953,
+      "upstream_inference_prompt_cost": 0.025555,
+      "upstream_inference_completions_cost": 0.003975
+    }
+  },
+  "provider": "Amazon Bedrock"
+}

@@ -1,0 +1,41 @@
+{
+  "id": "gen-1775125927-YL5BmzYkQ97xOzsVhbjV",
+  "container": null,
+  "content": [
+    {
+      "id": "toolu_bdrk_013CgWkGQYGZ8QDtFNFWQhZ5",
+      "caller": {
+        "type": "direct"
+      },
+      "input": {
+        "command": "cd /app && python -c \"\nimport mujoco, time, numpy as np\n\nmodel = mujoco.MjModel.from_xml_path('model_ref.xml')\n\ndef run_sim(model, seed=42):\n    data = mujoco.MjData(model)\n    rng = np.random.default_rng(seed)\n    data.qpos += rng.normal(0, 0.01, size=data.qpos.shape)\n    mujoco.mj_forward(model, data)\n    nstep = int(2.0 / model.opt.timestep)\n    t0 = time.perf_counter()\n    for _ in range(nstep):\n        mujoco.mj_step(model, data)\n    t1 = time.perf_counter()\n    full_physics = mujoco.mjtState.mjSTATE_FULLPHYSICS\n    state = np.zeros(mujoco.mj_stateSize(model, full_physics))\n    mujoco.mj_getState(model, data, state, full_physics)\n    return t1-t0, state\n\nref_times = []\nfor i in range(5):\n    t, _ = run_sim(model, seed=42+i)\n    ref_times.append(t)\nprint(f'Reference: {np.mean(ref_times):.4f}s')\n\n# Test: dense + filterparent disabled (might save broadphase time)\n# and EULERDAMP disabled (since we use Euler integrator, this could save time)\n# Check EULERDAMP\nm = mujoco.MjModel.from_xml_path('model_ref.xml')\nm.opt.jacobian = 0  # dense\nm.opt.disableflags |= mujoco.mjtDisableBit.mjDSBL_EULERDAMP\nopt_times = []\nmax_diffs = []\nfor i in range(5):\n    ref_t, ref_s = run_sim(model, seed=42+i)\n    t, state = run_sim(m, seed=42+i)\n    opt_times.append(t)\n    max_diffs.append(np.max(np.abs(state - ref_s)))\nprint(f'dense+noEulerDamp: {np.mean(opt_times):.4f}s ({np.mean(opt_times)/np.mean(ref_times)*100:.1f}%), max_diff={max(max_diffs):.2e}')\n\n# Try setting condim=1 explicitly and ncon=0 in option\n# Actually let's check: how many contacts happen in the reference simulation?\ndata = mujoco.MjData(model)\nrng = np.random.default_rng(42)\ndata.qpos += rng.normal(0, 0.01, size=data.qpos.shape)\nmujoco.mj_forward(model, data)\nmax_ncon = 0\nfor _ in range(1000):\n    mujoco.mj_step(model, data)\n    max_ncon = max(max_ncon, data.ncon)\nprint(f'Max contacts in sim: {max_ncon}')\n\""
+      },
+      "name": "bash",
+      "type": "tool_use"
+    }
+  ],
+  "model": "anthropic/claude-4.6-opus-20260205",
+  "role": "assistant",
+  "stop_reason": "tool_use",
+  "stop_sequence": null,
+  "type": "message",
+  "usage": {
+    "cache_creation": null,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "inference_geo": null,
+    "input_tokens": 7443,
+    "output_tokens": 843,
+    "server_tool_use": null,
+    "service_tier": null,
+    "speed": "standard",
+    "cost": 0.05829,
+    "is_byok": false,
+    "cost_details": {
+      "upstream_inference_cost": 0.05829,
+      "upstream_inference_prompt_cost": 0.037215,
+      "upstream_inference_completions_cost": 0.021075
+    }
+  },
+  "provider": "Amazon Bedrock"
+}

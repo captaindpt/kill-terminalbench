@@ -1,0 +1,41 @@
+{
+  "id": "gen-1775106179-W2ndnGFE8UwEYV76JWFq",
+  "container": null,
+  "content": [
+    {
+      "id": "toolu_bdrk_01JPyr2MT8LSppGnxnGcGVx4",
+      "caller": {
+        "type": "direct"
+      },
+      "input": {
+        "command": "# Token strings can be up to 257 chars! Need bigger buffers. Let me increase to 300.\n# Also merge entries can be 128+ chars each side. Let me fix the sizes.\ncd /app && cat > /app/gpt2.c << 'CEOF'\n#include<stdio.h>\n#include<stdlib.h>\n#include<string.h>\n#include<math.h>\n#define D 768\n#define H 12\n#define L 12\n#define V 50257\n#define P 1024\n#define M 3072\n#define S 7087872\nfloat*W,b1[D],b2[D],q[D],kc[P*D],vc[P*D],at[P],x[P*D],fc[M];\nchar*tk[V],*mr[50000][2];int nm;\nvoid ln(float*o,float*i,float*g,float*b){\nfloat m=0,v=0;int j;\nfor(j=0;j<D;j++)m+=i[j];m/=D;\nfor(j=0;j<D;j++)v+=(i[j]-m)*(i[j]-m);v/=D;v=1/sqrtf(v+1e-5f);\nfor(j=0;j<D;j++)o[j]=g[j]*(i[j]-m)*v+b[j];}\nfloat ge(float x){return .5f*x*(1+tanhf(.7978845608f*x*(1+.044715f*x*x)));}\nvoid ldv(char*fn){\nFILE*f=fopen(fn,\"r\");char l[512];fgets(l,512,f);nm=0;\nwhile(fgets(l,512,f)&&nm<50000){l[strcspn(l,\"\\n\\r\")]=0;\nchar*s=strchr(l,' ');if(!s)continue;*s=0;\nmr[nm][0]=strdup(l);mr[nm][1]=strdup(s+1);nm++;}fclose(f);\nfor(int i=0;i<256;i++){\nchar s[4]={0};\nif((i>32&&i<127)||(i>160)){s[0]=i;}\nelse{int c=256;for(int j=0;j<256;j++){\nif((j>32&&j<127)||(j>160))continue;\nif(j==i){s[0]=0xC0|(c>>6);s[1]=0x80|(c&63);break;}c++;}}\ntk[i]=strdup(s);}\nint n=256;for(int i=0;i<nm&&n<V;i++){\nchar s[600];strcpy(s,mr[i][0]);strcat(s,mr[i][1]);tk[n++]=strdup(s);}}\nint ft(char*s,int l){for(int i=nm+255;i>=0;i--){int t=strlen(tk[i]);if(t==l&&!memcmp(tk[i],s,l))return i;}return 0;}\nint tok(char*t,int*o){\nchar pc[P][300];int np=0,i=0,fi=1;\nwhile(t[i]){int j=0;\nif(!fi){pc[np][j++]=0xC4;pc[np][j++]=0xA0;}\nif(t[i]==' ')i++;\nwhile(t[i]&&t[i]!=' ')pc[np][j++]=t[i++];\npc[np][j]=0;np++;fi=0;}\nint tot=0;\nfor(int p=0;p<np;p++){\nchar sy[128][300];int ns=0;\nfor(int k=0;(unsigned char)pc[p][k];){unsigned char c=pc[p][k];\nif(c>=0xC0&&(unsigned char)pc[p][k+1]>=0x80){sy[ns][0]=c;sy[ns][1]=pc[p][k+1];sy[ns][2]=0;ns++;k+=2;}\nelse{sy[ns][0]=c;sy[ns][1]=0;ns++;k++;}}\nfor(int m=0;m<nm;m++)for(int k=0;k<ns-1;k++)\nif(!strcmp(sy[k],mr[m][0])&&!strcmp(sy[k+1],mr[m][1])){\nstrcat(sy[k],sy[k+1]);for(int l=k+1;l<ns-1;l++)strcpy(sy[l],sy[l+1]);ns--;k=-1;}\nfor(int k=0;k<ns;k++)o[tot++]=ft(sy[k],strlen(sy[k]));}return tot;}\nint main(int c,char**v){\nFILE*f=fopen(v[1],\"rb\");fseek(f,0,2);long z=ftell(f);fseek(f,0,0);\nW=malloc(z);fread(W,1,z,f);fclose(f);ldv(v[2]);\nint ts[P],n=tok(v[3],ts);\nfor(int s=0;s<n+20;s++){\nint t=ts[s];float*xe=x+s*D;\nfor(int j=0;j<D;j++)xe[j]=W[85842432+t*D+j]+W[85056000+s*D+j];\nfor(int l=0;l<L;l++){float*lw=W+(long)l*S;\nln(b1,xe,lw+2363136,lw+2362368);\nfloat qv[2304];\nfor(int j=0;j<2304;j++){float s2=0;for(int k=0;k<D;k++)s2+=b1[k]*lw[2304+k*2304+j];qv[j]=s2+lw[j];}\nfor(int j=0;j<D;j++){q[j]=qv[j];kc[s*D+j]=qv[D+j];vc[s*D+j]=qv[2*D+j];}\nfor(int h=0;h<H;h++){\nfor(int i=0;i<=s;i++){float d=0;for(int j=0;j<64;j++)d+=q[h*64+j]*kc[i*D+h*64+j];at[i]=d/8.0f;}\nfloat mx=-1e9,sm=0;for(int i=0;i<=s;i++)if(at[i]>mx)mx=at[i];\nfor(int i=0;i<=s;i++){at[i]=expf(at[i]-mx);sm+=at[i];}\nfor(int i=0;i<=s;i++)at[i]/=sm;\nfor(int j=0;j<64;j++){float a=0;for(int i=0;i<=s;i++)a+=at[i]*vc[i*D+h*64+j];b2[h*64+j]=a;}}\nfloat pj[D];\nfor(int j=0;j<D;j++){float s2=0;for(int k=0;k<D;k++)s2+=b2[k]*lw[1772544+k*D+j];pj[j]=s2;}\nfor(int j=0;j<D;j++)xe[j]+=pj[j]+lw[1771776+j];\nln(b1,xe,lw+2364672,lw+2363904);\nfor(int j=0;j<M;j++){float s2=0;for(int k=0;k<D;k++)s2+=b1[k]*lw[2368512+k*M+j];fc[j]=ge(s2+lw[2365440+j]);}\nfloat ml[D];\nfor(int j=0;j<D;j++){float s2=0;for(int k=0;k<M;k++)s2+=fc[k]*lw[4728576+k*D+j];ml[j]=s2;}\nfor(int j=0;j<D;j++)xe[j]+=ml[j]+lw[4727808+j];}\nif(s>=n-1){ln(b1,xe,W+85055232,W+85054464);\nfloat mx=-1e30;int mi=0;\nfor(int i=0;i<V;i++){float a=0;for(int j=0;j<D;j++)a+=b1[j]*W[85842432+i*D+j];if(a>mx){mx=a;mi=i;}}\nprintf(\"%s\",tk[mi]);fflush(stdout);if(s<n+19)ts[s+1]=mi;}}\nprintf(\"\\n\");}\nCEOF\nwc -c /app/gpt2.c"
+      },
+      "name": "bash",
+      "type": "tool_use"
+    }
+  ],
+  "model": "anthropic/claude-4.6-opus-20260205",
+  "role": "assistant",
+  "stop_reason": "tool_use",
+  "stop_sequence": null,
+  "type": "message",
+  "usage": {
+    "cache_creation": null,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "inference_geo": null,
+    "input_tokens": 6579,
+    "output_tokens": 2306,
+    "server_tool_use": null,
+    "service_tier": null,
+    "speed": "standard",
+    "cost": 0.090545,
+    "is_byok": false,
+    "cost_details": {
+      "upstream_inference_cost": 0.090545,
+      "upstream_inference_prompt_cost": 0.032895,
+      "upstream_inference_completions_cost": 0.05765
+    }
+  },
+  "provider": "Amazon Bedrock"
+}

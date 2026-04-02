@@ -1,0 +1,41 @@
+{
+  "id": "gen-1775113986-ekyqjoxU5SPtAoV4mpTV",
+  "container": null,
+  "content": [
+    {
+      "id": "toolu_bdrk_01B6GwYZQwYk9prUXLk1Q29K",
+      "caller": {
+        "type": "direct"
+      },
+      "input": {
+        "command": "cd /tmp && gcc -O3 -shared -fPIC -o /app/eigen_c.so eigen_c.c \\\n  -I$(python3 -c \"import numpy; print(numpy.get_include())\") \\\n  -I$(python3 -c \"import sysconfig; print(sysconfig.get_path('include'))\") \\\n  -L/usr/lib/x86_64-linux-gnu -llapack -lblas -lm 2>&1"
+      },
+      "name": "bash",
+      "type": "tool_use"
+    }
+  ],
+  "model": "anthropic/claude-4.6-opus-20260205",
+  "role": "assistant",
+  "stop_reason": "tool_use",
+  "stop_sequence": null,
+  "type": "message",
+  "usage": {
+    "cache_creation": null,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "inference_geo": null,
+    "input_tokens": 9542,
+    "output_tokens": 166,
+    "server_tool_use": null,
+    "service_tier": null,
+    "speed": "standard",
+    "cost": 0.05186,
+    "is_byok": false,
+    "cost_details": {
+      "upstream_inference_cost": 0.05186,
+      "upstream_inference_prompt_cost": 0.04771,
+      "upstream_inference_completions_cost": 0.00415
+    }
+  },
+  "provider": "Amazon Bedrock"
+}

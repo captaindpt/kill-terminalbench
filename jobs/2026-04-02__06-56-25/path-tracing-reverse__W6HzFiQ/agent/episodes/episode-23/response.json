@@ -1,0 +1,41 @@
+{
+  "id": "gen-1775119437-SQC9Nwjyjr2HV8qTCklu",
+  "container": null,
+  "content": [
+    {
+      "id": "toolu_bdrk_0175gL7yuAcEyV83n5iPjk8A",
+      "caller": {
+        "type": "direct"
+      },
+      "input": {
+        "command": "# So key constants:\n# 485a58: 1.0, 1.0, 0.5, 0.7  (the camera forward direction before normalize was stored here partially)\n# 485a60: 0.5, 0.7\n# 485ac0: 0x7fffffff = abs mask, then zeros (for andps = fabs)\n# 485ad0: 0.0, -0.5, -5.0, 1.0 = sphere center (0, -0.5, -5) radius 1.0\n# 485adc: 1.0\n\n# Now let me check the sphere_intersect function to understand parameter passing\nobjdump -d /app/mystery --start-address=0x4021a0 --stop-address=0x402c30 | head -200"
+      },
+      "name": "bash",
+      "type": "tool_use"
+    }
+  ],
+  "model": "anthropic/claude-4.6-opus-20260205",
+  "role": "assistant",
+  "stop_reason": "tool_use",
+  "stop_sequence": null,
+  "type": "message",
+  "usage": {
+    "cache_creation": null,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "inference_geo": null,
+    "input_tokens": 23002,
+    "output_tokens": 247,
+    "server_tool_use": null,
+    "service_tier": null,
+    "speed": "standard",
+    "cost": 0.121185,
+    "is_byok": false,
+    "cost_details": {
+      "upstream_inference_cost": 0.121185,
+      "upstream_inference_prompt_cost": 0.11501,
+      "upstream_inference_completions_cost": 0.006175
+    }
+  },
+  "provider": "Amazon Bedrock"
+}

@@ -1,0 +1,63 @@
+{
+  "id": "gen-1775111068-XvVpUph3wgIw9sa5EUyN",
+  "container": null,
+  "content": [
+    {
+      "id": "toolu_bdrk_01H9Z15YnUWUP9gLjNj7WucC",
+      "caller": {
+        "type": "direct"
+      },
+      "input": {
+        "command": "cat /app/hi.c"
+      },
+      "name": "bash",
+      "type": "tool_use"
+    },
+    {
+      "id": "toolu_bdrk_016i2bG8Nqv7mYDamZamkNUJ",
+      "caller": {
+        "type": "direct"
+      },
+      "input": {
+        "command": "xxd /app/a.out | head -40"
+      },
+      "name": "bash",
+      "type": "tool_use"
+    },
+    {
+      "id": "toolu_bdrk_01GtaaLVy51SHTvddPRvSEZ4",
+      "caller": {
+        "type": "direct"
+      },
+      "input": {
+        "command": "readelf -h /app/a.out 2>/dev/null || objdump -f /app/a.out 2>/dev/null || echo \"no readelf/objdump\""
+      },
+      "name": "bash",
+      "type": "tool_use"
+    }
+  ],
+  "model": "anthropic/claude-4.6-opus-20260205",
+  "role": "assistant",
+  "stop_reason": "tool_use",
+  "stop_sequence": null,
+  "type": "message",
+  "usage": {
+    "cache_creation": null,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "inference_geo": null,
+    "input_tokens": 1840,
+    "output_tokens": 180,
+    "server_tool_use": null,
+    "service_tier": null,
+    "speed": "standard",
+    "cost": 0.0137,
+    "is_byok": false,
+    "cost_details": {
+      "upstream_inference_cost": 0.0137,
+      "upstream_inference_prompt_cost": 0.0092,
+      "upstream_inference_completions_cost": 0.0045
+    }
+  },
+  "provider": "Amazon Bedrock"
+}

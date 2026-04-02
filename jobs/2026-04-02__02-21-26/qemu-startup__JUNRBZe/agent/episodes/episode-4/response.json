@@ -1,0 +1,41 @@
+{
+  "id": "gen-1775100553-nGfapFTX9tGOXQnayiLQ",
+  "container": null,
+  "content": [
+    {
+      "id": "toolu_bdrk_01PdFy2AkZrNF117SHqjMTwD",
+      "caller": {
+        "type": "direct"
+      },
+      "input": {
+        "command": "# The VM may still be booting. Let's wait longer and check for login prompt.\nfor i in $(seq 1 90); do\n  result=$( (sleep 3; echo ''; sleep 1) | telnet 127.0.0.1 6665 2>/dev/null )\n  if echo \"$result\" | grep -qi 'login'; then\n    echo \"Login prompt detected after attempt $i\"\n    echo \"$result\"\n    break\n  fi\n  echo \"Attempt $i: no login prompt yet\"\n  sleep 3\ndone"
+      },
+      "name": "bash",
+      "type": "tool_use"
+    }
+  ],
+  "model": "anthropic/claude-4.6-opus-20260205",
+  "role": "assistant",
+  "stop_reason": "tool_use",
+  "stop_sequence": null,
+  "type": "message",
+  "usage": {
+    "cache_creation": null,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "inference_geo": null,
+    "input_tokens": 2391,
+    "output_tokens": 180,
+    "server_tool_use": null,
+    "service_tier": null,
+    "speed": "standard",
+    "cost": 0.016455,
+    "is_byok": false,
+    "cost_details": {
+      "upstream_inference_cost": 0.016455,
+      "upstream_inference_prompt_cost": 0.011955,
+      "upstream_inference_completions_cost": 0.0045
+    }
+  },
+  "provider": "Amazon Bedrock"
+}

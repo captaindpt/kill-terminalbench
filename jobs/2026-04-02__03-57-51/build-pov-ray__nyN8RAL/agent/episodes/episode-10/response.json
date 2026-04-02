@@ -1,0 +1,41 @@
+{
+  "id": "gen-1775108076-HfKH5vKWuczT5V0tSDV9",
+  "container": null,
+  "content": [
+    {
+      "id": "toolu_bdrk_01E5XnsFJ1kfDgGGkSsqDqjP",
+      "caller": {
+        "type": "direct"
+      },
+      "input": {
+        "command": "# Try different approach - search for povray 2.2 on common source archives\ncd /tmp\n\n# Try direct wayback download with a common timestamp\nwget -q --timeout=15 \"https://web.archive.org/web/2004/http://www.povray.org/ftp/pub/povray/Old-Versions/Official-2.2/SrcUnix/povuni_s.tgz\" -O povuni_s.tgz 2>&1 && file povuni_s.tgz || echo \"Failed wayback\"\n\n# Try an alternative: the original filenames for POV-Ray 2.2 on Unix were:\n# povuni_s.tgz (source), povuni_d.tgz (docs/scenes)\n# But also sometimes packaged as a single archive\n\n# Try some other mirrors\nwget -q --timeout=15 \"https://src.fedoraproject.org/repo/pkgs/povray/povuni_s.tgz/\" -O fedora_listing.html 2>&1\ncat fedora_listing.html 2>/dev/null | head -20"
+      },
+      "name": "bash",
+      "type": "tool_use"
+    }
+  ],
+  "model": "anthropic/claude-4.6-opus-20260205",
+  "role": "assistant",
+  "stop_reason": "tool_use",
+  "stop_sequence": null,
+  "type": "message",
+  "usage": {
+    "cache_creation": null,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "inference_geo": null,
+    "input_tokens": 7860,
+    "output_tokens": 315,
+    "server_tool_use": null,
+    "service_tier": null,
+    "speed": "standard",
+    "cost": 0.047175,
+    "is_byok": false,
+    "cost_details": {
+      "upstream_inference_cost": 0.047175,
+      "upstream_inference_prompt_cost": 0.0393,
+      "upstream_inference_completions_cost": 0.007875
+    }
+  },
+  "provider": "Amazon Bedrock"
+}

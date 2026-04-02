@@ -1,0 +1,46 @@
+{
+  "id": "gen-1775096172-D5Ac06EvYMCGKezYqsIj",
+  "container": null,
+  "content": [
+    {
+      "citations": null,
+      "text": "Everything works correctly:\n\n1. **Commands execute** \u2014 `echo hello_world` produces `hello_world`\n2. **Ctrl-C works** \u2014 `sleep 999` is interrupted by `\\x03` (shows `^C`)\n3. **Interactive bash with startup files** \u2014 `$BASH` resolves to `/bin/bash`, confirming an interactive login shell\n4. **PTY-based** \u2014 the shell runs in a real pseudo-terminal, so interactive programs (vim, top, etc.) will work\n\nLet me verify the import path is clean:",
+      "type": "text"
+    },
+    {
+      "id": "toolu_bdrk_018UWU7xkGSCzVTpv9b9xmuk",
+      "caller": {
+        "type": "direct"
+      },
+      "input": {
+        "command": "cd /app && python3 -c \"from headless_terminal import HeadlessTerminal; print(HeadlessTerminal.__bases__)\""
+      },
+      "name": "bash",
+      "type": "tool_use"
+    }
+  ],
+  "model": "anthropic/claude-4.6-opus-20260205",
+  "role": "assistant",
+  "stop_reason": "tool_use",
+  "stop_sequence": null,
+  "type": "message",
+  "usage": {
+    "cache_creation": null,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "inference_geo": null,
+    "input_tokens": 4545,
+    "output_tokens": 210,
+    "server_tool_use": null,
+    "service_tier": null,
+    "speed": "standard",
+    "cost": 0.027975,
+    "is_byok": false,
+    "cost_details": {
+      "upstream_inference_cost": 0.027975,
+      "upstream_inference_prompt_cost": 0.022725,
+      "upstream_inference_completions_cost": 0.00525
+    }
+  },
+  "provider": "Amazon Bedrock"
+}

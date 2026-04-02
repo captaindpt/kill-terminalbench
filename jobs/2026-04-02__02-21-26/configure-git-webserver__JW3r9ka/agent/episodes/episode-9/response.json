@@ -1,0 +1,46 @@
+{
+  "id": "gen-1775097517-ARcHkj0nkCeMzLs5xpBF",
+  "container": null,
+  "content": [
+    {
+      "citations": null,
+      "text": "Both sshd (port 22) and nginx (port 8080) are running. Let me do an end-to-end test:",
+      "type": "text"
+    },
+    {
+      "id": "toolu_bdrk_01R2ozu7E2NbbDcPNgZp7MUn",
+      "caller": {
+        "type": "direct"
+      },
+      "input": {
+        "command": "# End-to-end test: simulate the git workflow locally\ncd /tmp\nrm -rf test-clone\nGIT_SSH_COMMAND=\"ssh -o StrictHostKeyChecking=no\" git clone user@localhost:/git/server test-clone 2>&1 || true\ncd test-clone\ngit config user.email \"test@test.com\"\ngit config user.name \"Test\"\necho \"hello world\" > hello.html\ngit add hello.html\ngit commit -m \"add hello.html\"\nGIT_SSH_COMMAND=\"ssh -o StrictHostKeyChecking=no\" git push origin master 2>&1"
+      },
+      "name": "bash",
+      "type": "tool_use"
+    }
+  ],
+  "model": "anthropic/claude-4.6-opus-20260205",
+  "role": "assistant",
+  "stop_reason": "tool_use",
+  "stop_sequence": null,
+  "type": "message",
+  "usage": {
+    "cache_creation": null,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "inference_geo": null,
+    "input_tokens": 4347,
+    "output_tokens": 229,
+    "server_tool_use": null,
+    "service_tier": null,
+    "speed": "standard",
+    "cost": 0.02746,
+    "is_byok": false,
+    "cost_details": {
+      "upstream_inference_cost": 0.02746,
+      "upstream_inference_prompt_cost": 0.021735,
+      "upstream_inference_completions_cost": 0.005725
+    }
+  },
+  "provider": "Amazon Bedrock"
+}

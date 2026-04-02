@@ -1,0 +1,41 @@
+{
+  "id": "gen-1775117721-KjBpb2sbhkvgbhjYTuWZ",
+  "container": null,
+  "content": [
+    {
+      "id": "toolu_bdrk_019qqPsuQ5ubehSCAbL7FWgM",
+      "caller": {
+        "type": "direct"
+      },
+      "input": {
+        "command": "# Score extraction looks fine... let me debug why no models get all 28\npython3 << 'PYEOF'\nimport json, os\n\nresults_dir = os.path.expanduser(\"~/.cache/mteb/results/results\")\nmodel = \"Salesforce__SFR-Embedding-2_R\"\nmodel_dir = os.path.join(results_dir, model)\nrev = os.listdir(model_dir)[0]\nrev_dir = os.path.join(model_dir, rev)\n\nscand_tasks = ['BornholmBitextMining', 'NorwegianCourtsBitextMining', 'AngryTweetsClassification', 'DanishPoliticalCommentsClassification', 'DalajClassification', 'DKHateClassification', 'LccSentimentClassification', 'MassiveIntentClassification', 'MassiveScenarioClassification', 'NordicLangClassification', 'NoRecClassification', 'NorwegianParliamentClassification', 'ScalaClassification', 'SwedishSentimentClassification', 'SweRecClassification', 'DanFeverRetrieval', 'NorQuadRetrieval', 'SNLRetrieval', 'SwednRetrieval', 'SweFaqRetrieval', 'TV2Nordretrieval', 'TwitterHjerneRetrieval', 'SNLHierarchicalClusteringS2S', 'SNLHierarchicalClusteringP2P', 'SwednClusteringP2P', 'SwednClusteringS2S', 'VGHierarchicalClusteringS2S', 'VGHierarchicalClusteringP2P']\n\nfor task in scand_tasks:\n    json_file = os.path.join(rev_dir, f\"{task}.json\")\n    exists = os.path.exists(json_file)\n    if exists:\n        with open(json_file) as f:\n            data = json.load(f)\n        scores = data.get('scores', {})\n        has_test = 'test' in scores\n        if has_test:\n            main_scores = [s.get('main_score') for s in scores['test'] if s.get('main_score') is not None]\n            print(f\"{task}: exists={exists}, test={has_test}, scores={main_scores}\")\n        else:\n            print(f\"{task}: exists={exists}, splits={list(scores.keys())}\")\n    else:\n        print(f\"{task}: exists={exists}\")\nPYEOF"
+      },
+      "name": "bash",
+      "type": "tool_use"
+    }
+  ],
+  "model": "anthropic/claude-4.6-opus-20260205",
+  "role": "assistant",
+  "stop_reason": "tool_use",
+  "stop_sequence": null,
+  "type": "message",
+  "usage": {
+    "cache_creation": null,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "inference_geo": null,
+    "input_tokens": 7939,
+    "output_tokens": 686,
+    "server_tool_use": null,
+    "service_tier": null,
+    "speed": "standard",
+    "cost": 0.056845,
+    "is_byok": false,
+    "cost_details": {
+      "upstream_inference_cost": 0.056845,
+      "upstream_inference_prompt_cost": 0.039695,
+      "upstream_inference_completions_cost": 0.01715
+    }
+  },
+  "provider": "Amazon Bedrock"
+}

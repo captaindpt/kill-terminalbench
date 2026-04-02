@@ -1,0 +1,41 @@
+{
+  "id": "gen-1775125855-kGkeKoDx4j3jZBtoRH8r",
+  "container": null,
+  "content": [
+    {
+      "id": "toolu_bdrk_01VVyGXazWwBQ1qoHwoqmjSp",
+      "caller": {
+        "type": "direct"
+      },
+      "input": {
+        "command": "cd /app && python3 << 'EOF'\nimport fasttext\n\n# Train with good parameters for accuracy while keeping model size manageable\nmodel = fasttext.train_supervised(\n    input='/tmp/yelp_train.txt',\n    lr=0.5,\n    epoch=25,\n    wordNgrams=2,\n    dim=100,\n    loss='softmax',\n    bucket=500000,\n    minCount=2,\n    thread=4\n)\n\n# Test on our test set\nresult = model.test('/tmp/yelp_test.txt')\nprint(f'Test samples: {result[0]}')\nprint(f'Precision: {result[1]:.4f}')\nprint(f'Recall: {result[2]:.4f}')\n\n# Save model\nmodel.save_model('/app/model.bin')\n\nimport os\nsize_mb = os.path.getsize('/app/model.bin') / (1024*1024)\nprint(f'Model size: {size_mb:.1f} MB')\nEOF\n"
+      },
+      "name": "bash",
+      "type": "tool_use"
+    }
+  ],
+  "model": "anthropic/claude-4.6-opus-20260205",
+  "role": "assistant",
+  "stop_reason": "tool_use",
+  "stop_sequence": null,
+  "type": "message",
+  "usage": {
+    "cache_creation": null,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "inference_geo": null,
+    "input_tokens": 7457,
+    "output_tokens": 302,
+    "server_tool_use": null,
+    "service_tier": null,
+    "speed": "standard",
+    "cost": 0.044835,
+    "is_byok": false,
+    "cost_details": {
+      "upstream_inference_cost": 0.044835,
+      "upstream_inference_prompt_cost": 0.037285,
+      "upstream_inference_completions_cost": 0.00755
+    }
+  },
+  "provider": "Amazon Bedrock"
+}

@@ -1,0 +1,41 @@
+{
+  "id": "gen-1775121553-iDdobD5Ipgo2iFRvlkWb",
+  "container": null,
+  "content": [
+    {
+      "id": "toolu_bdrk_01CgThbirRos6qJfa48zeEoS",
+      "caller": {
+        "type": "direct"
+      },
+      "input": {
+        "command": "# Let me also verify the PDB FASTA sequences one more time to make sure they match\npip install requests biopython -q 2>/dev/null\npython3 << 'EOF'\nimport requests\n\n# Verify PDB FASTA sequences\npdb_ids = {'5WJ2': 'Clover', '2H5Q': 'mCherry', '3KZY': 'SNAP-tag'}\n\nfor pdb_id, name in pdb_ids.items():\n    url = f\"https://www.rcsb.org/fasta/entry/{pdb_id}\"\n    resp = requests.get(url)\n    print(f\"\\n=== {pdb_id} ({name}) ===\")\n    print(resp.text[:500])\n    \n    # Parse FASTA\n    lines = resp.text.strip().split('\\n')\n    seqs = []\n    current_seq = []\n    for line in lines:\n        if line.startswith('>'):\n            if current_seq:\n                seqs.append(''.join(current_seq))\n                current_seq = []\n        else:\n            current_seq.append(line.strip())\n    if current_seq:\n        seqs.append(''.join(current_seq))\n    \n    for i, seq in enumerate(seqs):\n        print(f\"Chain {i}: {seq[:50]}... ({len(seq)} aa)\")\n\nEOF\n"
+      },
+      "name": "bash",
+      "type": "tool_use"
+    }
+  ],
+  "model": "anthropic/claude-4.6-opus-20260205",
+  "role": "assistant",
+  "stop_reason": "tool_use",
+  "stop_sequence": null,
+  "type": "message",
+  "usage": {
+    "cache_creation": null,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "inference_geo": null,
+    "input_tokens": 11479,
+    "output_tokens": 391,
+    "server_tool_use": null,
+    "service_tier": null,
+    "speed": "standard",
+    "cost": 0.06717,
+    "is_byok": false,
+    "cost_details": {
+      "upstream_inference_cost": 0.06717,
+      "upstream_inference_prompt_cost": 0.057395,
+      "upstream_inference_completions_cost": 0.009775
+    }
+  },
+  "provider": "Amazon Bedrock"
+}

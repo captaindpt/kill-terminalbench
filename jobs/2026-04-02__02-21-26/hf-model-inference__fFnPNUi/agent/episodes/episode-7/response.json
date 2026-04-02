@@ -1,0 +1,41 @@
+{
+  "id": "gen-1775098738-eR9ZoVgG4zy2oyoEFU0C",
+  "container": null,
+  "content": [
+    {
+      "id": "toolu_bdrk_015HMiDCGHsu2DSnQdbFDK4c",
+      "caller": {
+        "type": "direct"
+      },
+      "input": {
+        "command": "# Test positive sentiment\ncurl -s http://localhost:5000/sentiment -X POST -H \"Content-Type: application/json\" -d '{\"text\":\"I love this movie, it is fantastic!\"}' | python3 -m json.tool\n\n# Test negative sentiment\ncurl -s http://localhost:5000/sentiment -X POST -H \"Content-Type: application/json\" -d '{\"text\":\"This is terrible and I hate it.\"}' | python3 -m json.tool\n\n# Test error case - missing text field\ncurl -s -w \"\\nHTTP Status: %{http_code}\\n\" http://localhost:5000/sentiment -X POST -H \"Content-Type: application/json\" -d '{\"nottext\":\"hello\"}' | head -5"
+      },
+      "name": "bash",
+      "type": "tool_use"
+    }
+  ],
+  "model": "anthropic/claude-4.6-opus-20260205",
+  "role": "assistant",
+  "stop_reason": "tool_use",
+  "stop_sequence": null,
+  "type": "message",
+  "usage": {
+    "cache_creation": null,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "inference_geo": null,
+    "input_tokens": 3619,
+    "output_tokens": 227,
+    "server_tool_use": null,
+    "service_tier": null,
+    "speed": "standard",
+    "cost": 0.02377,
+    "is_byok": false,
+    "cost_details": {
+      "upstream_inference_cost": 0.02377,
+      "upstream_inference_prompt_cost": 0.018095,
+      "upstream_inference_completions_cost": 0.005675
+    }
+  },
+  "provider": "Amazon Bedrock"
+}

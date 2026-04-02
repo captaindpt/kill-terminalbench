@@ -1,0 +1,46 @@
+{
+  "id": "gen-1775125165-O4RtrWXgtTSIZplWV7R5",
+  "container": null,
+  "content": [
+    {
+      "citations": null,
+      "text": "Now let me implement the solution:",
+      "type": "text"
+    },
+    {
+      "id": "toolu_bdrk_01NsJAoAPhGZG3p9pGM1xZxY",
+      "caller": {
+        "type": "direct"
+      },
+      "input": {
+        "command": "cat > /app/parallel_linear.py << 'EOF'\nimport torch\nimport torch.nn as nn\nimport torch.distributed as dist\n\n\nclass ColumnParallelLinear(nn.Module):\n    \"\"\"Linear layer with column parallelism.\n    \n    The weight matrix is split along the output dimension (columns).\n    Each rank holds a shard of shape (out_features // world_size, in_features).\n    Output is gathered (all_gather) along the last dimension to produce the full output.\n    Bias is sharded the same way as the output dimension.\n    \"\"\"\n\n    def __init__(self, in_features: int, out_features: int, bias: bool, master_weight: torch.Tensor):\n        super().__init__()\n        self.in_features = in_features\n        self.out_features = out_features\n        self.use_bias = bias\n\n        world_size = dist.get_world_size()\n        rank = dist.get_rank()\n\n        assert out_features % world_size == 0, \\\n            f\"out_features ({out_features}) must be divisible by world_size ({world_size})\"\n\n        self.out_features_per_rank = out_features // world_size\n\n        # master_weight shape: (out_features, in_features)\n        # Split along dim=0 (output dimension) into world_size chunks\n        weight_chunks = torch.chunk(master_weight, world_size, dim=0)\n        self.weight = nn.Parameter(weight_chunks[rank].contiguous().clone())\n\n        if bias:\n            self.bias = nn.Parameter(torch.zeros(self.out_features_per_rank, dtype=master_weight.dtype))\n        else:\n            self.bias = None\n\n    def forward(self, x: torch.Tensor) -> torch.Tensor:\n        # Local matmul: x @ W_local^T  -> (..., out_features_per_rank)\n        output = torch.nn.functional.linear(x, self.weight, self.bias)\n\n        # all_gather along last dimension\n        world_size = dist.get_world_size()\n        if world_size > 1:\n            gathered = [torch.empty_like(output) for _ in range(world_size)]\n            dist.all_gather(gathered, output)\n            output = torch.cat(gathered, dim=-1)\n\n        return output\n\n\nclass RowParallelLinear(nn.Module):\n    \"\"\"Linear layer with row parallelism.\n    \n    The weight matrix is split along the input dimension (rows).\n    Each rank holds a shard of shape (out_features, in_features // world_size).\n    The input is assumed to be already sharded along the last dimension, one shard per rank.\n    Partial outputs are summed (all_reduce) to produce the full output.\n    Bias is kept full (not sharded) on each rank.\n    \"\"\"\n\n    def __init__(self, in_features: int, out_features: int, bias: bool, master_weight: torch.Tensor):\n        super().__init__()\n        self.in_features = in_features\n        self.out_features = out_features\n        self.use_bias = bias\n\n        world_size = dist.get_world_size()\n        rank = dist.get_rank()\n\n        assert in_features % world_size == 0, \\\n            f\"in_features ({in_features}) must be divisible by world_size ({world_size})\"\n\n        self.in_features_per_rank = in_features // world_size\n\n        # master_weight shape: (out_features, in_features)\n        # Split along dim=1 (input dimension) into world_size chunks\n        weight_chunks = torch.chunk(master_weight, world_size, dim=1)\n        self.weight = nn.Parameter(weight_chunks[rank].contiguous().clone())\n\n        if bias:\n            self.bias = nn.Parameter(torch.zeros(out_features, dtype=master_weight.dtype))\n        else:\n            self.bias = None\n\n    def forward(self, x: torch.Tensor) -> torch.Tensor:\n        # Local matmul: x @ W_local^T  -> (..., out_features)\n        output = torch.nn.functional.linear(x, self.weight, None)\n\n        # all_reduce to sum partial results\n        world_size = dist.get_world_size()\n        if world_size > 1:\n            dist.all_reduce(output, op=dist.ReduceOp.SUM)\n\n        # Add bias after all_reduce\n        if self.bias is not None:\n            output = output + self.bias\n\n        return output\nEOF"
+      },
+      "name": "bash",
+      "type": "tool_use"
+    }
+  ],
+  "model": "anthropic/claude-4.6-opus-20260205",
+  "role": "assistant",
+  "stop_reason": "tool_use",
+  "stop_sequence": null,
+  "type": "message",
+  "usage": {
+    "cache_creation": null,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "inference_geo": null,
+    "input_tokens": 3700,
+    "output_tokens": 1184,
+    "server_tool_use": null,
+    "service_tier": null,
+    "speed": "standard",
+    "cost": 0.0481,
+    "is_byok": false,
+    "cost_details": {
+      "upstream_inference_cost": 0.0481,
+      "upstream_inference_prompt_cost": 0.0185,
+      "upstream_inference_completions_cost": 0.0296
+    }
+  },
+  "provider": "Amazon Bedrock"
+}

@@ -1,0 +1,93 @@
+{
+  "system": "You are solving a task in a Linux environment.\n\nWork directly in the shell. You may issue multiple independent bash commands in a single response for efficiency.\nInspect the environment before changing it.\nRead errors carefully and adapt.\nBefore finishing, remove any temp files or build artifacts you created that aren't part of the deliverable.\nA separate verifier tests your work automatically.\n\nExecution model:\n- Each bash command runs in a separate non-persistent shell.\n- Background jobs started with `&` or `nohup` may die when the command ends.\n- For persistent services, use a real daemon strategy such as `setsid`, `start-stop-daemon`, or an actual service.\n\nVerification:\n- When task tests or verifier scripts are visible, run them the way they are intended to run.\n- An exit code of 0 from the wrong invocation is not evidence of success.\n- Stop once the task is complete and you have a strong success signal aligned with the task's actual checks.\n- Do not keep rechecking after a clear pass, but do not stop on weak or ambiguous signals.\n- If multiple required output files are of the same kind, prefer producing them in one coordinated script or pass.\n- When possible, produce a minimally valid deliverable early, then refine it.\n- When a task explicitly names a package, framework, or API, use that exact interface \u2014 not lower-level substitutes \u2014 unless you verify equivalence.\n- When reimplementing model or algorithm behavior in another language, validate against the reference on multiple representative inputs, not just the bundled example.\n\nArtifacts and scratch work:\n- Build or compile scratch binaries in `/tmp` unless the task explicitly requires them in the deliverable directory.\n- Do not leave test binaries, build artifacts, or temp files in the deliverable directory unless they are part of the required output.\n- Do not use bash comments or comment-only shell commands as scratchpad reasoning. Use the shell to make progress on the task.\n\nHarness constraints (be aware of these \u2014 plan around them):\n- Command timeout: each command has a maximum execution time (default 180s). Long-running builds or downloads may be killed. Split large operations or use timeouts wisely.\n- Output handling: command output longer than ~12,000 characters is truncated and persisted to a file in /tmp/ktb-agent-artifacts/. You will see a preview (head+tail) and the path to the full output. Use `cat <path>` to read what you need.\n- Episode budget: you have a fixed number of episodes. The harness will warn you at 50% and 75%. Do not waste episodes on no-ops, repeated reads of the same file, or retrying the same failing command without changes.\n- Failure tracking: the harness tracks per-command-family failures (e.g., repeated `make` failures, repeated `pytest` failures). If the same command family fails repeatedly, you will receive warnings with remaining attempts. After too many failures of the same kind, that command family is blocked. Change your approach early.\n- Loop detection: the harness detects repeating command patterns across episodes. If you run the same sequence of commands multiple times, you will be interrupted. Break the cycle by trying a different strategy.\n\nBefore finishing:\n- If the task has test scripts or verifiers (check /tests/, run-tests.sh, etc.), run them.\n- If your output depends on a computed value (tokenizer counts, floating point, hashing, etc.) rather than a deterministic operation, double-check it.\n- If the task is straightforward and your solution is deterministic, just stop.\n\nWhen the task is complete, respond briefly with no tool calls.\n",
+  "tools": [
+    {
+      "name": "bash",
+      "description": "Run a shell command and return stdout/stderr and the exit code.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "command": {
+            "type": "string",
+            "description": "Shell command to execute."
+          },
+          "timeout_sec": {
+            "type": "number",
+            "description": "Maximum time to wait for the command to finish.",
+            "default": 180
+          }
+        },
+        "required": [
+          "command"
+        ]
+      }
+    }
+  ],
+  "messages": [
+    {
+      "role": "user",
+      "content": "Task:\nStart the /app/alpine.iso image in qemu in such a way that I can connect to it via `telnet 127.0.0.1 6665`. When I run telnet I will expect to see the login prompt; I'll log in. You should just get me to this point. Start the image in the background and leave it running. Block until it's ready.\n"
+    },
+    {
+      "role": "assistant",
+      "content": [
+        "ThinkingBlock(signature='EuMCClsIDBACGAIqQAoUO39zs07WWRRsLdplds+p84ah2FnHDPBQOLw9XPHfVdbI2Zk5JZf+7GfX/aZNuIATXBNN37yNiYJ6lQWxouUyD2NsYXVkZS1vcHVzLTQtNjgAEgyYg7lA0kScl0edTg4aDNyKgwgqBzCMv47BlyIwkIatvskALjbmubmBSlYH0xyLzv51gO88OUjVD1j4Fm8B6svnsj7/2xAvA5y0NJ5aKrUBEuFkk/+lEhimELz9zfGXSEGkzGuRC7di8qYvtGNPZikMYmA/A+hvgqQKV8/f/YEzyURBg2eWVza689cgdTkAgTzndk9xwsiO0M1/1lyqCkKj5SYUMep0XOGASVgXRQPZldO7WJVRduuUz5hIOOSBaBuveFEQjkWAEhCI3RqJYsW2f23E+txCupWhmMnG1ey6KVEVGmfk6EXW+BSVlUXbP7D6pdz7tqxIVjJG608dp5hk4FhgFRgB', thinking='Let me start by examining the environment and the ISO file, then set up QEMU to boot the Alpine ISO with a serial console redirected to a telnet server on port 6665.', type='thinking')",
+        "ToolUseBlock(id='toolu_vrtx_015awyWn5dfAyBos86jpr35S', caller=DirectCaller(type='direct'), input={'command': 'ls -lh /app/alpine.iso'}, name='bash', type='tool_use')",
+        "ToolUseBlock(id='toolu_vrtx_01WUEuq1TSH376j1oeDyubon', caller=DirectCaller(type='direct'), input={'command': 'which qemu-system-x86_64 || which qemu-system-i386 || dpkg -l | grep qemu'}, name='bash', type='tool_use')",
+        "RedactedThinkingBlock(data='openrouter.reasoning:eyJzaWduYXR1cmUiOiJFdU1DQ2xzSURCQUNHQUlxUUFvVU8zOXpzMDdXV1JSc0xkcGxkcytwODRhaDJGbkhEUEJRT0x3OVhQSGZWZGJJMlprNUpaZis3R2ZYL2FaTnVJQVRYQk5OMzd5TmlZSjZsUVd4b3VVeUQyTnNZWFZrWlMxdmNIVnpMVFF0TmpnQUVneVlnN2xBMGtTY2wwZWRUZzRhRE55S2d3Z3FCekNNdjQ3Qmx5SXdrSWF0dnNrQUxqYm11Ym1CU2xZSDB4eUx6djUxZ084OE9ValZEMWo0Rm04QjZzdm5zajcvMnhBdkE1eTBOSjVhS3JVQkV1RmtrLytsRWhpbUVMejl6ZkdYU0VHa3pHdVJDN2RpOHFZdnRHTlBaaWtNWW1BL0EraHZncVFLVjgvZi9ZRXp5VVJCZzJlV1Z6YTY4OWNnZFRrQWdUem5kazl4d3NpTzBNMS8xbHlxQ2tLajVTWVVNZXAwWE9HQVNWZ1hSUVBabGRPN1dKVlJkdXVVejVoSU9PU0JhQnV2ZUZFUWprV0FFaENJM1JxSllzVzJmMjNFK3R4Q3VwV2htTW5HMWV5NktWRVZHbWZrNkVYVytCU1ZsVVhiUDdENnBkejd0cXhJVmpKRzYwOGRwNWhrNEZoZ0ZSZ0IiLCJ0ZXh0IjoiTGV0IG1lIHN0YXJ0IGJ5IGV4YW1pbmluZyB0aGUgZW52aXJvbm1lbnQgYW5kIHRoZSBJU08gZmlsZSwgdGhlbiBzZXQgdXAgUUVNVSB0byBib290IHRoZSBBbHBpbmUgSVNPIHdpdGggYSBzZXJpYWwgY29uc29sZSByZWRpcmVjdGVkIHRvIGEgdGVsbmV0IHNlcnZlciBvbiBwb3J0IDY2NjUuIiwidHlwZSI6InJlYXNvbmluZy50ZXh0In0=', type='redacted_thinking')"
+      ]
+    },
+    {
+      "role": "user",
+      "content": [
+        {
+          "type": "tool_result",
+          "tool_use_id": "toolu_vrtx_015awyWn5dfAyBos86jpr35S",
+          "content": "[exit_code=0]\n\n-rw-r--r-- 1 root root 957M Dec  7  2023 /app/alpine.iso"
+        },
+        {
+          "type": "tool_result",
+          "tool_use_id": "toolu_vrtx_01WUEuq1TSH376j1oeDyubon",
+          "content": "[exit_code=0]\n\n/usr/bin/qemu-system-x86_64"
+        }
+      ]
+    },
+    {
+      "role": "assistant",
+      "content": [
+        "ToolUseBlock(id='toolu_bdrk_017ho6khBYnSPwmteTnZTHYD', caller=DirectCaller(type='direct'), input={'command': '# Check available RAM and KVM support\\nfree -m | head -3\\nls /dev/kvm 2>/dev/null && echo \"KVM available\" || echo \"No KVM\"'}, name='bash', type='tool_use')"
+      ]
+    },
+    {
+      "role": "user",
+      "content": [
+        {
+          "type": "tool_result",
+          "tool_use_id": "toolu_bdrk_017ho6khBYnSPwmteTnZTHYD",
+          "content": "[exit_code=0]\n\nbash: line 2: free: command not found\nNo KVM"
+        }
+      ]
+    },
+    {
+      "role": "assistant",
+      "content": [
+        "ToolUseBlock(id='toolu_bdrk_01Dg7GjPAswLRdqjPtBMGKdK', caller=DirectCaller(type='direct'), input={'command': '# Launch QEMU with serial console on telnet port 6665, no graphics\\nsetsid qemu-system-x86_64 \\\\\\n  -m 512 \\\\\\n  -cdrom /app/alpine.iso \\\\\\n  -boot d \\\\\\n  -nographic \\\\\\n  -serial telnet:127.0.0.1:6665,server,nowait \\\\\\n  -display none \\\\\\n  </dev/null >/tmp/qemu.log 2>&1 &\\n\\necho \"QEMU PID: $!\"'}, name='bash', type='tool_use')"
+      ]
+    },
+    {
+      "role": "user",
+      "content": [
+        {
+          "type": "tool_result",
+          "tool_use_id": "toolu_bdrk_01Dg7GjPAswLRdqjPtBMGKdK",
+          "content": "[exit_code=0]\n\nQEMU PID: 48"
+        }
+      ]
+    }
+  ],
+  "model": "anthropic/claude-opus-4.6",
+  "thinking": {
+    "type": "enabled",
+    "budget_tokens": 10000
+  }
+}

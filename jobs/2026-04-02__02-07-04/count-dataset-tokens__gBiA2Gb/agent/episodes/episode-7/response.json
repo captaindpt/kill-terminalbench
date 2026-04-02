@@ -1,0 +1,41 @@
+{
+  "id": "gen-1775095746-342lCiq9CcnfFOxKBr87",
+  "container": null,
+  "content": [
+    {
+      "id": "toolu_bdrk_01SDiopvNCCGwMi1SXApBw5D",
+      "caller": {
+        "type": "direct"
+      },
+      "input": {
+        "command": "# science = physics + chemistry + biology based on README\n# \"deepseek tokens\" = tokens in deepseek_reasoning + deepseek_solution\npython3 -c \"\nfrom datasets import load_dataset\nfrom transformers import AutoTokenizer\n\nds = load_dataset('ryanmarten/OpenThoughts-1k-sample', 'metadata', split='train')\ntokenizer = AutoTokenizer.from_pretrained('Qwen/Qwen2.5-1.5B-Instruct')\n\nscience_domains = {'physics', 'chemistry', 'biology'}\ntotal_tokens = 0\ncount = 0\n\nfor row in ds:\n    if row['domain'] in science_domains:\n        count += 1\n        text = (row['deepseek_reasoning'] or '') + (row['deepseek_solution'] or '')\n        tokens = tokenizer.encode(text)\n        total_tokens += len(tokens)\n\nprint(f'Science rows: {count}')\nprint(f'Total tokens: {total_tokens}')\n\" 2>&1"
+      },
+      "name": "bash",
+      "type": "tool_use"
+    }
+  ],
+  "model": "anthropic/claude-4.6-opus-20260205",
+  "role": "assistant",
+  "stop_reason": "tool_use",
+  "stop_sequence": null,
+  "type": "message",
+  "usage": {
+    "cache_creation": null,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "inference_geo": null,
+    "input_tokens": 8340,
+    "output_tokens": 299,
+    "server_tool_use": null,
+    "service_tier": null,
+    "speed": "standard",
+    "cost": 0.049175,
+    "is_byok": false,
+    "cost_details": {
+      "upstream_inference_cost": 0.049175,
+      "upstream_inference_prompt_cost": 0.0417,
+      "upstream_inference_completions_cost": 0.007475
+    }
+  },
+  "provider": "Amazon Bedrock"
+}

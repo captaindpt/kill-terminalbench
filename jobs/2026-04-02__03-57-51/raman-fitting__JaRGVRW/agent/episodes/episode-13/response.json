@@ -1,0 +1,41 @@
+{
+  "id": "gen-1775106607-SHxcVaopEF6ckKCK8Qju",
+  "container": null,
+  "content": [
+    {
+      "id": "toolu_bdrk_01QVugwQDb7JbecTTeWepfXE",
+      "caller": {
+        "type": "direct"
+      },
+      "input": {
+        "command": "python3 << 'PYEOF'\nimport numpy as np\nfrom scipy.optimize import curve_fit\nimport json\n\n# Now I can see clearly after background subtraction:\n# \n# 2D peak: centered around shift ~2989-3057 (x=16178-16246), background-subtracted intensity ~2750\n#   This is a clear peak! The 2D band shifted to ~2990 cm^-1\n#\n# G peak region (shift ~1585, x=17650): background-subtracted intensity is only ~157\n#   But there IS a broad bump in the 1200-1600 shift range with increasing residual\n#   The peak seems to be around shift ~1257 (x=17978), y_sub=718\n#   Or maybe shift ~1172 (x=18063), y_sub=1012\n#   \n# This is problematic - the \"G peak\" seems to be at a different position than expected.\n# But the background polynomial is not perfect either.\n#\n# Let me try a different approach: fit the peaks directly with Lorentzian + local linear baseline\n# on the raw data, using the x values as-is.\n\ndata = []\nwith open('/app/graphene.dat', 'r') as f:\n    for line in f:\n        line = line.strip()\n        if not line:\n            continue\n        parts = line.split('\\t')\n        x = float(parts[0].replace(',', '.'))\n        y = float(parts[1].replace(',', '.'))\n        data.append((x, y))\n\ndata = np.array(data)\nx_all = data[:, 0]\ny_all = data[:, 1]\nidx = np.argsort(x_all)\nx_all = x_all[idx]\ny_all = y_all[idx]\n\n# OK let me approach this completely differently.\n# Maybe the x axis is NOT absolute wavenumber. Let me check if it could be \n# wavelength in some unit.\n\n# If x is wavelength in 0.1nm (Angstroms):\n# Peak at 3748 \u00c5 = 374.8 nm (UV)\n# Peak at 6338 \u00c5 = 633.8 nm (red - HeNe laser line!)\n# Peak at 10395 \u00c5 = 1039.5 nm (NIR) \n# Peak at 16246 \u00c5 = 1624.6 nm (NIR)\n# Peak at 19235 \u00c5 = 1923.5 nm (NIR)\n\n# If the laser is HeNe at 633nm (6328 \u00c5), the peak at 6338 could be the laser!\n# Then converting to Raman shift:\n# For Stokes (higher wavelength than laser):\n# Raman shift = (1/lambda_laser - 1/lambda_scattered) * 1e7 where lambda in \u00c5 and we want cm^-1\n# shift = (1e7/6338 - 1e7/lambda) where lambda > 6338\n\n# peak at 10395 \u00c5: shift = 1e7/6338 - 1e7/10395 = 1578 - 962 = 616 cm^-1... nah\n\n# Actually, if x is wavelength in \u00c5:\n# shift = (1/lambda_laser - 1/lambda) * 1e8  (lambda in \u00c5, shift in cm^-1)\n# wait no: 1 \u00c5 = 1e-8 cm, so wavenumber = 1e8/lambda(\u00c5) cm^-1\n# shift = 1e8/lambda_laser - 1e8/lambda\n\n# For laser at 6338 \u00c5:\n# Peak at 10395 \u00c5: shift = 1e8/6338 - 1e8/10395 = 15778 - 9620 = 6158 cm^-1 - too high\n\n# What if x is wavelength in nm?\n# Peak at 3748 nm -> IR, not Raman relevant\n# Too long wavelength\n\n# What if x is wavelength in some weird unit? Let me see: \n# If we convert from x (assumed wavenumber cm^-1) to wavelength:\n# Peak at 6338 cm^-1 -> 1577.7 nm\n# Peak at 19235 cm^-1 -> 519.9 nm\n\n# With 520nm (19235 cm^-1) laser, I already showed the 2D peak is at ~16200 cm^-1\n# Let me just fit the 2D peak there and search for the G peak more carefully\n\n# Zooming into the spectrum around the expected G peak position:\n# x = 19235 - 1580 = 17655 cm^-1\n# Looking at data near x=17650: y=20341 at shift=1585\n\n# But in background-subtracted, the residual around shift 1585 is only 157\n# while the residual at shift 1172 is 1012\n\n# Maybe the background model was wrong. Let me try just local baseline subtraction\n# for both peaks separately.\n\n# For 2D peak: use points on either side of the peak (x in 15000-15500 and 16700-17000)\n# For G peak: use points on either side (x in 17100-17400 and 18200-18500 or similar)\n\n# 2D PEAK FIT\n# The peak is around x=16200, between x=15500 and x=16900\nmask_2d = (x_all >= 15500) & (x_all <= 16900)\nx_2d = x_all[mask_2d]\ny_2d = y_all[mask_2d]\n\n# Local linear baseline using endpoints\nslope = (y_2d[-1] - y_2d[0]) / (x_2d[-1] - x_2d[0])\nbaseline = y_2d[0] + slope * (x_2d - x_2d[0])\ny_2d_sub = y_2d - baseline\n\nprint(\"2D peak region (baseline subtracted):\")\nfor i in range(len(x_2d)):\n    shift = 19235 - x_2d[i]\n    print(f\"  x={x_2d[i]:.1f} (shift={shift:.0f}), y_raw={y_2d[i]:.1f}, bl={baseline[i]:.1f}, y_sub={y_2d_sub[i]:.1f}\")\n\nPYEOF"
+      },
+      "name": "bash",
+      "type": "tool_use"
+    }
+  ],
+  "model": "anthropic/claude-4.6-opus-20260205",
+  "role": "assistant",
+  "stop_reason": "tool_use",
+  "stop_sequence": null,
+  "type": "message",
+  "usage": {
+    "cache_creation": null,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "inference_geo": null,
+    "input_tokens": 13502,
+    "output_tokens": 1638,
+    "server_tool_use": null,
+    "service_tier": null,
+    "speed": "standard",
+    "cost": 0.10846,
+    "is_byok": false,
+    "cost_details": {
+      "upstream_inference_cost": 0.10846,
+      "upstream_inference_prompt_cost": 0.06751,
+      "upstream_inference_completions_cost": 0.04095
+    }
+  },
+  "provider": "Amazon Bedrock"
+}

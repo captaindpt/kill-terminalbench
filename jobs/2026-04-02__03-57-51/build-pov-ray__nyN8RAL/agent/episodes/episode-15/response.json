@@ -1,0 +1,41 @@
+{
+  "id": "gen-1775108199-7afjyPa6VLTs2ijvBmSt",
+  "container": null,
+  "content": [
+    {
+      "id": "toolu_bdrk_0168sEVyW43pfcpbCtGUN8sd",
+      "caller": {
+        "type": "direct"
+      },
+      "input": {
+        "command": "# Let's try the Internet Archive Wayback Machine with specific timestamps and all three file packages\ncd /tmp\n\n# Try with specific timestamps\nfor ts in 20050101 20100101 20150101 20200101 20010101 19990101; do\n  url=\"https://web.archive.org/web/${ts}000000*/http://www.povray.org/ftp/pub/povray/Old-Versions/Official-2.2/SrcUnix/povuni_s.tgz\"\n  echo \"Trying timestamp $ts...\"\n  wget -q --timeout=10 \"$url\" -O \"test_${ts}.html\" 2>&1 && { echo \"Got something\"; head -5 \"test_${ts}.html\"; } || echo \"Failed\"\ndone"
+      },
+      "name": "bash",
+      "type": "tool_use"
+    }
+  ],
+  "model": "anthropic/claude-4.6-opus-20260205",
+  "role": "assistant",
+  "stop_reason": "tool_use",
+  "stop_sequence": null,
+  "type": "message",
+  "usage": {
+    "cache_creation": null,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "inference_geo": null,
+    "input_tokens": 10323,
+    "output_tokens": 235,
+    "server_tool_use": null,
+    "service_tier": null,
+    "speed": "standard",
+    "cost": 0.05749,
+    "is_byok": false,
+    "cost_details": {
+      "upstream_inference_cost": 0.05749,
+      "upstream_inference_prompt_cost": 0.051615,
+      "upstream_inference_completions_cost": 0.005875
+    }
+  },
+  "provider": "Amazon Bedrock"
+}

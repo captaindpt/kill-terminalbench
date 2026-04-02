@@ -1,0 +1,7 @@
+[
+  {
+    "type": "tool_result",
+    "tool_use_id": "toolu_bdrk_01NHNvNbSxSszShVmcg1nS6m",
+    "content": "[exit_code=0]\n\n<!-- Inspired by https://github.com/google-deepmind/mujoco/blob/main/model/plugin/elasticity/cable.xml -->\n<mujoco model=\"Cable\">\n\n  <extension>\n    <plugin plugin=\"mujoco.elasticity.cable\"/>\n  </extension>\n\n  <statistic center=\"0 0 .3\" extent=\"1\"/>\n  <visual>\n    <global elevation=\"-30\"/>\n  </visual>\n\n  <compiler autolimits=\"true\"/>\n\n  <size memory=\"2M\"/>\n\n  <worldbody>\n    <composite type=\"cable\" curve=\"s\" count=\"41 1 1\" size=\"1\" offset=\"-.3 0 .6\" initial=\"none\">\n      <plugin plugin=\"mujoco.elasticity.cable\">\n        <!--Units are in Pa (SI)-->\n        <config key=\"twist\" value=\"1e7\"/>\n        <config key=\"bend\" value=\"4e6\"/>\n        <config key=\"vmax\" value=\"0.05\"/>\n      </plugin>\n      <joint kind=\"main\" damping=\".015\"/>\n      <geom type=\"capsule\" size=\".005\" rgba=\".8 .2 .1 1\" condim=\"1\"/>\n    </composite>\n    <body name=\"slider\" pos=\".7 0 .6\">\n      <joint type=\"slide\" axis=\"1 0 0\" damping=\".1\"/>\n      <geom size=\".01\"/>\n    </body>\n  </worldbody>\n  <equality>\n    <connect name=\"right_boundary\" body1=\"B_last\" body2=\"slider\" anchor=\".025 0 0\"/>\n  </equality>\n  <contact>\n    <exclude body1=\"B_last\" body2=\"slider\"/>\n  </contact>\n  <actuator>\n    <motor site=\"S_last\" gear=\"0 0 0 1 0 0\" ctrlrange=\"-.03 .03\"/>\n  </actuator>\n</mujoco>"
+  }
+]

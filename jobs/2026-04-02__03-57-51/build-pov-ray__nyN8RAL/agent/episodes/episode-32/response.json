@@ -1,0 +1,41 @@
+{
+  "id": "gen-1775108489-U6DX2dlwI9bbCbS1gxdg",
+  "container": null,
+  "content": [
+    {
+      "id": "toolu_bdrk_01XcYPgaPcogvctupsjbXF7W",
+      "caller": {
+        "type": "direct"
+      },
+      "input": {
+        "command": "# Let me check that repo - it might have the old povray source\ncurl -sL \"https://api.github.com/repos/discatte/povray_tools_and_trinkets/contents/\" 2>/dev/null | python3 -c \"\nimport sys, json\nitems = json.load(sys.stdin)\nfor i in items:\n    print(i['name'], i['type'])\n\" 2>/dev/null"
+      },
+      "name": "bash",
+      "type": "tool_use"
+    }
+  ],
+  "model": "anthropic/claude-4.6-opus-20260205",
+  "role": "assistant",
+  "stop_reason": "tool_use",
+  "stop_sequence": null,
+  "type": "message",
+  "usage": {
+    "cache_creation": null,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "inference_geo": null,
+    "input_tokens": 4577,
+    "output_tokens": 151,
+    "server_tool_use": null,
+    "service_tier": null,
+    "speed": "standard",
+    "cost": 0.02666,
+    "is_byok": false,
+    "cost_details": {
+      "upstream_inference_cost": 0.02666,
+      "upstream_inference_prompt_cost": 0.022885,
+      "upstream_inference_completions_cost": 0.003775
+    }
+  },
+  "provider": "Amazon Bedrock"
+}

@@ -1,0 +1,46 @@
+{
+  "id": "gen-1775109491-gmJZgtksf2zKbIlhV9Zb",
+  "container": null,
+  "content": [
+    {
+      "citations": null,
+      "text": "Now let me analyze the constraints and find the earliest valid slot:",
+      "type": "text"
+    },
+    {
+      "id": "toolu_bdrk_01QwAnZ64Mnyiw6EWgJXykfT",
+      "caller": {
+        "type": "direct"
+      },
+      "input": {
+        "command": "cat << 'PYTHON' > /tmp/find_slot.py\nfrom datetime import datetime, timedelta\n\n# Days: Mon Jan 15 - Fri Jan 19, 2024\n# All times UTC = local\n\n# Parse existing meetings\nalice_meetings = [\n    (datetime(2024,1,15,10,0), datetime(2024,1,15,11,0)),\n    (datetime(2024,1,15,13,0), datetime(2024,1,15,14,0)),\n    (datetime(2024,1,16,10,0), datetime(2024,1,16,12,0)),\n    (datetime(2024,1,17,10,0), datetime(2024,1,17,11,0)),\n    (datetime(2024,1,17,13,0), datetime(2024,1,17,14,0)),\n    (datetime(2024,1,18,10,0), datetime(2024,1,18,11,0)),\n    (datetime(2024,1,19,10,0), datetime(2024,1,19,11,0)),\n    (datetime(2024,1,19,13,0), datetime(2024,1,19,14,0)),\n]\n\nbob_meetings = [\n    (datetime(2024,1,15,11,0), datetime(2024,1,15,12,0)),\n    (datetime(2024,1,15,13,0), datetime(2024,1,15,15,0)),\n    (datetime(2024,1,16,13,0), datetime(2024,1,16,14,0)),\n    (datetime(2024,1,17,12,0), datetime(2024,1,17,13,0)),\n    (datetime(2024,1,18,13,0), datetime(2024,1,18,14,0)),\n    (datetime(2024,1,19,12,0), datetime(2024,1,19,13,0)),\n]\n\ncarol_meetings = [\n    (datetime(2024,1,15,11,0), datetime(2024,1,15,12,0)),\n    (datetime(2024,1,16,11,0), datetime(2024,1,16,12,0)),\n    (datetime(2024,1,16,13,0), datetime(2024,1,16,14,0)),\n    (datetime(2024,1,17,12,0), datetime(2024,1,17,13,0)),\n    (datetime(2024,1,18,12,0), datetime(2024,1,18,13,0)),\n    (datetime(2024,1,19,11,0), datetime(2024,1,19,12,0)),\n]\n\nall_meetings = alice_meetings + bob_meetings + carol_meetings\n\ndef conflicts_with_existing(start, end):\n    for ms, me in all_meetings:\n        if start < me and end > ms:\n            return True\n    return False\n\ndef check_constraints(start, end):\n    \"\"\"Check all HARD constraints. Return True if valid.\"\"\"\n    day = start.weekday()  # 0=Mon\n    \n    # Alice: no meetings before 9 AM or after 2 PM (end must be <= 14:00)\n    if start.hour < 9 or end.hour > 14 or (end.hour == 14 and end.minute > 0):\n        return False\n    # Actually: \"Absolutely no meetings after 2 PM\" means meeting can't be after 2 PM\n    # So the meeting must end by 2 PM at latest\n    if end > start.replace(hour=14, minute=0):\n        return False\n    if start < start.replace(hour=9, minute=0):\n        return False\n    \n    # Bob: No meetings before 10 AM\n    if start.hour < 10:\n        return False\n    # Bob: Must leave by 4:30 PM on Tue(1)/Thu(3)\n    if day in (1, 3) and end > start.replace(hour=16, minute=30):\n        return False\n    # Bob's general availability: he prefers 1-5 PM, can do 11-1 PM. \n    # But his hard constraint is just no meetings before 10 AM (stated explicitly).\n    # Wait, let me re-read: \"Prefers afternoons (1-5 PM), can do late mornings (11 AM-1 PM) if needed.\"\n    # This implies his available window is 11 AM - 5 PM (with preference for 1-5 PM).\n    # Actually, hmm. The \"can do\" implies 11 AM - 1 PM is acceptable but not preferred.\n    # And \"prefers 1-5 PM\". The hard constraint stated is \"No meetings before 10 AM.\"\n    # But wait - if he \"can do late mornings (11 AM-1 PM) if needed\", does that mean\n    # 10 AM - 11 AM is NOT available? Let me re-read carefully.\n    # \"Bob: Prefers afternoons (1-5 PM), can do late mornings (11 AM-1 PM) if needed. Must leave by 4:30 PM on Tue/Thu. No meetings before 10 AM.\"\n    # So his availability is: 11 AM - 5 PM (with 1-5 PM preferred, 11 AM - 1 PM acceptable)\n    # Wait, but \"No meetings before 10 AM\" is explicitly stated. The preference/can-do structure\n    # suggests 11 AM is the earliest he can do, with 10 AM being ruled out entirely by \n    # \"can do late mornings (11 AM-1 PM)\" - meaning 10-11 AM is not available?\n    # Let me think about this more carefully. The explicit hard constraint is \"No meetings before 10 AM.\"\n    # The \"can do late mornings (11 AM-1 PM) if needed\" seems to define his acceptable range beyond preference.\n    # So his available times are: 11 AM - 5 PM (preferred: 1-5 PM, acceptable: 11 AM - 1 PM)\n    # 10 AM - 11 AM: neither preferred nor \"can do\" - so not available.\n    # Actually, re-reading: \"No meetings before 10 AM\" is stated as a hard constraint.\n    # The preference structure further narrows: prefers 1-5 PM, can do 11 AM-1 PM.\n    # So 10-11 AM is technically not ruled out by the explicit \"no meetings before 10 AM\" constraint,\n    # but it's also not listed as available in any category.\n    # I think the intent is: Bob's available 11 AM - 5 PM, hard constraint no before 10 AM.\n    # Let me treat 10-11 AM as unavailable for Bob since it's not in his \"prefers\" or \"can do\" ranges.\n    if start.hour < 11:\n        return False\n    # Bob's end must be by 5 PM (his range is up to 5 PM)\n    if end > start.replace(hour=17, minute=0):\n        return False\n    \n    # Carol: Available 9 AM - 5 PM\n    if start.hour < 9 or end > start.replace(hour=17, minute=0):\n        return False\n    # Carol: lunch break 12:00-12:30 PM (unavailable)\n    lunch_start = start.replace(hour=12, minute=0)\n    lunch_end = start.replace(hour=12, minute=30)\n    if start < lunch_end and end > lunch_start:\n        return False\n    # Carol: 15-min buffer after meetings ending at 4:45 PM or later\n    # This means if the meeting ends at 4:45 or later, Carol needs 15 min buffer after,\n    # so effectively the meeting can't end after 4:45 PM (since 5 PM is her limit and she needs 15 min)\n    # Actually this means: if meeting ends at 4:45+, Carol is blocked until end+15min.\n    # Since she's only available until 5 PM, meeting must end by 4:45 PM.\n    # Wait, but actually this constraint is about ANY meeting. If an existing meeting ends at 4:45+,\n    # she needs 15 min buffer. Let me re-read: \"Needs 15-min buffer after meetings ending at 4:45 PM or later\"\n    # This means for our new meeting too - if it ends at 4:45 PM or later, need 15 min buffer.\n    # But since Alice can't meet after 2 PM, this won't matter.\n    \n    # Check no conflict with existing meetings\n    if conflicts_with_existing(start, end):\n        return False\n    \n    return True\n\ndef preference_score(start):\n    \"\"\"Lower is better. Use to sort among valid slots.\"\"\"\n    day = start.weekday()\n    score = 0\n    # Carol prefers not Monday\n    if day == 0:\n        score += 1000  # Penalize Monday\n    # Among same day, prefer earlier (already handled by iteration order)\n    return score\n\n# Search all minute-granularity slots\nvalid_slots = []\nfor day in range(15, 20):  # Jan 15-19\n    for hour in range(9, 18):  # 9 AM to 5 PM start (end by 6 PM)\n        for minute in range(0, 60):\n            start = datetime(2024, 1, day, hour, minute)\n            end = start + timedelta(hours=1)\n            if end > datetime(2024, 1, day, 18, 0):\n                continue\n            if check_constraints(start, end):\n                valid_slots.append(start)\n\n# Sort by: first preference score, then by datetime\nvalid_slots.sort(key=lambda s: (preference_score(s), s))\n\nprint(f\"Found {len(valid_slots)} valid slots\")\nif valid_slots:\n    for s in valid_slots[:20]:\n        print(f\"  {s.strftime('%a %Y-%m-%d %H:%M')} - {(s+timedelta(hours=1)).strftime('%H:%M')}  (pref_score={preference_score(s)})\")\n    \n    best = valid_slots[0]\n    print(f\"\\nBest slot: {best.strftime('%Y-%m-%d %H:%M')} - {(best+timedelta(hours=1)).strftime('%H:%M')}\")\n    print(f\"DTSTART: {best.strftime('%Y%m%dT%H%M%S')}Z\")\n    print(f\"DTEND: {(best+timedelta(hours=1)).strftime('%Y%m%dT%H%M%S')}Z\")\nPYTHON\npython3 /tmp/find_slot.py"
+      },
+      "name": "bash",
+      "type": "tool_use"
+    }
+  ],
+  "model": "anthropic/claude-4.6-opus-20260205",
+  "role": "assistant",
+  "stop_reason": "tool_use",
+  "stop_sequence": null,
+  "type": "message",
+  "usage": {
+    "cache_creation": null,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "inference_geo": null,
+    "input_tokens": 3930,
+    "output_tokens": 2721,
+    "server_tool_use": null,
+    "service_tier": null,
+    "speed": "standard",
+    "cost": 0.087675,
+    "is_byok": false,
+    "cost_details": {
+      "upstream_inference_cost": 0.087675,
+      "upstream_inference_prompt_cost": 0.01965,
+      "upstream_inference_completions_cost": 0.068025
+    }
+  },
+  "provider": "Amazon Bedrock"
+}

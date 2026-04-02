@@ -1,0 +1,41 @@
+{
+  "id": "gen-1775098617-FjVxLAE99LABS5Fl5yoh",
+  "container": null,
+  "content": [
+    {
+      "id": "toolu_bdrk_01RjkRC1k4mwVi4anjHUu8UJ",
+      "caller": {
+        "type": "direct"
+      },
+      "input": {
+        "command": "mkdir -p /app/model_cache/sentiment_model\npython3 -c \"\nfrom transformers import AutoTokenizer, AutoModelForSequenceClassification\nmodel_name = 'distilbert-base-uncased-finetuned-sst-2-english'\nsave_path = '/app/model_cache/sentiment_model'\nprint('Downloading tokenizer...')\ntokenizer = AutoTokenizer.from_pretrained(model_name)\ntokenizer.save_pretrained(save_path)\nprint('Downloading model...')\nmodel = AutoModelForSequenceClassification.from_pretrained(model_name)\nmodel.save_pretrained(save_path)\nprint('Done!')\n\" 2>&1"
+      },
+      "name": "bash",
+      "type": "tool_use"
+    }
+  ],
+  "model": "anthropic/claude-4.6-opus-20260205",
+  "role": "assistant",
+  "stop_reason": "tool_use",
+  "stop_sequence": null,
+  "type": "message",
+  "usage": {
+    "cache_creation": null,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "inference_geo": null,
+    "input_tokens": 2274,
+    "output_tokens": 220,
+    "server_tool_use": null,
+    "service_tier": null,
+    "speed": "standard",
+    "cost": 0.01687,
+    "is_byok": false,
+    "cost_details": {
+      "upstream_inference_cost": 0.01687,
+      "upstream_inference_prompt_cost": 0.01137,
+      "upstream_inference_completions_cost": 0.0055
+    }
+  },
+  "provider": "Amazon Bedrock"
+}

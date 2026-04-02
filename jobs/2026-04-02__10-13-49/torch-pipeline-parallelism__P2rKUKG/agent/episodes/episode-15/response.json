@@ -1,0 +1,41 @@
+{
+  "id": "gen-1775125032-v01DgCAB5YvsmQQonIpK",
+  "container": null,
+  "content": [
+    {
+      "id": "toolu_bdrk_01UKBEPoBtjGSipaFDRfuuTG",
+      "caller": {
+        "type": "direct"
+      },
+      "input": {
+        "command": "python3 -c \"\nfrom transformers import LlamaForCausalLM, LlamaConfig\nimport torch\nconfig = LlamaConfig(\n    hidden_size=64,\n    intermediate_size=128,\n    num_hidden_layers=4,\n    num_attention_heads=4,\n    vocab_size=100,\n)\nmodel = LlamaForCausalLM(config)\ninput_ids = torch.randint(0, 100, (2, 8))\n\n# Test: run embed_tokens\nembeds = model.model.embed_tokens(input_ids)\nprint('embeds shape:', embeds.shape)\n\n# Need position_embeddings for layers\n# Check rotary_emb\nimport inspect\nsig = inspect.signature(model.model.rotary_emb.forward)\nprint('rotary_emb sig:', sig)\n\npos_ids = torch.arange(8).unsqueeze(0).expand(2, -1)\ncos, sin = model.model.rotary_emb(embeds, pos_ids)\nprint('cos shape:', cos.shape, 'sin shape:', sin.shape)\n\n# Run a layer\nlayer_out = model.model.layers[0](embeds, position_embeddings=(cos, sin))\nprint('layer_out type:', type(layer_out))\nprint('layer_out:', layer_out.shape if isinstance(layer_out, torch.Tensor) else layer_out)\n\""
+      },
+      "name": "bash",
+      "type": "tool_use"
+    }
+  ],
+  "model": "anthropic/claude-4.6-opus-20260205",
+  "role": "assistant",
+  "stop_reason": "tool_use",
+  "stop_sequence": null,
+  "type": "message",
+  "usage": {
+    "cache_creation": null,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "inference_geo": null,
+    "input_tokens": 5854,
+    "output_tokens": 396,
+    "server_tool_use": null,
+    "service_tier": null,
+    "speed": "standard",
+    "cost": 0.03917,
+    "is_byok": false,
+    "cost_details": {
+      "upstream_inference_cost": 0.03917,
+      "upstream_inference_prompt_cost": 0.02927,
+      "upstream_inference_completions_cost": 0.0099
+    }
+  },
+  "provider": "Amazon Bedrock"
+}

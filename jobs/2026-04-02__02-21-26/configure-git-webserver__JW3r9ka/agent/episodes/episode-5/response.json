@@ -1,0 +1,41 @@
+{
+  "id": "gen-1775097498-mU5l3pDTN0pM7qYsjcye",
+  "container": null,
+  "content": [
+    {
+      "id": "toolu_bdrk_0144pi8qnVABq3zkTWGqXCDL",
+      "caller": {
+        "type": "direct"
+      },
+      "input": {
+        "command": "# Configure nginx to serve from /var/www/git-web on port 8080\ncat > /etc/nginx/sites-available/git-web << 'EOF'\nserver {\n    listen 8080 default_server;\n    root /var/www/git-web;\n    index index.html;\n\n    location / {\n        try_files $uri $uri/ =404;\n    }\n}\nEOF\n\n# Enable the site, disable the default\nrm -f /etc/nginx/sites-enabled/default\nln -sf /etc/nginx/sites-available/git-web /etc/nginx/sites-enabled/git-web\n\n# Test config\nnginx -t"
+      },
+      "name": "bash",
+      "type": "tool_use"
+    }
+  ],
+  "model": "anthropic/claude-4.6-opus-20260205",
+  "role": "assistant",
+  "stop_reason": "tool_use",
+  "stop_sequence": null,
+  "type": "message",
+  "usage": {
+    "cache_creation": null,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "inference_geo": null,
+    "input_tokens": 3450,
+    "output_tokens": 206,
+    "server_tool_use": null,
+    "service_tier": null,
+    "speed": "standard",
+    "cost": 0.0224,
+    "is_byok": false,
+    "cost_details": {
+      "upstream_inference_cost": 0.0224,
+      "upstream_inference_prompt_cost": 0.01725,
+      "upstream_inference_completions_cost": 0.00515
+    }
+  },
+  "provider": "Amazon Bedrock"
+}

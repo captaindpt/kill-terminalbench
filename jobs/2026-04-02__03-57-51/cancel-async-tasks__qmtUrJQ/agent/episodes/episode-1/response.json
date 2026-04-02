@@ -1,0 +1,41 @@
+{
+  "id": "gen-1775109070-hlsoJD1sESZpREHZyVeo",
+  "container": null,
+  "content": [
+    {
+      "id": "toolu_bdrk_01MUWdX2q7evJxs2NeUHvHeR",
+      "caller": {
+        "type": "direct"
+      },
+      "input": {
+        "command": "cat > /app/run.py << 'PYTHON'\nimport asyncio\nimport signal\nfrom collections.abc import Awaitable, Callable\n\n\nasync def run_tasks(tasks: list[Callable[[], Awaitable[None]]], max_concurrent: int) -> None:\n    \"\"\"Run async tasks with a concurrency limit, ensuring cleanup on KeyboardInterrupt.\"\"\"\n    semaphore = asyncio.Semaphore(max_concurrent)\n\n    async def worker(task: Callable[[], Awaitable[None]]) -> None:\n        async with semaphore:\n            await task()\n\n    running_tasks: list[asyncio.Task] = []\n\n    loop = asyncio.get_running_loop()\n    interrupted = False\n    original_handler = signal.getsignal(signal.SIGINT)\n\n    def _sigint_handler(sig, frame):\n        nonlocal interrupted\n        interrupted = True\n        for t in running_tasks:\n            if not t.done():\n                t.cancel()\n\n    loop.add_signal_handler(signal.SIGINT, _sigint_handler, None, None)\n\n    try:\n        for task in tasks:\n            running_tasks.append(asyncio.create_task(worker(task)))\n\n        # Wait for all tasks, letting cancellation propagate naturally\n        results = await asyncio.gather(*running_tasks, return_exceptions=True)\n\n        if interrupted:\n            raise KeyboardInterrupt\n    finally:\n        loop.remove_signal_handler(signal.SIGINT)\n        signal.signal(signal.SIGINT, original_handler)\nPYTHON"
+      },
+      "name": "bash",
+      "type": "tool_use"
+    }
+  ],
+  "model": "anthropic/claude-4.6-opus-20260205",
+  "role": "assistant",
+  "stop_reason": "tool_use",
+  "stop_sequence": null,
+  "type": "message",
+  "usage": {
+    "cache_creation": null,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "inference_geo": null,
+    "input_tokens": 1851,
+    "output_tokens": 427,
+    "server_tool_use": null,
+    "service_tier": null,
+    "speed": "standard",
+    "cost": 0.01993,
+    "is_byok": false,
+    "cost_details": {
+      "upstream_inference_cost": 0.01993,
+      "upstream_inference_prompt_cost": 0.009255,
+      "upstream_inference_completions_cost": 0.010675
+    }
+  },
+  "provider": "Amazon Bedrock"
+}

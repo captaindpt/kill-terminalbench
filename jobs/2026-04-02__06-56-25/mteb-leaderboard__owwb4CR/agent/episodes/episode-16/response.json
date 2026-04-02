@@ -1,0 +1,41 @@
+{
+  "id": "gen-1775117426-yRfG5iIw9zHKMiV8E871",
+  "container": null,
+  "content": [
+    {
+      "id": "toolu_bdrk_0126M8DEhczkSaCYEvFZ2NiX",
+      "caller": {
+        "type": "direct"
+      },
+      "input": {
+        "command": "python3 << 'PYEOF'\nimport json, os, glob\n\nresults_dir = os.path.expanduser(\"~/.cache/mteb/results/results\")\nmodels = os.listdir(results_dir)\n\nscand_tasks = ['BornholmBitextMining', 'NorwegianCourtsBitextMining', 'AngryTweetsClassification', 'DanishPoliticalCommentsClassification', 'DalajClassification', 'DKHateClassification', 'LccSentimentClassification', 'MassiveIntentClassification', 'MassiveScenarioClassification', 'NordicLangClassification', 'NoRecClassification', 'NorwegianParliamentClassification', 'ScalaClassification', 'SwedishSentimentClassification', 'SweRecClassification', 'DanFeverRetrieval', 'NorQuadRetrieval', 'SNLRetrieval', 'SwednRetrieval', 'SweFaqRetrieval', 'TV2Nordretrieval', 'TwitterHjerneRetrieval', 'SNLHierarchicalClusteringS2S', 'SNLHierarchicalClusteringP2P', 'SwednClusteringP2P', 'SwednClusteringS2S', 'VGHierarchicalClusteringS2S', 'VGHierarchicalClusteringP2P']\n\n# For each model, check what Scandinavian tasks results exist\nmodel_scores = {}\nfor model in models:\n    model_dir = os.path.join(results_dir, model)\n    if not os.path.isdir(model_dir):\n        continue\n    \n    # Look for revision dirs\n    revisions = os.listdir(model_dir)\n    for rev in revisions:\n        rev_dir = os.path.join(model_dir, rev)\n        if not os.path.isdir(rev_dir):\n            continue\n        \n        task_scores = {}\n        for task_name in scand_tasks:\n            # Check for json file\n            json_file = os.path.join(rev_dir, f\"{task_name}.json\")\n            if os.path.exists(json_file):\n                try:\n                    with open(json_file) as f:\n                        data = json.load(f)\n                    # Extract main score from the dataset_revision or scores\n                    # The structure varies - let's look at what's inside\n                    if 'scores' in data:\n                        scores = data['scores']\n                        # scores is typically: {split: [{hf_subset: ..., main_score: ...}]}\n                        for split, split_scores in scores.items():\n                            if split == 'test' or split == 'validation':\n                                if isinstance(split_scores, list):\n                                    # Average across subsets\n                                    main_scores_list = [s.get('main_score', None) for s in split_scores if s.get('main_score') is not None]\n                                    if main_scores_list:\n                                        task_scores[task_name] = sum(main_scores_list) / len(main_scores_list)\n                                break\n                except:\n                    pass\n        \n        if len(task_scores) == len(scand_tasks):\n            mean_score = sum(task_scores.values()) / len(task_scores)\n            model_name = model.replace(\"__\", \"/\")\n            model_scores[model_name] = mean_score\n\n# Sort by mean score\nsorted_models = sorted(model_scores.items(), key=lambda x: x[1], reverse=True)\nprint(f\"Models with all {len(scand_tasks)} Scandinavian task results: {len(sorted_models)}\")\nfor name, score in sorted_models[:20]:\n    print(f\"{score:.4f} - {name}\")\nPYEOF"
+      },
+      "name": "bash",
+      "type": "tool_use"
+    }
+  ],
+  "model": "anthropic/claude-4.6-opus-20260205",
+  "role": "assistant",
+  "stop_reason": "tool_use",
+  "stop_sequence": null,
+  "type": "message",
+  "usage": {
+    "cache_creation": null,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "inference_geo": null,
+    "input_tokens": 10691,
+    "output_tokens": 1014,
+    "server_tool_use": null,
+    "service_tier": null,
+    "speed": "standard",
+    "cost": 0.078805,
+    "is_byok": false,
+    "cost_details": {
+      "upstream_inference_cost": 0.078805,
+      "upstream_inference_prompt_cost": 0.053455,
+      "upstream_inference_completions_cost": 0.02535
+    }
+  },
+  "provider": "Amazon Bedrock"
+}

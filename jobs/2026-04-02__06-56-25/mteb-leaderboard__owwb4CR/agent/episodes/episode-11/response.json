@@ -1,0 +1,41 @@
+{
+  "id": "gen-1775117285-SAhfiqwmzDKvsmXeoDhL",
+  "container": null,
+  "content": [
+    {
+      "id": "toolu_bdrk_017SkUUQfdvm8zwEQbcg5jN9",
+      "caller": {
+        "type": "direct"
+      },
+      "input": {
+        "command": "python3 << 'PYEOF' 2>/dev/null\nimport mteb\nimport warnings\nwarnings.filterwarnings(\"ignore\")\n\nbenchmarks = mteb.get_benchmarks()\nfor b in benchmarks:\n    if 'Scandinavian' in b.name:\n        results = b.load_results(base_results=None)\n        r0 = results[0]\n        for k in vars(r0).keys():\n            v = getattr(r0, k)\n            if k != 'task_results':\n                print(f\"{k}: {repr(v)[:200]}\")\n        break\nPYEOF"
+      },
+      "name": "bash",
+      "type": "tool_use"
+    }
+  ],
+  "model": "anthropic/claude-4.6-opus-20260205",
+  "role": "assistant",
+  "stop_reason": "tool_use",
+  "stop_sequence": null,
+  "type": "message",
+  "usage": {
+    "cache_creation": null,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "inference_geo": null,
+    "input_tokens": 9096,
+    "output_tokens": 201,
+    "server_tool_use": null,
+    "service_tier": null,
+    "speed": "standard",
+    "cost": 0.050505,
+    "is_byok": false,
+    "cost_details": {
+      "upstream_inference_cost": 0.050505,
+      "upstream_inference_prompt_cost": 0.04548,
+      "upstream_inference_completions_cost": 0.005025
+    }
+  },
+  "provider": "Amazon Bedrock"
+}

@@ -1,0 +1,41 @@
+{
+  "id": "gen-1775111012-XT39Mus9z56TqzvNj7jw",
+  "container": null,
+  "content": [
+    {
+      "id": "toolu_bdrk_01Rwo2pwM6WbnBgovvTL67Kh",
+      "caller": {
+        "type": "direct"
+      },
+      "input": {
+        "command": "# Wait, input[182:215] is 33 chars but I see only 32 chars printed. Let me check.\npython3 -c \"\ninput_seq = ''\nwith open('sequences.fasta') as f:\n    current = None\n    for line in f:\n        line = line.strip()\n        if line.startswith('>input'):\n            current = 'input'\n        elif line.startswith('>output'):\n            current = 'output'\n        elif current == 'input':\n            input_seq += line\ns = input_seq[182:215]\nprint(f'len={len(s)}, seq={s}')\n\""
+      },
+      "name": "bash",
+      "type": "tool_use"
+    }
+  ],
+  "model": "anthropic/claude-4.6-opus-20260205",
+  "role": "assistant",
+  "stop_reason": "tool_use",
+  "stop_sequence": null,
+  "type": "message",
+  "usage": {
+    "cache_creation": null,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "inference_geo": null,
+    "input_tokens": 12883,
+    "output_tokens": 207,
+    "server_tool_use": null,
+    "service_tier": null,
+    "speed": "standard",
+    "cost": 0.06959,
+    "is_byok": false,
+    "cost_details": {
+      "upstream_inference_cost": 0.06959,
+      "upstream_inference_prompt_cost": 0.064415,
+      "upstream_inference_completions_cost": 0.005175
+    }
+  },
+  "provider": "Amazon Bedrock"
+}

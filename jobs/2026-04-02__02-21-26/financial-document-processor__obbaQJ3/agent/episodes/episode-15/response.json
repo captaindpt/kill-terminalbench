@@ -1,0 +1,46 @@
+{
+  "id": "gen-1775098002-cC7OuNu8zOdV6aHbL7ll",
+  "container": null,
+  "content": [
+    {
+      "citations": null,
+      "text": "Now I see the issues clearly:\n\n1. **2lgKzDuI4E4g.jpg**: \"Total:\" is on line 30 with no number, and the amounts appear later: $6558 (line 66-68). Both Total and Amount due exist, so use Total = $6558.\n2. **lxtL9XrYRsVG.jpg**: VAT is 72.54 (line 72-73), \"Gross worth\" is 797.91. The summary only has 2 $ amounts at that level, need to also parse the gross worth section.\n\nLet me redo the processing with better parsing:",
+      "type": "text"
+    },
+    {
+      "id": "toolu_bdrk_01B3iiKSyFgQ9fWzjWKaRxKP",
+      "caller": {
+        "type": "direct"
+      },
+      "input": {
+        "command": "python3 << 'PYEOF'\nimport os\nimport shutil\nimport csv\nimport re\nimport pytesseract\nfrom PIL import Image\nimport fitz\n\ninv_dir = \"/app/invoices/\"\noth_dir = \"/app/other/\"\ndoc_dir = \"/app/documents/\"\n\n# Move everything back to documents first\nfor d in [inv_dir, oth_dir]:\n    for f in os.listdir(d):\n        if f == 'summary.csv':\n            os.remove(os.path.join(d, f))\n            continue\n        shutil.move(os.path.join(d, f), os.path.join(doc_dir, f))\n\ndef get_text(fpath, fname):\n    text = \"\"\n    if fname.lower().endswith(\".pdf\"):\n        doc = fitz.open(fpath)\n        for page in doc:\n            text += page.get_text()\n        doc.close()\n    elif fname.lower().endswith((\".jpg\", \".jpeg\", \".png\")):\n        img = Image.open(fpath)\n        text = pytesseract.image_to_string(img)\n    return text\n\ndef is_invoice(text):\n    return 'invoice' in text.lower()\n\ndef parse_number(s):\n    s = s.strip()\n    s = re.sub(r'[\u20ac\u00a3$]', '', s)\n    s = re.sub(r'\\s*(USD|EUR|GBP)\\s*', '', s).strip()\n    # European format: \"5 640,17\" -> 5640.17\n    if ',' in s and '.' not in s:\n        s = s.replace(' ', '').replace(',', '.')\n    elif '.' in s and ',' not in s:\n        s = s.replace(' ', '')\n    else:\n        s = s.replace(' ', '').replace(',', '')\n    try:\n        return float(s)\n    except:\n        return None\n\ndef extract_invoice_data(text, fname):\n    lines = text.split('\\n')\n    \n    # === Format: PDF with TotalPrice ===\n    if 'TotalPrice' in text:\n        total = 0\n        for i, line in enumerate(lines):\n            if 'TotalPrice' in line:\n                m = re.search(r'TotalPrice\\s*[:\\s]*([0-9,.]+)', line)\n                if m:\n                    total = parse_number(m.group(1))\n                elif i+1 < len(lines):\n                    v = parse_number(lines[i+1].strip())\n                    if v is not None:\n                        total = v\n        return total, 0\n    \n    # === Format: Invoices with SUMMARY section (European format) ===\n    if 'SUMMARY' in text:\n        # Try pattern: \"Total $ X $ Y $ Z\" (all on one line, like vvK89XK847m3.jpg)\n        total_line = re.search(r'Total\\s+\\$\\s*([\\d\\s,]+\\d+(?:,\\d+)?)\\s+\\$\\s*([\\d\\s,]+\\d+(?:,\\d+)?)\\s+\\$\\s*([\\d\\s,]+\\d+(?:,\\d+)?)', text)\n        if total_line:\n            net = parse_number(total_line.group(1))\n            vat = parse_number(total_line.group(2))\n            gross = parse_number(total_line.group(3))\n            return gross, vat\n        \n        # Otherwise parse SUMMARY section for $ amounts and \"Gross worth\" value\n        summary_pos = text.find('SUMMARY')\n        summary_text = text[summary_pos:]\n        \n        # Find \"Gross worth\" total: look for \"$ X\" after \"Gross worth\"\n        gross_match = re.search(r'Gross\\s+worth\\s*\\n\\s*([\\d\\s,.]+)\\s*\\n\\s*\\$\\s*([\\d\\s,.]+)', summary_text)\n        if gross_match:\n            gross_total = parse_number(gross_match.group(2))\n        else:\n            # Try finding it another way - last $ amount\n            all_dollar = re.findall(r'\\$\\s*([\\d\\s,.]+)', summary_text)\n            gross_total = parse_number(all_dollar[-1]) if all_dollar else 0\n        \n        # Find VAT total\n        vat_total = 0\n        # Look for \"VAT\\nXXX\\n$ XXX\" pattern OR \"Net worth VAT\\nXXX XXX\\n$ XXX $ XXX\"\n        vat_section = re.search(r'Net\\s+worth\\s+VAT\\s*\\n\\s*([\\d\\s,.]+)\\s+([\\d\\s,.]+)\\s*\\n\\s*\\$\\s*([\\d\\s,.]+)\\s+\\$\\s*([\\d\\s,.]+)', summary_text)\n        if vat_section:\n            vat_total = parse_number(vat_section.group(4))\n        else:\n            # Look for standalone VAT amount: pattern \"VAT\\n<value>\\n$ <value>\"\n            vat_match = re.search(r'\\bVAT\\s*\\n\\s*([\\d\\s,.]+)\\s*\\n\\s*\\$\\s*([\\d\\s,.]+)', summary_text)\n            if vat_match:\n                vat_total = parse_number(vat_match.group(2))\n        \n        return gross_total, vat_total\n\n    # === Format: Stripe-style invoices ===\n    # These have \"Total:\" and possibly \"Amount due:\" \n    # The amounts might be on separate column lines\n    \n    # For 2lgKzDuI4E4g.jpg, the Total and Amount line nums are known from OCR layout\n    # \"Total:\" is label only, and values appear later as \"$6558\" after \"Amount\" header\n    # Strategy: find all $ amounts, identify Total vs SubTotal vs Amount Due\n    \n    # Collect all $ amounts\n    dollar_amounts = []\n    for line in lines:\n        matches = re.findall(r'\\$\\s*([\\d,. ]+)', line.strip())\n        for m in matches:\n            v = parse_number(m)\n            if v is not None:\n                dollar_amounts.append(v)\n    \n    # Check if there's SubTotal, Total, Amount due labels\n    has_subtotal = any(re.search(r'subtotal', l, re.I) for l in lines)\n    has_total = any(re.match(r'\\s*Total\\s*:', l, re.I) for l in lines)\n    has_amount_due = any(re.search(r'amount\\s+due', l, re.I) for l in lines)\n    \n    if has_total and has_amount_due and dollar_amounts:\n        # Pattern: the last few dollar amounts should be SubTotal, Total, Amount Due\n        # SubTotal=Total (appears twice) then Amount due (lower, different value)\n        # From 2lgKzDuI4E4g: ...$6558, $6558, $4382 - Total is $6558 (use Total, not Amount Due)\n        # From KrJiw0OZx7jf: ...$9963, $9963, $7139 - Total is $9963\n        \n        # The Total value appears right after SubTotal with same value\n        # Find the repeated value near the end\n        if len(dollar_amounts) >= 3:\n            # Look for the SubTotal=Total pair\n            for i in range(len(dollar_amounts)-2, 0, -1):\n                if dollar_amounts[i] == dollar_amounts[i-1]:\n                    return dollar_amounts[i], 0\n            # Fallback: second to last unique amount\n            return dollar_amounts[-2], 0\n        elif len(dollar_amounts) >= 1:\n            return dollar_amounts[-1], 0\n    \n    elif has_total and dollar_amounts:\n        # Just Total, no Amount Due\n        return dollar_amounts[-1], 0\n    \n    # Fallback\n    return 0, 0\n\n# Process all files\ninvoices = []\nfiles = sorted(os.listdir(doc_dir))\n\nfor fname in files:\n    fpath = os.path.join(doc_dir, fname)\n    text = get_text(fpath, fname)\n    \n    if is_invoice(text):\n        total_amount, vat_amount = extract_invoice_data(text, fname)\n        invoices.append((fname, total_amount, vat_amount))\n        print(f\"INVOICE: {fname} -> total={total_amount}, vat={vat_amount}\")\n        shutil.move(fpath, os.path.join(inv_dir, fname))\n    else:\n        print(f\"OTHER:   {fname}\")\n        shutil.move(fpath, os.path.join(oth_dir, fname))\n\n# Create summary.csv\nsum_total = round(sum(inv[1] for inv in invoices), 2)\nsum_vat = round(sum(inv[2] for inv in invoices), 2)\n\nwith open(os.path.join(inv_dir, 'summary.csv'), 'w', newline='') as f:\n    writer = csv.writer(f)\n    writer.writerow(['filename', 'total_amount', 'vat_amount'])\n    for fname, total, vat in invoices:\n        writer.writerow([fname, total, vat])\n    writer.writerow(['total', sum_total, sum_vat])\n\nprint(\"\\n--- Summary CSV ---\")\nwith open(os.path.join(inv_dir, 'summary.csv')) as f:\n    print(f.read())\n\nprint(\"\\n--- Documents dir ---\")\nprint(os.listdir(doc_dir))\nprint(\"--- Invoices dir ---\")\nprint([f for f in os.listdir(inv_dir) if f != 'summary.csv'])\nprint(\"--- Other dir ---\")\nprint(os.listdir(oth_dir))\nPYEOF"
+      },
+      "name": "bash",
+      "type": "tool_use"
+    }
+  ],
+  "model": "anthropic/claude-4.6-opus-20260205",
+  "role": "assistant",
+  "stop_reason": "tool_use",
+  "stop_sequence": null,
+  "type": "message",
+  "usage": {
+    "cache_creation": null,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "inference_geo": null,
+    "input_tokens": 19166,
+    "output_tokens": 2704,
+    "server_tool_use": null,
+    "service_tier": null,
+    "speed": "standard",
+    "cost": 0.16343,
+    "is_byok": false,
+    "cost_details": {
+      "upstream_inference_cost": 0.16343,
+      "upstream_inference_prompt_cost": 0.09583,
+      "upstream_inference_completions_cost": 0.0676
+    }
+  },
+  "provider": "Amazon Bedrock"
+}

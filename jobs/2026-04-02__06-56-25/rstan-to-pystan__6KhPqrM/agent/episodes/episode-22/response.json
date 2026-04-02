@@ -1,0 +1,46 @@
+{
+  "id": "gen-1775122933-2W8Aj4PQoW4WpKyMl4Jm",
+  "container": null,
+  "content": [
+    {
+      "citations": null,
+      "text": "I see! The PyStan code uses `num_thin` internally (not `thin`). Let me check what the actual CmdStan parameter name is:",
+      "type": "text"
+    },
+    {
+      "id": "toolu_bdrk_01XCYEGvvw4PSEm78dKv8txw",
+      "caller": {
+        "type": "direct"
+      },
+      "input": {
+        "command": "python3 -c \"\nimport stan.common\nimport inspect\nsrc = inspect.getsource(stan.common)\nfor i, line in enumerate(src.split('\\n')):\n    if 'thin' in line.lower():\n        print(f'{i}: {line}')\n\" 2>&1 | head -20"
+      },
+      "name": "bash",
+      "type": "tool_use"
+    }
+  ],
+  "model": "anthropic/claude-4.6-opus-20260205",
+  "role": "assistant",
+  "stop_reason": "tool_use",
+  "stop_sequence": null,
+  "type": "message",
+  "usage": {
+    "cache_creation": null,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "inference_geo": null,
+    "input_tokens": 8280,
+    "output_tokens": 163,
+    "server_tool_use": null,
+    "service_tier": null,
+    "speed": "standard",
+    "cost": 0.045475,
+    "is_byok": false,
+    "cost_details": {
+      "upstream_inference_cost": 0.045475,
+      "upstream_inference_prompt_cost": 0.0414,
+      "upstream_inference_completions_cost": 0.004075
+    }
+  },
+  "provider": "Amazon Bedrock"
+}

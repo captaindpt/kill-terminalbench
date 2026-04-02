@@ -1,0 +1,41 @@
+{
+  "id": "gen-1775100945-8tzdmR5KS6hO0T9AVRHm",
+  "container": null,
+  "content": [
+    {
+      "id": "toolu_bdrk_01MjP8UNgS8akPKyXDYt1Hoj",
+      "caller": {
+        "type": "direct"
+      },
+      "input": {
+        "command": "cat > /app/decompress.py << 'PYEOF'\n#!/usr/bin/env python3\n\"\"\"\nDecompress/revert a resharded directory back to original structure in-place.\n\nUsage: python decompress.py <resharded_dir>\n\"\"\"\n\nimport json\nimport os\nimport sys\nimport tarfile\nimport shutil\n\n\ndef main():\n    if len(sys.argv) != 2:\n        print(f\"Usage: {sys.argv[0]} <resharded_dir>\", file=sys.stderr)\n        sys.exit(1)\n    \n    resharded_dir = sys.argv[1]\n    \n    if not os.path.isdir(resharded_dir):\n        print(f\"Error: {resharded_dir} is not a directory\", file=sys.stderr)\n        sys.exit(1)\n    \n    manifest_path = os.path.join(resharded_dir, \"manifest.json\")\n    if not os.path.isfile(manifest_path):\n        print(f\"Error: manifest.json not found in {resharded_dir}\", file=sys.stderr)\n        sys.exit(1)\n    \n    with open(manifest_path, \"r\") as f:\n        manifest = json.load(f)\n    \n    print(f\"Found {len(manifest)} archives in manifest\")\n    \n    # Extract all archives\n    for entry in manifest:\n        archive_rel = entry[\"archive\"]\n        archive_path = os.path.join(resharded_dir, archive_rel)\n        \n        if not os.path.isfile(archive_path):\n            print(f\"WARNING: Archive not found: {archive_path}\", file=sys.stderr)\n            continue\n        \n        with tarfile.open(archive_path, \"r:gz\") as tar:\n            tar.extractall(path=resharded_dir, filter=\"data\")\n    \n    # Clean up: remove archives, manifest, and batch directories\n    # First collect all archive paths and their parent dirs\n    archive_dirs = set()\n    for entry in manifest:\n        archive_rel = entry[\"archive\"]\n        archive_path = os.path.join(resharded_dir, archive_rel)\n        if os.path.isfile(archive_path):\n            os.remove(archive_path)\n        # Track parent directory if it's a subdirectory\n        parent = os.path.dirname(archive_rel)\n        if parent:\n            archive_dirs.add(os.path.join(resharded_dir, parent))\n    \n    # Remove manifest\n    os.remove(manifest_path)\n    \n    # Remove empty batch directories\n    for d in sorted(archive_dirs, reverse=True):\n        try:\n            os.rmdir(d)\n        except OSError:\n            pass  # Directory not empty, skip\n    \n    print(\"Done! Original structure restored.\")\n\n\nif __name__ == \"__main__\":\n    main()\nPYEOF"
+      },
+      "name": "bash",
+      "type": "tool_use"
+    }
+  ],
+  "model": "anthropic/claude-4.6-opus-20260205",
+  "role": "assistant",
+  "stop_reason": "tool_use",
+  "stop_sequence": null,
+  "type": "message",
+  "usage": {
+    "cache_creation": null,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "inference_geo": null,
+    "input_tokens": 4722,
+    "output_tokens": 746,
+    "server_tool_use": null,
+    "service_tier": null,
+    "speed": "standard",
+    "cost": 0.04226,
+    "is_byok": false,
+    "cost_details": {
+      "upstream_inference_cost": 0.04226,
+      "upstream_inference_prompt_cost": 0.02361,
+      "upstream_inference_completions_cost": 0.01865
+    }
+  },
+  "provider": "Amazon Bedrock"
+}

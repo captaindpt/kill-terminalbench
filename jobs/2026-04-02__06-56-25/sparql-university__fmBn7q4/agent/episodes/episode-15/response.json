@@ -1,0 +1,35 @@
+{
+  "id": "gen-1775123801-jtuglqmKPNo10VSa7FHn",
+  "container": null,
+  "content": [
+    {
+      "citations": null,
+      "text": "The solution is complete. The SPARQL query at `/app/solution.sparql`:\n\n1. **Criterion 1 (Full professors)**: Uses `FILTER(STRSTARTS(?role, \"Professor\"))` to match \"Professor\" but exclude \"Assistant Professor\".\n2. **Criterion 2 (EU country)**: Uses `FILTER EXISTS` to check that the professor works in at least one department belonging to a university in an EU member state (27 countries as of 2025-08-16).\n3. **Criterion 3 (>10 enrolled students)**: Uses an inline subquery to find departments where more than 10 distinct students are currently enrolled (enrolled before reference date, not yet graduated) in classes taught in that department. The professor must work in at least one such qualifying department.\n\nThe results correctly return all countries where each qualifying professor works (not just EU ones), matching the expected output.",
+      "type": "text"
+    }
+  ],
+  "model": "anthropic/claude-4.6-opus-20260205",
+  "role": "assistant",
+  "stop_reason": "end_turn",
+  "stop_sequence": null,
+  "type": "message",
+  "usage": {
+    "cache_creation": null,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "inference_geo": null,
+    "input_tokens": 7309,
+    "output_tokens": 205,
+    "server_tool_use": null,
+    "service_tier": null,
+    "speed": "standard",
+    "cost": 0.04167,
+    "is_byok": false,
+    "cost_details": {
+      "upstream_inference_cost": 0.04167,
+      "upstream_inference_prompt_cost": 0.036545,
+      "upstream_inference_completions_cost": 0.005125
+    }
+  },
+  "provider": "Amazon Bedrock"
+}

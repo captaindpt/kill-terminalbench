@@ -1,0 +1,7 @@
+[
+  {
+    "type": "tool_result",
+    "tool_use_id": "toolu_bdrk_013vxjwXahnSnLVKpVTocbkf",
+    "content": "[exit_code=0]\n\n    const temp = this.registers[rs]; // Store jump target\n    this.registers[rd] = this.pc + 4; // Store return address\n    this.pc = temp;\n  }\n  \n  jr(rs) {\n    // JR rs - Jump Register\n    this.pc = this.registers[rs];\n  }\n  \n  // ---- Other Control Operations ----\n  \n  movz(rs, rt, rd) {\n    // MOVZ rd,rs,rt - Move if Zero\n    if (this.registers[rt] === 0) {\n      this.registers[rd] = this.registers[rs];\n    }\n  }\n  \n  movn(rs, rt, rd) {\n    // MOVN rd,rs,rt - Move if Not Zero\n    if (this.registers[rt] !== 0) {\n      this.registers[rd] = this.registers[rs];\n    }\n  }\n  \n  teq(rs, rt, code = 0) {\n    // TEQ rs,rt,code - Trap if Equal\n    if (this.registers[rs] === this.registers[rt]) {\n      this.epc = this.pc;\n      // In a real implementation, this would trigger a trap exception\n      throw new Error(`TEQ trap exception: registers ${this.regNames[rs]} and ${this.regNames[rt]} are equal (code ${code})`);\n    }\n  }\n  \n  break(code) {\n    // BREAK - Breakpoint\n    this.epc = this.pc;\n    // In a real implementation, this would trigger a breakpoint exception\n    throw new Error(`BREAK exception (code ${code})`);\n  }\n  \n  syscall(code) {\n    // SYSCALL - System Call\n    return this.handleSyscall();\n  }\n  \n  // ---- Memory Access Operations ----\n  \n  lb(rt, offset, base) {\n    // LB rt,offset(base) - Load Byte (signed)"
+  }
+]

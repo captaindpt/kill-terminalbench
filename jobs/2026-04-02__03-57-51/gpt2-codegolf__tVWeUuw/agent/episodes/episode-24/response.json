@@ -1,0 +1,41 @@
+{
+  "id": "gen-1775106167-FNwNF1N0FqrjzMTF07ck",
+  "container": null,
+  "content": [
+    {
+      "id": "toolu_bdrk_01EF9d8wF2xAX76VaAu55gMA",
+      "caller": {
+        "type": "direct"
+      },
+      "input": {
+        "command": "# Long tokens could overflow 64-byte buffers. Let's check max token length\ncd /app && awk '{if(length($0)>60) print length($0), NR, $0}' vocab.bpe | sort -rn | head -10"
+      },
+      "name": "bash",
+      "type": "tool_use"
+    }
+  ],
+  "model": "anthropic/claude-4.6-opus-20260205",
+  "role": "assistant",
+  "stop_reason": "tool_use",
+  "stop_sequence": null,
+  "type": "message",
+  "usage": {
+    "cache_creation": null,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "inference_geo": null,
+    "input_tokens": 5774,
+    "output_tokens": 110,
+    "server_tool_use": null,
+    "service_tier": null,
+    "speed": "standard",
+    "cost": 0.03162,
+    "is_byok": false,
+    "cost_details": {
+      "upstream_inference_cost": 0.03162,
+      "upstream_inference_prompt_cost": 0.02887,
+      "upstream_inference_completions_cost": 0.00275
+    }
+  },
+  "provider": "Amazon Bedrock"
+}

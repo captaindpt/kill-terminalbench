@@ -1,0 +1,41 @@
+{
+  "id": "gen-1775126521-XbSYTpYFAkon38mT5VK8",
+  "container": null,
+  "content": [
+    {
+      "id": "toolu_bdrk_0128ht9MJgMWZuBpfmYTTeds",
+      "caller": {
+        "type": "direct"
+      },
+      "input": {
+        "command": "python3 << 'EOF'\nimport cv2\nimport numpy as np\n\ncap = cv2.VideoCapture('/app/example_video.mp4')\nfps = cap.get(cv2.CAP_PROP_FPS)\ntotal_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))\nwidth = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))\nheight = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))\nprint(f\"FPS: {fps}, Total frames: {total_frames}, Resolution: {width}x{height}\")\n\n# Read first frame (background - no runner)\nret, bg_frame = cap.read()\nbg_gray = cv2.cvtColor(bg_frame, cv2.COLOR_BGR2GRAY).astype(np.float32)\n\n# Save background for inspection\ncv2.imwrite('/tmp/bg_frame.png', bg_frame)\n\ncap.release()\nEOF"
+      },
+      "name": "bash",
+      "type": "tool_use"
+    }
+  ],
+  "model": "anthropic/claude-4.6-opus-20260205",
+  "role": "assistant",
+  "stop_reason": "tool_use",
+  "stop_sequence": null,
+  "type": "message",
+  "usage": {
+    "cache_creation": null,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "inference_geo": null,
+    "input_tokens": 2212,
+    "output_tokens": 292,
+    "server_tool_use": null,
+    "service_tier": null,
+    "speed": "standard",
+    "cost": 0.01836,
+    "is_byok": false,
+    "cost_details": {
+      "upstream_inference_cost": 0.01836,
+      "upstream_inference_prompt_cost": 0.01106,
+      "upstream_inference_completions_cost": 0.0073
+    }
+  },
+  "provider": "Amazon Bedrock"
+}

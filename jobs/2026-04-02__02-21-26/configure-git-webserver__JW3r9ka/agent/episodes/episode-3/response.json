@@ -1,0 +1,46 @@
+{
+  "id": "gen-1775097460-yMU67iJxgUMv4QA8EjYR",
+  "container": null,
+  "content": [
+    {
+      "citations": null,
+      "text": "Good, all the pieces are installed. Now let me set everything up:\n\n**Step 1:** Create the bare git repo, the web root, and the post-receive hook.\n**Step 2:** Configure nginx on port 8080.\n**Step 3:** Start SSH and nginx.",
+      "type": "text"
+    },
+    {
+      "id": "toolu_bdrk_01NnuDrqCeQUKx2jQF6ow8Dm",
+      "caller": {
+        "type": "direct"
+      },
+      "input": {
+        "command": "# Create bare git repository\nmkdir -p /git/server\ncd /git/server\ngit init --bare\n\n# Create web root directory\nmkdir -p /var/www/git-web\n\n# Create post-receive hook that checks out pushed content to the web root\ncat > /git/server/hooks/post-receive << 'EOF'\n#!/bin/bash\nGIT_WORK_TREE=/var/www/git-web git checkout -f master 2>/dev/null || GIT_WORK_TREE=/var/www/git-web git checkout -f main 2>/dev/null\nEOF\nchmod +x /git/server/hooks/post-receive\n\necho \"--- Bare repo created ---\"\nls -la /git/server/hooks/post-receive"
+      },
+      "name": "bash",
+      "type": "tool_use"
+    }
+  ],
+  "model": "anthropic/claude-4.6-opus-20260205",
+  "role": "assistant",
+  "stop_reason": "tool_use",
+  "stop_sequence": null,
+  "type": "message",
+  "usage": {
+    "cache_creation": null,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "inference_geo": null,
+    "input_tokens": 2807,
+    "output_tokens": 291,
+    "server_tool_use": null,
+    "service_tier": null,
+    "speed": "standard",
+    "cost": 0.02131,
+    "is_byok": false,
+    "cost_details": {
+      "upstream_inference_cost": 0.02131,
+      "upstream_inference_prompt_cost": 0.014035,
+      "upstream_inference_completions_cost": 0.007275
+    }
+  },
+  "provider": "Amazon Bedrock"
+}

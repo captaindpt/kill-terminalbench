@@ -1,0 +1,41 @@
+{
+  "id": "gen-1775120767-ySU8yzRUg3jII3VDbpbH",
+  "container": null,
+  "content": [
+    {
+      "id": "toolu_bdrk_01Wvp4oPvJdXR8ck6wU5iJBx",
+      "caller": {
+        "type": "direct"
+      },
+      "input": {
+        "command": "cat > plus_comm.v << 'EOF'\nRequire Import Arith.\n\nTheorem plus_comm : forall n m : nat,\n  n + m = m + n.\nProof.\n  intros n m.\n  induction n as [|n' IHn'].\n  - simpl.\n    (* Base case: 0 + m = m + 0 *)\n    rewrite Nat.add_0_r. reflexivity.\n  - simpl.\n    (* Inductive step: S n' + m = m + S n' *)\n    rewrite IHn'.\n    rewrite Nat.add_succ_r. reflexivity.\nQed.\nEOF\ncoqc plus_comm.v"
+      },
+      "name": "bash",
+      "type": "tool_use"
+    }
+  ],
+  "model": "anthropic/claude-4.6-opus-20260205",
+  "role": "assistant",
+  "stop_reason": "tool_use",
+  "stop_sequence": null,
+  "type": "message",
+  "usage": {
+    "cache_creation": null,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "inference_geo": null,
+    "input_tokens": 1805,
+    "output_tokens": 226,
+    "server_tool_use": null,
+    "service_tier": null,
+    "speed": "standard",
+    "cost": 0.014675,
+    "is_byok": false,
+    "cost_details": {
+      "upstream_inference_cost": 0.014675,
+      "upstream_inference_prompt_cost": 0.009025,
+      "upstream_inference_completions_cost": 0.00565
+    }
+  },
+  "provider": "Amazon Bedrock"
+}

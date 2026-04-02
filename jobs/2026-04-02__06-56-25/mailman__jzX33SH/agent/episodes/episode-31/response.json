@@ -1,0 +1,41 @@
+{
+  "id": "gen-1775114781-eLo87aMguo0KhakF96Pm",
+  "container": null,
+  "content": [
+    {
+      "id": "toolu_bdrk_01Q98daZqvLFwjmBKYsU97RU",
+      "caller": {
+        "type": "direct"
+      },
+      "input": {
+        "command": "# Now test again\npython3 -c \"\nimport smtplib\nfrom email.mime.text import MIMEText\nmsg = MIMEText('Hello test 3')\nmsg['Subject'] = 'Test Subject 3'\nmsg['From'] = 'sender@local.edu'\nmsg['To'] = 'testuser1@local.edu'\nwith smtplib.SMTP('localhost', 25) as s:\n    s.send_message(msg)\nprint('Email sent')\n\"\nsleep 3\ntail -10 /var/log/mail.log 2>&1\necho \"===\"\nls -la /var/mail/ 2>&1"
+      },
+      "name": "bash",
+      "type": "tool_use"
+    }
+  ],
+  "model": "anthropic/claude-4.6-opus-20260205",
+  "role": "assistant",
+  "stop_reason": "tool_use",
+  "stop_sequence": null,
+  "type": "message",
+  "usage": {
+    "cache_creation": null,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "inference_geo": null,
+    "input_tokens": 5146,
+    "output_tokens": 210,
+    "server_tool_use": null,
+    "service_tier": null,
+    "speed": "standard",
+    "cost": 0.03098,
+    "is_byok": false,
+    "cost_details": {
+      "upstream_inference_cost": 0.03098,
+      "upstream_inference_prompt_cost": 0.02573,
+      "upstream_inference_completions_cost": 0.00525
+    }
+  },
+  "provider": "Amazon Bedrock"
+}

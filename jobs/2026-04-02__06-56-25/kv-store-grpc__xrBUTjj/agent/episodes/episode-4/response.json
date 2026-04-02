@@ -1,0 +1,41 @@
+{
+  "id": "gen-1775113833-RAtxiDKZqCnGYUTgsAE7",
+  "container": null,
+  "content": [
+    {
+      "id": "toolu_bdrk_015DGxPFQbEcRxp4RiYvUsSW",
+      "caller": {
+        "type": "direct"
+      },
+      "input": {
+        "command": "cd /app && setsid python server.py &\nsleep 2\n# Quick smoke test\npython -c \"\nimport grpc, kv_store_pb2, kv_store_pb2_grpc\nch = grpc.insecure_channel('localhost:5328')\nstub = kv_store_pb2_grpc.KVStoreStub(ch)\nresp = stub.SetVal(kv_store_pb2.SetValRequest(key='hello', value=42))\nprint('SetVal response:', resp.val)\nresp = stub.GetVal(kv_store_pb2.GetValRequest(key='hello'))\nprint('GetVal response:', resp.val)\n\""
+      },
+      "name": "bash",
+      "type": "tool_use"
+    }
+  ],
+  "model": "anthropic/claude-4.6-opus-20260205",
+  "role": "assistant",
+  "stop_reason": "tool_use",
+  "stop_sequence": null,
+  "type": "message",
+  "usage": {
+    "cache_creation": null,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "inference_geo": null,
+    "input_tokens": 2877,
+    "output_tokens": 215,
+    "server_tool_use": null,
+    "service_tier": null,
+    "speed": "standard",
+    "cost": 0.01976,
+    "is_byok": false,
+    "cost_details": {
+      "upstream_inference_cost": 0.01976,
+      "upstream_inference_prompt_cost": 0.014385,
+      "upstream_inference_completions_cost": 0.005375
+    }
+  },
+  "provider": "Amazon Bedrock"
+}

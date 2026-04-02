@@ -1,0 +1,35 @@
+{
+  "id": "gen-1775099783-NU1MMO4pKPm01zlTuwSJ",
+  "container": null,
+  "content": [
+    {
+      "citations": null,
+      "text": "The polyglot works. Here's how it works:\n\n- **Line 1: `//\\`** \u2014 Both languages see a line comment. But in C++, the `\\` is a line-continuation character, so line 2 is *also* commented out in C++. Rust doesn't do line continuation, so line 2 is active in Rust.\n- **Line 2:** Contains the full Rust `fn main()` with Fibonacci logic, ending with `/*` which opens a block comment in Rust that hides the C++ code. C++ skips this entire line due to the `\\` continuation from line 1.\n- **Lines 3\u201311:** The C++ code (`#include`, `int main`, etc.) \u2014 active in C++, hidden inside a block comment in Rust.\n- **Line 12: `// */`** \u2014 In Rust, the `*/` closes the block comment (the space prevents `/*` from being found as a nested comment opener). In C++, `//` makes it a line comment.",
+      "type": "text"
+    }
+  ],
+  "model": "anthropic/claude-4.6-opus-20260205",
+  "role": "assistant",
+  "stop_reason": "end_turn",
+  "stop_sequence": null,
+  "type": "message",
+  "usage": {
+    "cache_creation": null,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "inference_geo": null,
+    "input_tokens": 7452,
+    "output_tokens": 239,
+    "server_tool_use": null,
+    "service_tier": null,
+    "speed": "standard",
+    "cost": 0.043235,
+    "is_byok": false,
+    "cost_details": {
+      "upstream_inference_cost": 0.043235,
+      "upstream_inference_prompt_cost": 0.03726,
+      "upstream_inference_completions_cost": 0.005975
+    }
+  },
+  "provider": "Amazon Bedrock"
+}

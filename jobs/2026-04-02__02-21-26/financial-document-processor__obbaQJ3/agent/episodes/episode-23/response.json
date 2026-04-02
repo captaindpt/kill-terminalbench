@@ -1,0 +1,46 @@
+{
+  "id": "gen-1775098462-eKRfOUgQdv8QWrXxndmC",
+  "container": null,
+  "content": [
+    {
+      "citations": null,
+      "text": "Now I see the OCR structure clearly. The SUMMARY sections have different layouts. Let me also check the remaining lines for JOiylq2_7S18:",
+      "type": "text"
+    },
+    {
+      "id": "toolu_bdrk_018yB8jSg4iLRHnXSzueuXib",
+      "caller": {
+        "type": "direct"
+      },
+      "input": {
+        "command": "python3 << 'PYEOF'\nimport pytesseract\nfrom PIL import Image\nimport re\n\nfor fname in ['JOiylq2_7S18.jpg']:\n    img = Image.open(f\"/app/invoices/{fname}\")\n    text = pytesseract.image_to_string(img)\n    \n    summary_pos = text.find('SUMMARY')\n    summary_text = text[summary_pos:]\n    lines = summary_text.split('\\n')\n    for i, line in enumerate(lines[75:120]):\n        print(f\"{i+75:3d}: [{line}]\")\nPYEOF"
+      },
+      "name": "bash",
+      "type": "tool_use"
+    }
+  ],
+  "model": "anthropic/claude-4.6-opus-20260205",
+  "role": "assistant",
+  "stop_reason": "tool_use",
+  "stop_sequence": null,
+  "type": "message",
+  "usage": {
+    "cache_creation": null,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "inference_geo": null,
+    "input_tokens": 10865,
+    "output_tokens": 239,
+    "server_tool_use": null,
+    "service_tier": null,
+    "speed": "standard",
+    "cost": 0.0603,
+    "is_byok": false,
+    "cost_details": {
+      "upstream_inference_cost": 0.0603,
+      "upstream_inference_prompt_cost": 0.054325,
+      "upstream_inference_completions_cost": 0.005975
+    }
+  },
+  "provider": "Amazon Bedrock"
+}

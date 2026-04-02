@@ -1,0 +1,41 @@
+{
+  "id": "gen-1775100399-QJbnXvl6EILyYqDxv7Xo",
+  "container": null,
+  "content": [
+    {
+      "id": "toolu_bdrk_01N71n9PhNjxvMfVcbDotor6",
+      "caller": {
+        "type": "direct"
+      },
+      "input": {
+        "command": "# Run it with setsid to survive shell exit\nsetsid /tmp/setup_alpine.exp > /tmp/expect.log 2>&1 &\necho \"Started expect, PID of setsid: $!\"\n\n# Monitor progress\nfor i in $(seq 1 80); do\n    if grep -q \"SETUP_DONE_MARKER\" /tmp/expect.log 2>/dev/null; then\n        echo \"Setup complete after ~$((i*3)) seconds!\"\n        break\n    fi\n    if [ $i -eq 80 ]; then\n        echo \"Timed out after 240 seconds\"\n    fi\n    sleep 3\ndone\n\necho \"=== Last 60 lines of log ===\"\ntail -60 /tmp/expect.log"
+      },
+      "name": "bash",
+      "type": "tool_use"
+    }
+  ],
+  "model": "anthropic/claude-4.6-opus-20260205",
+  "role": "assistant",
+  "stop_reason": "tool_use",
+  "stop_sequence": null,
+  "type": "message",
+  "usage": {
+    "cache_creation": null,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "inference_geo": null,
+    "input_tokens": 6048,
+    "output_tokens": 232,
+    "server_tool_use": null,
+    "service_tier": null,
+    "speed": "standard",
+    "cost": 0.03604,
+    "is_byok": false,
+    "cost_details": {
+      "upstream_inference_cost": 0.03604,
+      "upstream_inference_prompt_cost": 0.03024,
+      "upstream_inference_completions_cost": 0.0058
+    }
+  },
+  "provider": "Amazon Bedrock"
+}

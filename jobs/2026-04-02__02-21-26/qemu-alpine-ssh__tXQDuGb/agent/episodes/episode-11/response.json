@@ -1,0 +1,41 @@
+{
+  "id": "gen-1775100341-b2ZGOAFtEJok7NfDQ8xP",
+  "container": null,
+  "content": [
+    {
+      "id": "toolu_bdrk_01LWsBCRkmyEfNoJhRbitCiU",
+      "caller": {
+        "type": "direct"
+      },
+      "input": {
+        "command": "# Good, port 2222 is free. Now create a better expect script that installs openssh\ncat > /tmp/setup_alpine.exp << 'EXPECT_SCRIPT'\n#!/usr/bin/expect -f\n\nset timeout 180\n\n# Start QEMU\nspawn qemu-system-x86_64 \\\n  -m 512 \\\n  -cdrom /app/alpine.iso \\\n  -boot d \\\n  -nographic \\\n  -net nic \\\n  -net user,hostfwd=tcp::2222-:22\n\n# Wait for boot prompt and press Enter\nexpect {\n    \"boot:\" {\n        send \"\\r\"\n    }\n    timeout {\n        puts \"TIMEOUT waiting for boot prompt\"\n        exit 1\n    }\n}\n\n# Wait for login prompt\nexpect {\n    \"localhost login:\" {\n        send \"root\\r\"\n    }\n    timeout {\n        puts \"TIMEOUT waiting for login\"\n        exit 1\n    }\n}\n\n# Wait for shell prompt\nsleep 2\nexpect -re {[#\\$] }\n\n# Set up networking first\nsend \"ifconfig eth0 up && udhcpc -i eth0\\r\"\nexpect -re {[#\\$] }\nsleep 3\n\n# Setup APK repositories\nsend \"setup-apkrepos -1\\r\"\nexpect {\n    -re {[#\\$] } {}\n    \"Enter\" { send \"\\r\"; exp_continue }\n    timeout {}\n}\nsleep 2\n\n# Install openssh\nsend \"apk add openssh\\r\"\nexpect {\n    -re {[#\\$] } {}\n    timeout { puts \"TIMEOUT installing openssh\"; exit 1 }\n}\nsleep 2\n\n# Set root password\nsend \"echo 'root:password123' | chpasswd\\r\"\nexpect -re {[#\\$] }\n\n# Generate SSH host keys\nsend \"ssh-keygen -A\\r\"\nexpect -re {[#\\$] }\nsleep 2\n\n# Configure sshd to allow root login with password\nsend \"sed -i 's/#PermitRootLogin.*/PermitRootLogin yes/' /etc/ssh/sshd_config\\r\"\nexpect -re {[#\\$] }\n\nsend \"sed -i 's/#PasswordAuthentication.*/PasswordAuthentication yes/' /etc/ssh/sshd_config\\r\"\nexpect -re {[#\\$] }\n\nsend \"echo 'PermitRootLogin yes' >> /etc/ssh/sshd_config\\r\"\nexpect -re {[#\\$] }\n\nsend \"echo 'PasswordAuthentication yes' >> /etc/ssh/sshd_config\\r\"\nexpect -re {[#\\$] }\n\n# Start sshd\nsend \"/usr/sbin/sshd -D &\\r\"\nexpect -re {[#\\$] }\nsleep 1\n\nsend \"echo SETUP_DONE_MARKER\\r\"\nexpect \"SETUP_DONE_MARKER\"\n\nputs \"\\n\\nSSH SETUP COMPLETE\"\n\n# Keep expect running so QEMU stays alive\nset timeout -1\nexpect eof\nEXPECT_SCRIPT\nchmod +x /tmp/setup_alpine.exp"
+      },
+      "name": "bash",
+      "type": "tool_use"
+    }
+  ],
+  "model": "anthropic/claude-4.6-opus-20260205",
+  "role": "assistant",
+  "stop_reason": "tool_use",
+  "stop_sequence": null,
+  "type": "message",
+  "usage": {
+    "cache_creation": null,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "inference_geo": null,
+    "input_tokens": 5206,
+    "output_tokens": 824,
+    "server_tool_use": null,
+    "service_tier": null,
+    "speed": "standard",
+    "cost": 0.04663,
+    "is_byok": false,
+    "cost_details": {
+      "upstream_inference_cost": 0.04663,
+      "upstream_inference_prompt_cost": 0.02603,
+      "upstream_inference_completions_cost": 0.0206
+    }
+  },
+  "provider": "Amazon Bedrock"
+}

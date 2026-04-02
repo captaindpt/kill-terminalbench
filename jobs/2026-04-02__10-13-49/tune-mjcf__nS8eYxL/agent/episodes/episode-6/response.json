@@ -1,0 +1,41 @@
+{
+  "id": "gen-1775125659-9hrI18i4zdS9OVG8C7E9",
+  "container": null,
+  "content": [
+    {
+      "id": "toolu_bdrk_015DuEQVw13TZmZtMCiXCKUs",
+      "caller": {
+        "type": "direct"
+      },
+      "input": {
+        "command": "cd /app && python -c \"\nimport mujoco, time, numpy as np\n\nmodel = mujoco.MjModel.from_xml_path('model_ref.xml')\n\n# Try disabling contact detection and see impact\n# Contacts: 16, Midphase: 8192, FilterParent: 512, Sensor: 4096\n# Contact + Midphase + Sensor + Filterparent + Limit + Frictionloss + Refsafe\nflags_to_test = {\n    'contact': mujoco.mjtDisableBit.mjDSBL_CONTACT,\n    'midphase': mujoco.mjtDisableBit.mjDSBL_MIDPHASE,\n    'sensor': mujoco.mjtDisableBit.mjDSBL_SENSOR,\n    'filterparent': mujoco.mjtDisableBit.mjDSBL_FILTERPARENT,\n    'limit': mujoco.mjtDisableBit.mjDSBL_LIMIT,\n    'frictionloss': mujoco.mjtDisableBit.mjDSBL_FRICTIONLOSS,\n    'refsafe': mujoco.mjtDisableBit.mjDSBL_REFSAFE,\n    'clampctrl': mujoco.mjtDisableBit.mjDSBL_CLAMPCTRL,\n    'nativeccd': mujoco.mjtDisableBit.mjDSBL_NATIVECCD,\n}\n\ndef run_sim(model, seed=42):\n    data = mujoco.MjData(model)\n    rng = np.random.default_rng(seed)\n    data.qpos += rng.normal(0, 0.01, size=data.qpos.shape)\n    mujoco.mj_forward(model, data)\n    nstep = int(2.0 / model.opt.timestep)\n    t0 = time.perf_counter()\n    for _ in range(nstep):\n        mujoco.mj_step(model, data)\n    t1 = time.perf_counter()\n    full_physics = mujoco.mjtState.mjSTATE_FULLPHYSICS\n    state = np.zeros(mujoco.mj_stateSize(model, full_physics))\n    mujoco.mj_getState(model, data, state, full_physics)\n    return t1-t0, state\n\n# Reference\nref_time, ref_state = run_sim(model)\nprint(f'Reference: {ref_time:.4f}s')\n\n# Test each flag individually\nfor name, flag in flags_to_test.items():\n    m = mujoco.MjModel.from_xml_path('model_ref.xml')\n    m.opt.disableflags |= flag\n    t, state = run_sim(m)\n    diff = np.max(np.abs(state - ref_state))\n    print(f'{name}: {t:.4f}s ({t/ref_time*100:.1f}%), max_diff={diff:.2e}')\n\n# All safe flags combined\nm = mujoco.MjModel.from_xml_path('model_ref.xml')\nfor name, flag in flags_to_test.items():\n    m.opt.disableflags |= flag\nt, state = run_sim(m)\ndiff = np.max(np.abs(state - ref_state))\nprint(f'ALL: {t:.4f}s ({t/ref_time*100:.1f}%), max_diff={diff:.2e}')\n\""
+      },
+      "name": "bash",
+      "type": "tool_use"
+    }
+  ],
+  "model": "anthropic/claude-4.6-opus-20260205",
+  "role": "assistant",
+  "stop_reason": "tool_use",
+  "stop_sequence": null,
+  "type": "message",
+  "usage": {
+    "cache_creation": null,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "inference_geo": null,
+    "input_tokens": 7204,
+    "output_tokens": 948,
+    "server_tool_use": null,
+    "service_tier": null,
+    "speed": "standard",
+    "cost": 0.05972,
+    "is_byok": false,
+    "cost_details": {
+      "upstream_inference_cost": 0.05972,
+      "upstream_inference_prompt_cost": 0.03602,
+      "upstream_inference_completions_cost": 0.0237
+    }
+  },
+  "provider": "Amazon Bedrock"
+}

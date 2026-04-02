@@ -1,0 +1,41 @@
+{
+  "id": "gen-1775098698-yYZIL56c1dA2ETVf3vGX",
+  "container": null,
+  "content": [
+    {
+      "id": "toolu_bdrk_01QwCLcLgBD5PKZJmfutJbXE",
+      "caller": {
+        "type": "direct"
+      },
+      "input": {
+        "command": "# Kill any existing process on port 5000\npkill -f \"python3 /app/app.py\" 2>/dev/null || true\nsleep 1\n# Start the Flask app in the background using setsid so it persists\nsetsid python3 /app/app.py > /app/flask.log 2>&1 &\necho \"Waiting for server to start...\"\nfor i in $(seq 1 30); do\n    if curl -s http://localhost:5000/sentiment -X POST -H \"Content-Type: application/json\" -d '{\"text\":\"test\"}' > /dev/null 2>&1; then\n        echo \"Server is up!\"\n        break\n    fi\n    sleep 1\ndone"
+      },
+      "name": "bash",
+      "type": "tool_use"
+    }
+  ],
+  "model": "anthropic/claude-4.6-opus-20260205",
+  "role": "assistant",
+  "stop_reason": "tool_use",
+  "stop_sequence": null,
+  "type": "message",
+  "usage": {
+    "cache_creation": null,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "inference_geo": null,
+    "input_tokens": 3176,
+    "output_tokens": 222,
+    "server_tool_use": null,
+    "service_tier": null,
+    "speed": "standard",
+    "cost": 0.02143,
+    "is_byok": false,
+    "cost_details": {
+      "upstream_inference_cost": 0.02143,
+      "upstream_inference_prompt_cost": 0.01588,
+      "upstream_inference_completions_cost": 0.00555
+    }
+  },
+  "provider": "Amazon Bedrock"
+}

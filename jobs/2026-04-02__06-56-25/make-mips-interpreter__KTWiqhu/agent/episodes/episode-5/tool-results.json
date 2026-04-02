@@ -1,0 +1,7 @@
+[
+  {
+    "type": "tool_result",
+    "tool_use_id": "toolu_bdrk_01SPG48cYBZUfMUYLnScstSt",
+    "content": "[exit_code=0]\n\n#include \"my_stdlib.h\"\n#ifndef DOOM_GENERIC\n#define DOOM_GENERIC\n\n// remove #include <stdlib.h>\n// remove #include <stdint.h>\n\n#ifndef DOOMGENERIC_RESX\n#define DOOMGENERIC_RESX 640\n#endif  // DOOMGENERIC_RESX\n\n#ifndef DOOMGENERIC_RESY\n#define DOOMGENERIC_RESY 400\n#endif  // DOOMGENERIC_RESY\n\n\n#ifdef CMAP256\n\ntypedef uint8_t pixel_t;\n\n#else  // CMAP256\n\ntypedef uint32_t pixel_t;\n\n#endif  // CMAP256\n\n\nextern pixel_t* DG_ScreenBuffer;\n\nvoid doomgeneric_Create(int argc, char **argv);\nvoid doomgeneric_Tick();\n\n\n//Implement below functions for your platform\nvoid DG_Init();\nvoid DG_DrawFrame();\nvoid DG_SleepMs(uint32_t ms);\nuint32_t DG_GetTicksMs();\nint DG_GetKey(int* pressed, unsigned char* key);\nvoid DG_SetWindowTitle(const char * title);\n\n#endif //DOOM_GENERIC"
+  }
+]

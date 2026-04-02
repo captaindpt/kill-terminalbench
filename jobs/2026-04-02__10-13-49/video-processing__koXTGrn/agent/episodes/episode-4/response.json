@@ -1,0 +1,41 @@
+{
+  "id": "gen-1775126552-y9XC02f2DKnu35zqQ7FT",
+  "container": null,
+  "content": [
+    {
+      "id": "toolu_bdrk_01TNPyswAx7UUNwF3WvwJaTz",
+      "caller": {
+        "type": "direct"
+      },
+      "input": {
+        "command": "python3 << 'PYEOF'\nimport cv2\nimport numpy as np\n\ncap = cv2.VideoCapture('/app/example_video.mp4')\n\n# Read first frame as background\nret, bg_frame = cap.read()\nbg_gray = cv2.cvtColor(bg_frame, cv2.COLOR_BGR2GRAY).astype(np.float32)\n\ntotal_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))\n\n# Let me focus on a specific region - the runner/jumper area\n# Looking at the data, there's a lot of noise spread across the whole frame\n# Let me try to isolate the runner more carefully\n\n# Let me look at consecutive frame differences to track actual motion\nprev_gray = bg_gray.copy()\nframe_diffs = []\nbg_diffs = []\n\ncap.set(cv2.CAP_PROP_POS_FRAMES, 0)\nret, prev_frame = cap.read()\nprev_gray_consec = cv2.cvtColor(prev_frame, cv2.COLOR_BGR2GRAY).astype(np.float32)\n\nfor i in range(1, total_frames):\n    ret, frame = cap.read()\n    if not ret:\n        break\n    gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY).astype(np.float32)\n    \n    # Consecutive frame diff\n    diff_consec = cv2.absdiff(gray, prev_gray_consec)\n    _, thresh_consec = cv2.threshold(diff_consec, 25, 255, cv2.THRESH_BINARY)\n    \n    # Background diff\n    diff_bg = cv2.absdiff(gray, bg_gray)\n    _, thresh_bg = cv2.threshold(diff_bg, 40, 255, cv2.THRESH_BINARY)\n    thresh_bg = thresh_bg.astype(np.uint8)\n    \n    # Apply morphological operations to clean up background diff\n    kernel = np.ones((5,5), np.uint8)\n    thresh_bg_clean = cv2.morphologyEx(thresh_bg, cv2.MORPH_OPEN, kernel)\n    thresh_bg_clean = cv2.morphologyEx(thresh_bg_clean, cv2.MORPH_CLOSE, kernel)\n    \n    motion_pixels = np.where(thresh_bg_clean > 0)\n    area = len(motion_pixels[0])\n    \n    if area > 100:\n        centroid_y = np.mean(motion_pixels[0])\n        centroid_x = np.mean(motion_pixels[1])\n        min_y = np.min(motion_pixels[0])\n        max_y = np.max(motion_pixels[0])\n        # Get the top of the person (head position)\n        # Use percentile to be robust\n        top_y = np.percentile(motion_pixels[0], 5)\n        bottom_y = np.percentile(motion_pixels[0], 95)\n    else:\n        centroid_y = 0\n        centroid_x = 0\n        min_y = 0\n        max_y = 0\n        top_y = 0\n        bottom_y = 0\n    \n    bg_diffs.append({\n        'frame': i,\n        'area': area,\n        'centroid_y': centroid_y,\n        'centroid_x': centroid_x,\n        'min_y': min_y,\n        'top_y': top_y,\n        'bottom_y': bottom_y,\n    })\n    \n    prev_gray_consec = gray.copy()\n\ncap.release()\n\nprint(\"Frame, Area, CentroidY, CentroidX, MinY, TopY(p5), BottomY(p95)\")\nfor d in bg_diffs:\n    print(f\"{d['frame']:3d}, {d['area']:6d}, {d['centroid_y']:7.1f}, {d['centroid_x']:7.1f}, {d['min_y']:4d}, {d['top_y']:7.1f}, {d['bottom_y']:7.1f}\")\nPYEOF"
+      },
+      "name": "bash",
+      "type": "tool_use"
+    }
+  ],
+  "model": "anthropic/claude-4.6-opus-20260205",
+  "role": "assistant",
+  "stop_reason": "tool_use",
+  "stop_sequence": null,
+  "type": "message",
+  "usage": {
+    "cache_creation": null,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "inference_geo": null,
+    "input_tokens": 7195,
+    "output_tokens": 1077,
+    "server_tool_use": null,
+    "service_tier": null,
+    "speed": "standard",
+    "cost": 0.0629,
+    "is_byok": false,
+    "cost_details": {
+      "upstream_inference_cost": 0.0629,
+      "upstream_inference_prompt_cost": 0.035975,
+      "upstream_inference_completions_cost": 0.026925
+    }
+  },
+  "provider": "Amazon Bedrock"
+}

@@ -1,0 +1,41 @@
+{
+  "id": "gen-1775126675-Gvvb9Ho25clMiazi1ZtG",
+  "container": null,
+  "content": [
+    {
+      "id": "toolu_bdrk_014z4EZMNNVjpFNYsJ3YNV1a",
+      "caller": {
+        "type": "direct"
+      },
+      "input": {
+        "command": "# The paper replicator is an exact copy of the opponent paper - they tie.\n# I need something that beats stone, paper, and vampire (75%+), and gets 33%+ vs snake and g2-clear.\n# Let me try a different approach: a clearer/bomber that's aggressive\n\n# Let me try the \"Impfinity\" approach - imp spiral with clear\n# Or better: a qscan + clear combination\n\n# Let me try a well-known warrior type: a bomber that uses SPL bombs,\n# which is like a \"stone\" but more deadly\n\ncat > my_warrior.red << 'EOF'\n;redcode-94\n;name Aggro\n;author AI\n;strategy SPL bomber with core clear backup\n\nstep    equ 3039\ncnt     equ 4000\n\nbomb    spl #0, #0\n\n; Boot clear routine away\nboot    mov clear+5, 5000+5\n        mov clear+4, 5000+4\n        mov clear+3, 5000+3\n        mov clear+2, 5000+2\n        mov clear+1, 5000+1\n        mov clear+0, 5000+0\n        \n; Main bomber loop\n        mov #cnt, count\nbloop   mov bomb, @ptr\n        add #step, ptr\n        djn bloop, count\n        jmp 5000        ; goto clear when done bombing\n\nptr     dat #0, #step\ncount   dat #0, #cnt\n\n; Clear routine (will be booted to 5000)\nclear   mov dbomb, >cptr\n        mov dbomb, >cptr\n        djn clear, #-1\ncptr    dat #0, #-step\ndbomb   dat #0, #0\n\n        end boot\nEOF\npmars -b -r 100 -f my_warrior.red warriors/stone.red\npmars -b -r 100 -f my_warrior.red warriors/paper.red  \npmars -b -r 100 -f my_warrior.red warriors/vampire.red\npmars -b -r 100 -f my_warrior.red warriors/snake.red\npmars -b -r 100 -f my_warrior.red warriors/g2-clear.red"
+      },
+      "name": "bash",
+      "type": "tool_use"
+    }
+  ],
+  "model": "anthropic/claude-4.6-opus-20260205",
+  "role": "assistant",
+  "stop_reason": "tool_use",
+  "stop_sequence": null,
+  "type": "message",
+  "usage": {
+    "cache_creation": null,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "inference_geo": null,
+    "input_tokens": 6877,
+    "output_tokens": 576,
+    "server_tool_use": null,
+    "service_tier": null,
+    "speed": "standard",
+    "cost": 0.048785,
+    "is_byok": false,
+    "cost_details": {
+      "upstream_inference_cost": 0.048785,
+      "upstream_inference_prompt_cost": 0.034385,
+      "upstream_inference_completions_cost": 0.0144
+    }
+  },
+  "provider": "Amazon Bedrock"
+}

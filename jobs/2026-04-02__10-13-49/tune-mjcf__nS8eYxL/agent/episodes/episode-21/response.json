@@ -1,0 +1,41 @@
+{
+  "id": "gen-1775125981-OSFBKCuLWY0n0fJUCaeX",
+  "container": null,
+  "content": [
+    {
+      "id": "toolu_bdrk_01KMYXR5BHisoWNtWqGUsBas",
+      "caller": {
+        "type": "direct"
+      },
+      "input": {
+        "command": "cd /app && python -c \"\nimport mujoco, time, numpy as np\n\nmodel = mujoco.MjModel.from_xml_path('model_ref.xml')\n\n# Get timer labels\ntimer_labels = ['STEP', 'FORWARD', 'INVERSE', 'POSITION', 'POS_KINEMATICS', \n                'POS_INERTIA', 'POS_COLLISION', 'POS_MAKE', 'POS_PROJECT',\n                'VELOCITY', 'ACTUATION', 'CONSTRAINT', 'ADVANCE',\n                'COL_BROAD', 'COL_NARROW']\n\ndata = mujoco.MjData(model)\nrng = np.random.default_rng(42)\ndata.qpos += rng.normal(0, 0.01, size=data.qpos.shape)\nmujoco.mj_forward(model, data)\nfor _ in range(1000):\n    mujoco.mj_step(model, data)\n\ntotal_step = data.timer[0].duration\nprint('Timer breakdown for 1000 steps (reference model):')\nfor i in range(len(data.timer)):\n    if data.timer[i].number > 0:\n        label = timer_labels[i] if i < len(timer_labels) else f'unknown_{i}'\n        dur = data.timer[i].duration\n        print(f'  {label:20s}: {dur*1000:.2f}ms ({dur/total_step*100:.1f}%)')\n\n# Now do the same with dense jacobian\nprint()\nm = mujoco.MjModel.from_xml_path('model_ref.xml')\nm.opt.jacobian = 0  # dense\ndata2 = mujoco.MjData(m)\nrng = np.random.default_rng(42)\ndata2.qpos += rng.normal(0, 0.01, size=data2.qpos.shape)\nmujoco.mj_forward(m, data2)\nfor _ in range(1000):\n    mujoco.mj_step(m, data2)\n\ntotal_step2 = data2.timer[0].duration\nprint('Timer breakdown for 1000 steps (dense jacobian):')\nfor i in range(len(data2.timer)):\n    if data2.timer[i].number > 0:\n        label = timer_labels[i] if i < len(timer_labels) else f'unknown_{i}'\n        dur = data2.timer[i].duration\n        print(f'  {label:20s}: {dur*1000:.2f}ms ({dur/total_step2*100:.1f}%)')\n\""
+      },
+      "name": "bash",
+      "type": "tool_use"
+    }
+  ],
+  "model": "anthropic/claude-4.6-opus-20260205",
+  "role": "assistant",
+  "stop_reason": "tool_use",
+  "stop_sequence": null,
+  "type": "message",
+  "usage": {
+    "cache_creation": null,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "inference_geo": null,
+    "input_tokens": 8950,
+    "output_tokens": 712,
+    "server_tool_use": null,
+    "service_tier": null,
+    "speed": "standard",
+    "cost": 0.06255,
+    "is_byok": false,
+    "cost_details": {
+      "upstream_inference_cost": 0.06255,
+      "upstream_inference_prompt_cost": 0.04475,
+      "upstream_inference_completions_cost": 0.0178
+    }
+  },
+  "provider": "Amazon Bedrock"
+}

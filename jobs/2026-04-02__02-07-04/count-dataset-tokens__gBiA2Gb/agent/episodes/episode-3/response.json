@@ -1,0 +1,41 @@
+{
+  "id": "gen-1775095704-5DVWFFZwbc5QIy5gqUnw",
+  "container": null,
+  "content": [
+    {
+      "id": "toolu_bdrk_011Awr82hcaynjk56NAL2P86",
+      "caller": {
+        "type": "direct"
+      },
+      "input": {
+        "command": "python3 -c \"\nfrom datasets import load_dataset\n# Check the dataset README/card for info about domain and model\nds = load_dataset('ryanmarten/OpenThoughts-1k-sample', split='train')\n# Check if there's metadata in config\nimport json\n# Let's look at the README\nfrom huggingface_hub import hf_hub_download\nreadme = hf_hub_download('ryanmarten/OpenThoughts-1k-sample', 'README.md')\nwith open(readme) as f:\n    print(f.read())\n\" 2>&1"
+      },
+      "name": "bash",
+      "type": "tool_use"
+    }
+  ],
+  "model": "anthropic/claude-4.6-opus-20260205",
+  "role": "assistant",
+  "stop_reason": "tool_use",
+  "stop_sequence": null,
+  "type": "message",
+  "usage": {
+    "cache_creation": null,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "inference_geo": null,
+    "input_tokens": 2991,
+    "output_tokens": 190,
+    "server_tool_use": null,
+    "service_tier": null,
+    "speed": "standard",
+    "cost": 0.019705,
+    "is_byok": false,
+    "cost_details": {
+      "upstream_inference_cost": 0.019705,
+      "upstream_inference_prompt_cost": 0.014955,
+      "upstream_inference_completions_cost": 0.00475
+    }
+  },
+  "provider": "Amazon Bedrock"
+}

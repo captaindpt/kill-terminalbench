@@ -1,0 +1,41 @@
+{
+  "id": "gen-1775108375-QEqd7NMVJtYt1IO6KuLr",
+  "container": null,
+  "content": [
+    {
+      "id": "toolu_bdrk_01BC5TvKGcd6d1mSaFCh9F9A",
+      "caller": {
+        "type": "direct"
+      },
+      "input": {
+        "command": "# GitHub only has 3.7+. Let's check Fedora and Debian repos for old sources.\n# Also try some other direct download sources\ncurl -sL \"https://src.fedoraproject.org/repo/pkgs/povray/\" 2>/dev/null | grep -i \"2.2\\|povuni\\|tgz\" | head -10 &\n\n# Try common shareware/retro software archives\ncurl -sI \"https://files.scene.org/get/mirrors/simtelnet/msdos/graphics/povray22.zip\" 2>/dev/null | head -5 &\ncurl -sI \"https://www.nic.funet.fi/pub/graphics/packages/povray/Old-Versions/Official-2.2/SrcUnix/povuni_s.tgz\" 2>/dev/null | head -5 &\n\n# Try Simtel archives\ncurl -sI \"http://cd.textfiles.com/simtel/SIMTEL/MSDOS/GRAPHICS/POVRAY22.ZIP\" 2>/dev/null | head -5 &\n\nwait"
+      },
+      "name": "bash",
+      "type": "tool_use"
+    }
+  ],
+  "model": "anthropic/claude-4.6-opus-20260205",
+  "role": "assistant",
+  "stop_reason": "tool_use",
+  "stop_sequence": null,
+  "type": "message",
+  "usage": {
+    "cache_creation": null,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "inference_geo": null,
+    "input_tokens": 5587,
+    "output_tokens": 317,
+    "server_tool_use": null,
+    "service_tier": null,
+    "speed": "standard",
+    "cost": 0.03586,
+    "is_byok": false,
+    "cost_details": {
+      "upstream_inference_cost": 0.03586,
+      "upstream_inference_prompt_cost": 0.027935,
+      "upstream_inference_completions_cost": 0.007925
+    }
+  },
+  "provider": "Amazon Bedrock"
+}

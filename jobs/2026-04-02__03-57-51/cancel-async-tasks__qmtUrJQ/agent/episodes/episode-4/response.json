@@ -1,0 +1,41 @@
+{
+  "id": "gen-1775109132-1wiXsLin2YqvkullKAaA",
+  "container": null,
+  "content": [
+    {
+      "id": "toolu_bdrk_01JAecBKUoWA4PzXetG2mGxV",
+      "caller": {
+        "type": "direct"
+      },
+      "input": {
+        "command": "cd /app && python3 << 'TEST'\nimport asyncio\nfrom run import run_tasks\n\n# Test 3: Tasks with finally blocks (non-interrupt)\nasync def test_finally():\n    order = []\n\n    async def task_with_finally(name):\n        try:\n            order.append(f\"{name}-start\")\n            await asyncio.sleep(0.01)\n            order.append(f\"{name}-end\")\n        finally:\n            order.append(f\"{name}-cleanup\")\n\n    tasks = [lambda n=i: task_with_finally(f\"t{n}\") for i in range(5)]\n    await run_tasks(tasks, max_concurrent=2)\n    \n    for i in range(5):\n        assert f\"t{i}-cleanup\" in order, f\"Missing cleanup for t{i}\"\n    print(f\"Test 3 passed: all finally blocks ran. Order: {order}\")\n\nasyncio.run(test_finally())\nTEST\n"
+      },
+      "name": "bash",
+      "type": "tool_use"
+    }
+  ],
+  "model": "anthropic/claude-4.6-opus-20260205",
+  "role": "assistant",
+  "stop_reason": "tool_use",
+  "stop_sequence": null,
+  "type": "message",
+  "usage": {
+    "cache_creation": null,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "inference_geo": null,
+    "input_tokens": 3055,
+    "output_tokens": 282,
+    "server_tool_use": null,
+    "service_tier": null,
+    "speed": "standard",
+    "cost": 0.022325,
+    "is_byok": false,
+    "cost_details": {
+      "upstream_inference_cost": 0.022325,
+      "upstream_inference_prompt_cost": 0.015275,
+      "upstream_inference_completions_cost": 0.00705
+    }
+  },
+  "provider": "Amazon Bedrock"
+}

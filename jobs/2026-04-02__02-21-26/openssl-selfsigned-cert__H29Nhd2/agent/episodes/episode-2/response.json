@@ -1,0 +1,41 @@
+{
+  "id": "gen-1775098992-g8jukEHlJEoyalhltoH8",
+  "container": null,
+  "content": [
+    {
+      "id": "toolu_bdrk_01RV9jPbQ3CT75PuZXxEiBNy",
+      "caller": {
+        "type": "direct"
+      },
+      "input": {
+        "command": "# Verify permissions and file existence\necho \"=== File listing ===\"\nls -la /app/ssl/\necho \"\"\necho \"=== Key permissions ===\"\nstat -c \"%a\" /app/ssl/server.key\necho \"\"\necho \"=== Certificate check ===\"\nopenssl x509 -in /app/ssl/server.crt -noout -text | head -20\necho \"\"\necho \"=== PEM file contains both key and cert ===\"\ngrep -c \"BEGIN\" /app/ssl/server.pem\necho \"\"\necho \"=== Verification file ===\"\ncat /app/ssl/verification.txt\n"
+      },
+      "name": "bash",
+      "type": "tool_use"
+    }
+  ],
+  "model": "anthropic/claude-4.6-opus-20260205",
+  "role": "assistant",
+  "stop_reason": "tool_use",
+  "stop_sequence": null,
+  "type": "message",
+  "usage": {
+    "cache_creation": null,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "inference_geo": null,
+    "input_tokens": 3243,
+    "output_tokens": 198,
+    "server_tool_use": null,
+    "service_tier": null,
+    "speed": "standard",
+    "cost": 0.021165,
+    "is_byok": false,
+    "cost_details": {
+      "upstream_inference_cost": 0.021165,
+      "upstream_inference_prompt_cost": 0.016215,
+      "upstream_inference_completions_cost": 0.00495
+    }
+  },
+  "provider": "Amazon Bedrock"
+}

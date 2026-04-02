@@ -1,0 +1,41 @@
+{
+  "id": "gen-1775117687-yawR7a8fooI9FBunMupc",
+  "container": null,
+  "content": [
+    {
+      "id": "toolu_bdrk_011y5wwsj1p9fFdWYiqECCPn",
+      "caller": {
+        "type": "direct"
+      },
+      "input": {
+        "command": "# Something's wrong with score extraction. Let's look at an actual result file\npython3 << 'PYEOF'\nimport json, os\n\nresults_dir = os.path.expanduser(\"~/.cache/mteb/results/results\")\nmodel = \"Salesforce__SFR-Embedding-2_R\"\nmodel_dir = os.path.join(results_dir, model)\nrev = os.listdir(model_dir)[0]\nrev_dir = os.path.join(model_dir, rev)\n\n# Check one task file\njson_file = os.path.join(rev_dir, \"BornholmBitextMining.json\")\nwith open(json_file) as f:\n    data = json.load(f)\nprint(json.dumps(data, indent=2)[:3000])\nPYEOF"
+      },
+      "name": "bash",
+      "type": "tool_use"
+    }
+  ],
+  "model": "anthropic/claude-4.6-opus-20260205",
+  "role": "assistant",
+  "stop_reason": "tool_use",
+  "stop_sequence": null,
+  "type": "message",
+  "usage": {
+    "cache_creation": null,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "inference_geo": null,
+    "input_tokens": 6586,
+    "output_tokens": 248,
+    "server_tool_use": null,
+    "service_tier": null,
+    "speed": "standard",
+    "cost": 0.03913,
+    "is_byok": false,
+    "cost_details": {
+      "upstream_inference_cost": 0.03913,
+      "upstream_inference_prompt_cost": 0.03293,
+      "upstream_inference_completions_cost": 0.0062
+    }
+  },
+  "provider": "Amazon Bedrock"
+}

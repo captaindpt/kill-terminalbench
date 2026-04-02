@@ -1,0 +1,41 @@
+{
+  "id": "gen-1775100825-lQ7KXn60s4Dm0YyLcbTa",
+  "container": null,
+  "content": [
+    {
+      "id": "toolu_bdrk_01QnaeLGSAVGkWXBWsaJ1fxM",
+      "caller": {
+        "type": "direct"
+      },
+      "input": {
+        "command": "# Verify constraints\necho \"=== Root level entries ===\"\nls /tmp/resharded/ | wc -l\nls /tmp/resharded/\n\necho \"\"\necho \"=== Check max entries per directory ===\"\nfor d in $(find /tmp/resharded -type d); do\n    count=$(ls \"$d\" | wc -l)\n    if [ \"$count\" -gt 30 ]; then\n        echo \"VIOLATION: $d has $count entries\"\n    fi\ndone\necho \"No violations (if nothing printed above)\"\n\necho \"\"\necho \"=== Check max file size ===\"\nfind /tmp/resharded -type f -size +15M\necho \"No oversized files (if nothing printed above)\"\n\necho \"\"\necho \"=== File sizes ===\"\nfind /tmp/resharded -type f -exec ls -lh {} \\; | awk '{print $5, $NF}' | sort -rh | head -5"
+      },
+      "name": "bash",
+      "type": "tool_use"
+    }
+  ],
+  "model": "anthropic/claude-4.6-opus-20260205",
+  "role": "assistant",
+  "stop_reason": "tool_use",
+  "stop_sequence": null,
+  "type": "message",
+  "usage": {
+    "cache_creation": null,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "inference_geo": null,
+    "input_tokens": 9668,
+    "output_tokens": 270,
+    "server_tool_use": null,
+    "service_tier": null,
+    "speed": "standard",
+    "cost": 0.05509,
+    "is_byok": false,
+    "cost_details": {
+      "upstream_inference_cost": 0.05509,
+      "upstream_inference_prompt_cost": 0.04834,
+      "upstream_inference_completions_cost": 0.00675
+    }
+  },
+  "provider": "Amazon Bedrock"
+}

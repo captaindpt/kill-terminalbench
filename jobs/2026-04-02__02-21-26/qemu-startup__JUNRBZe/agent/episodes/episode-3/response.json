@@ -1,0 +1,41 @@
+{
+  "id": "gen-1775100426-4DyVkjrOvK6yz9DAtm58",
+  "container": null,
+  "content": [
+    {
+      "id": "toolu_bdrk_01PD1dFdjzZ3RePS3tibUNeQ",
+      "caller": {
+        "type": "direct"
+      },
+      "input": {
+        "command": "# Wait for the telnet port to be open and for a login prompt to appear\nfor i in $(seq 1 60); do\n  if (echo '' | telnet 127.0.0.1 6665 2>/dev/null) | grep -qi 'login'; then\n    echo \"Login prompt detected after ${i}s\"\n    break\n  fi\n  sleep 2\ndone\n# Final check\necho '---'\n(sleep 2; echo '') | telnet 127.0.0.1 6665 2>/dev/null | head -20"
+      },
+      "name": "bash",
+      "type": "tool_use"
+    }
+  ],
+  "model": "anthropic/claude-4.6-opus-20260205",
+  "role": "assistant",
+  "stop_reason": "tool_use",
+  "stop_sequence": null,
+  "type": "message",
+  "usage": {
+    "cache_creation": null,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "inference_geo": null,
+    "input_tokens": 2156,
+    "output_tokens": 182,
+    "server_tool_use": null,
+    "service_tier": null,
+    "speed": "standard",
+    "cost": 0.01533,
+    "is_byok": false,
+    "cost_details": {
+      "upstream_inference_cost": 0.01533,
+      "upstream_inference_prompt_cost": 0.01078,
+      "upstream_inference_completions_cost": 0.00455
+    }
+  },
+  "provider": "Amazon Bedrock"
+}

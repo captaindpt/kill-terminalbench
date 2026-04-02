@@ -1,0 +1,50 @@
+{
+  "id": "gen-1775124842-nVgDZv2cXo1AuE0Hgutl",
+  "container": null,
+  "content": [
+    {
+      "signature": "EuAFCkgIDBABGAIqQOedn0Q4Lnqx5TJtIGYqvbnPCj3sTWrHQseM19xVojdLX8sYJc1VMwh2sUU1kYZcN2RB+TIaSxDMx008I2AQIgkSDE7nEcXq+sjRIiJFYRoMs6ps4NoAmzLlBB7KIjBYTou6UfUyvjnLevpftpP8TttRkMrjwvAwGItXFmuMQDSyV0D6d9paUukQE/0XBdQqxQTFeEfa2N9WqC2UOChzocqnJvcn5ePbqn/XEvI4/PfNmG+y0a7Wbbic1wHP2I4qK/a10PF8P+lJCtue5MueWptl+mwoU+nyu21Qb4ga1pDnkX11/KJpZZXM0lpWGFktBnW3CugeBa3Yldojwnyi/soeFwRJ8bxKhkgaZtLLsLfe3WHPvNQNmACITy8i+6+SXvROVCOWd++HfesrpKU/AE8LlRZs0o1xGsWXwKBySeHg+j5d4b3kXhWFlQV5+GCgqAIanwAN/MFE1wOGCloWGZ0+U+TXpgNQVP0f0PUxufYl2VNCQXnLYTzaHgVkKFlyZCE81/VHadZE5syHe2WxUzvHIKDexr7NSpKn/0ZCieW6V6BicZwiXIltW/iTKlSwgE2B4FR6qMyMk/OKO7d1nZ1toXtbcn/3mmh6Oy8/bxezYSbJa+IzXAt78Cr0YmAoheZJjtOC2KoTLJaeKv+7ZldZ6IGManWvX6pnzeNuPegp+hrNah1vSKlKGM10zNLuM+6/Xl/JNtKZi7Zfk2VANZp1f2A9gKe8QrBjlvFZJcNjQH57cf2z5WtpJKeFGR/DjK58BLpWrDmTe+wjU3L5VDGvR/KY1HXqLQOl8qOPBDuVAiYPncspsVo7DX0ov4QYqMBc8txLOJNbGTJFFyyPoYJCri/h9eebHayckrUJB9rQZyts46CB7nCRWM7mCiILdwcfmPp2EArA9mcjCbgYnoBLHmiqYRtDumfjpfmq2Xlc13mmCWCuJTwpy9ygZzge5D1cJIsesBgB",
+      "thinking": "Let me analyze this task carefully. I need to implement pipeline parallel training for a LLaMA model using PyTorch with an all-forward-all-backward (AFAB) scheduling strategy.\n\nLet me start by understanding the requirements:\n1. Partition model layers in a roughly balanced way across ranks\n2. Forward pass all microbatches first\n3. Then backward pass all microbatches\n4. Use P2P communication between pipeline stages\n5. Handle rank 0 (input), intermediate ranks, and last rank (loss computation)\n\nLet me first look at the test file to understand exactly what's expected.",
+      "type": "thinking"
+    },
+    {
+      "id": "toolu_bdrk_016X5Ma83Vu6UZYnN8VezrmV",
+      "caller": {
+        "type": "direct"
+      },
+      "input": {
+        "command": "find /app -type f | head -50"
+      },
+      "name": "bash",
+      "type": "tool_use"
+    },
+    {
+      "data": "openrouter.reasoning:eyJzaWduYXR1cmUiOiJFdUFGQ2tnSURCQUJHQUlxUU9lZG4wUTRMbnF4NVRKdElHWXF2Ym5QQ2ozc1RXckhRc2VNMTl4Vm9qZExYOHNZSmMxVk13aDJzVVUxa1laY04yUkIrVElhU3hETXgwMDhJMkFRSWdrU0RFN25FY1hxK3NqUklpSkZZUm9NczZwczROb0FtekxsQkI3S0lqQllUb3U2VWZVeXZqbkxldnBmdHBQOFR0dFJrTXJqd3ZBd0dJdFhGbXVNUURTeVYwRDZkOXBhVXVrUUUvMFhCZFFxeFFURmVFZmEyTjlXcUMyVU9DaHpvY3FuSnZjbjVlUGJxbi9YRXZJNC9QZk5tRyt5MGE3V2JiaWMxd0hQMkk0cUsvYTEwUEY4UCtsSkN0dWU1TXVlV3B0bCttd29VK255dTIxUWI0Z2ExcERua1gxMS9LSnBaWlhNMGxwV0dGa3RCblczQ3VnZUJhM1lsZG9qd255aS9zb2VGd1JKOGJ4S2hrZ2FadExMc0xmZTNXSFB2TlFObUFDSVR5OGkrNitTWHZST1ZDT1dkKytIZmVzcnBLVS9BRThMbFJaczBvMXhHc1dYd0tCeVNlSGcrajVkNGIza1hoV0ZsUVY1K0dDZ3FBSWFud0FOL01GRTF3T0dDbG9XR1owK1UrVFhwZ05RVlAwZjBQVXh1ZllsMlZOQ1FYbkxZVHphSGdWa0tGbHlaQ0U4MS9WSGFkWkU1c3lIZTJXeFV6dkhJS0RleHI3TlNwS24vMFpDaWVXNlY2QmljWndpWElsdFcvaVRLbFN3Z0UyQjRGUjZxTXlNay9PS083ZDFuWjF0b1h0YmNuLzNtbWg2T3k4L2J4ZXpZU2JKYStJelhBdDc4Q3IwWW1Bb2hlWkpqdE9DMktvVExKYWVLdis3WmxkWjZJR01hbld2WDZwbnplTnVQZWdwK2hyTmFoMXZTS2xLR00xMHpOTHVNKzYvWGwvSk50S1ppN1pmazJWQU5acDFmMkE5Z0tlOFFyQmpsdkZaSmNOalFINTdjZjJ6NVd0cEpLZUZHUi9Eaks1OEJMcFdyRG1UZSt3alUzTDVWREd2Ui9LWTFIWHFMUU9sOHFPUEJEdVZBaVlQbmNzcHNWbzdEWDBvdjRRWXFNQmM4dHhMT0pOYkdUSkZGeXlQb1lKQ3JpL2g5ZWViSGF5Y2tyVUpCOXJRWnl0czQ2Q0I3bkNSV003bUNpSUxkd2NmbVBwMkVBckE5bWNqQ2JnWW5vQkxIbWlxWVJ0RHVtZmpwZm1xMlhsYzEzbW1DV0N1SlR3cHk5eWdaemdlNUQxY0pJc2VzQmdCIiwidGV4dCI6IkxldCBtZSBhbmFseXplIHRoaXMgdGFzayBjYXJlZnVsbHkuIEkgbmVlZCB0byBpbXBsZW1lbnQgcGlwZWxpbmUgcGFyYWxsZWwgdHJhaW5pbmcgZm9yIGEgTExhTUEgbW9kZWwgdXNpbmcgUHlUb3JjaCB3aXRoIGFuIGFsbC1mb3J3YXJkLWFsbC1iYWNrd2FyZCAoQUZBQikgc2NoZWR1bGluZyBzdHJhdGVneS5cblxuTGV0IG1lIHN0YXJ0IGJ5IHVuZGVyc3RhbmRpbmcgdGhlIHJlcXVpcmVtZW50czpcbjEuIFBhcnRpdGlvbiBtb2RlbCBsYXllcnMgaW4gYSByb3VnaGx5IGJhbGFuY2VkIHdheSBhY3Jvc3MgcmFua3NcbjIuIEZvcndhcmQgcGFzcyBhbGwgbWljcm9iYXRjaGVzIGZpcnN0XG4zLiBUaGVuIGJhY2t3YXJkIHBhc3MgYWxsIG1pY3JvYmF0Y2hlc1xuNC4gVXNlIFAyUCBjb21tdW5pY2F0aW9uIGJldHdlZW4gcGlwZWxpbmUgc3RhZ2VzXG41LiBIYW5kbGUgcmFuayAwIChpbnB1dCksIGludGVybWVkaWF0ZSByYW5rcywgYW5kIGxhc3QgcmFuayAobG9zcyBjb21wdXRhdGlvbilcblxuTGV0IG1lIGZpcnN0IGxvb2sgYXQgdGhlIHRlc3QgZmlsZSB0byB1bmRlcnN0YW5kIGV4YWN0bHkgd2hhdCdzIGV4cGVjdGVkLiIsInR5cGUiOiJyZWFzb25pbmcudGV4dCJ9",
+      "type": "redacted_thinking"
+    }
+  ],
+  "model": "anthropic/claude-4.6-opus-20260205",
+  "role": "assistant",
+  "stop_reason": "tool_use",
+  "stop_sequence": null,
+  "type": "message",
+  "usage": {
+    "cache_creation": null,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "inference_geo": null,
+    "input_tokens": 1922,
+    "output_tokens": 203,
+    "server_tool_use": null,
+    "service_tier": null,
+    "speed": "standard",
+    "cost": 0.014685,
+    "is_byok": false,
+    "cost_details": {
+      "upstream_inference_cost": 0.014685,
+      "upstream_inference_prompt_cost": 0.00961,
+      "upstream_inference_completions_cost": 0.005075
+    }
+  },
+  "provider": "Amazon Bedrock"
+}

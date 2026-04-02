@@ -1,0 +1,41 @@
+{
+  "id": "gen-1775125572-KFUHnJfVc9MMkx18NXWE",
+  "container": null,
+  "content": [
+    {
+      "id": "toolu_bdrk_01KddFVXGBWzCwpwoWFm9uZD",
+      "caller": {
+        "type": "direct"
+      },
+      "input": {
+        "command": "cd /app && python -c \"\nimport mujoco\nmodel = mujoco.MjModel.from_xml_path('model_ref.xml')\nprint('solver enum: 0=PGS, 1=CG, 2=Newton')\nprint('integrator enum: 0=Euler, 1=implicit, 2=implicitfast, 3=RK4')\nprint('cone enum: 0=pyramidal, 1=elliptic')\n# Check contacts\ndata = mujoco.MjData(model)\nmujoco.mj_forward(model, data)\nprint('ncon:', data.ncon)\nprint('condim per geom:')\nfor i in range(model.ngeom):\n    print(f'  geom {i}: condim={model.geom_condim[i]}')\n\" 2>&1 | head -30\n"
+      },
+      "name": "bash",
+      "type": "tool_use"
+    }
+  ],
+  "model": "anthropic/claude-4.6-opus-20260205",
+  "role": "assistant",
+  "stop_reason": "tool_use",
+  "stop_sequence": null,
+  "type": "message",
+  "usage": {
+    "cache_creation": null,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "inference_geo": null,
+    "input_tokens": 3974,
+    "output_tokens": 263,
+    "server_tool_use": null,
+    "service_tier": null,
+    "speed": "standard",
+    "cost": 0.026445,
+    "is_byok": false,
+    "cost_details": {
+      "upstream_inference_cost": 0.026445,
+      "upstream_inference_prompt_cost": 0.01987,
+      "upstream_inference_completions_cost": 0.006575
+    }
+  },
+  "provider": "Amazon Bedrock"
+}

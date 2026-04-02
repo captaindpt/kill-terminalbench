@@ -1,0 +1,41 @@
+{
+  "id": "gen-1775119228-ej1bTRfjBBOMijljmlHX",
+  "container": null,
+  "content": [
+    {
+      "id": "toolu_bdrk_01SYDuvzkBz5KANVQYNcdQLQ",
+      "caller": {
+        "type": "direct"
+      },
+      "input": {
+        "command": "python3 -c \"\nimport math\n\n# I'll do a manual optimization without numpy/scipy\n\ndef screen_to_uv(px, py):\n    u = (2*(px+0.5)/2400 - 1) * 4.0/3.0\n    v = 1.0 - 2*(py+0.5)/1800\n    return u, v\n\ndef disc(u, v, cy, cz, R):\n    dd = u*u + v*v + 1\n    dc = v*cy - cz\n    cc = cy*cy + cz*cz\n    return dc*dc - dd*(cc - R*R)\n\nboundaries = [\n    (810, 1178, 1221),\n    (830, 1114, 1285),\n    (850, 1084, 1315),\n    (870, 1063, 1336),\n    (900, 1041, 1358),\n    (930, 1027, 1372),\n    (960, 1019, 1380),\n    (990, 1016, 1383),\n    (1000, 1016, 1383),\n    (1050, 1025, 1374),\n    (1100, 1050, 1349),\n    (1150, 1103, 1296),\n    (1175, 1168, 1231),\n]\n\ndef objective(cy, cz, R):\n    err = 0\n    for py, left, right in boundaries:\n        u_r = (2*(right+1)/2400 - 1) * 4.0/3.0\n        v = 1.0 - 2*(py+0.5)/1800\n        d = disc(u_r, v, cy, cz, R)\n        err += d*d\n        u_l = (2*left/2400 - 1) * 4.0/3.0\n        d = disc(u_l, v, cy, cz, R)\n        err += d*d\n    return err\n\n# Manual Nelder-Mead / gradient-free optimization\n# Initial guess\nbest_cy, best_cz, best_R = -0.1, -5.0, 1.0\nbest_err = objective(best_cy, best_cz, best_R)\n\n# Grid search first\nfor cy_try in [x * 0.1 for x in range(-20, 5)]:\n    for cz_try in [x * 0.5 for x in range(-20, -1)]:\n        for R_try in [x * 0.1 for x in range(1, 30)]:\n            err = objective(cy_try, cz_try, R_try)\n            if err < best_err:\n                best_err = err\n                best_cy, best_cz, best_R = cy_try, cz_try, R_try\n\nprint(f'After grid: cy={best_cy:.4f}, cz={best_cz:.4f}, R={best_R:.4f}, err={best_err:.4e}')\n\n# Refine with smaller steps\nfor iteration in range(5):\n    step_cy, step_cz, step_R = 0.05 / (2**iteration), 0.25 / (2**iteration), 0.05 / (2**iteration)\n    improved = True\n    while improved:\n        improved = False\n        for dcy in [-step_cy, 0, step_cy]:\n            for dcz in [-step_cz, 0, step_cz]:\n                for dR in [-step_R, 0, step_R]:\n                    if dcy == 0 and dcz == 0 and dR == 0:\n                        continue\n                    cy_t = best_cy + dcy\n                    cz_t = best_cz + dcz\n                    R_t = best_R + dR\n                    err = objective(cy_t, cz_t, R_t)\n                    if err < best_err:\n                        best_err = err\n                        best_cy, best_cz, best_R = cy_t, cz_t, R_t\n                        improved = True\n\nprint(f'After refine: cy={best_cy:.6f}, cz={best_cz:.6f}, R={best_R:.6f}, err={best_err:.6e}')\n\n# Even finer refinement\nfor iteration in range(8):\n    step = 0.001 / (2**iteration)\n    improved = True\n    while improved:\n        improved = False\n        for dcy in [-step, 0, step]:\n            for dcz in [-step, 0, step]:\n                for dR in [-step, 0, step]:\n                    if dcy == 0 and dcz == 0 and dR == 0:\n                        continue\n                    cy_t = best_cy + dcy\n                    cz_t = best_cz + dcz\n                    R_t = best_R + dR\n                    err = objective(cy_t, cz_t, R_t)\n                    if err < best_err:\n                        best_err = err\n                        best_cy, best_cz, best_R = cy_t, cz_t, R_t\n                        improved = True\n\nprint(f'Final: cy={best_cy:.8f}, cz={best_cz:.8f}, R={best_R:.8f}, err={best_err:.8e}')\nprint(f'H = R - cy = {best_R - best_cy:.8f}')\nprint(f'Sphere apparent center v = {best_cy/(-best_cz):.8f}')\n\n# Verify\nfor py, left, right in boundaries:\n    u_r = (2*(right+1)/2400 - 1) * 4.0/3.0\n    u_l = (2*left/2400 - 1) * 4.0/3.0\n    v = 1.0 - 2*(py+0.5)/1800\n    d_r = disc(u_r, v, best_cy, best_cz, best_R)\n    d_l = disc(u_l, v, best_cy, best_cz, best_R)\n    print(f'  y={py}: disc_l={d_l:.6e}, disc_r={d_r:.6e}')\n\" 2>&1\n"
+      },
+      "name": "bash",
+      "type": "tool_use"
+    }
+  ],
+  "model": "anthropic/claude-4.6-opus-20260205",
+  "role": "assistant",
+  "stop_reason": "tool_use",
+  "stop_sequence": null,
+  "type": "message",
+  "usage": {
+    "cache_creation": null,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "inference_geo": null,
+    "input_tokens": 10564,
+    "output_tokens": 1642,
+    "server_tool_use": null,
+    "service_tier": null,
+    "speed": "standard",
+    "cost": 0.09387,
+    "is_byok": false,
+    "cost_details": {
+      "upstream_inference_cost": 0.09387,
+      "upstream_inference_prompt_cost": 0.05282,
+      "upstream_inference_completions_cost": 0.04105
+    }
+  },
+  "provider": "Amazon Bedrock"
+}

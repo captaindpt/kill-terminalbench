@@ -1,0 +1,41 @@
+{
+  "id": "gen-1775095669-A6HGvg2GpOLcZzTvkPi3",
+  "container": null,
+  "content": [
+    {
+      "id": "toolu_bdrk_01JkvjcnfCT4QgJUb7HTGixc",
+      "caller": {
+        "type": "direct"
+      },
+      "input": {
+        "command": "python3 -c \"\nfrom datasets import load_dataset\nds = load_dataset('ryanmarten/OpenThoughts-1k-sample', split='train')\n# Look at first example\nprint(type(ds[0]['conversations']))\nprint(len(ds[0]['conversations']))\nfor c in ds[0]['conversations']:\n    print(c.keys(), str(c.get('value',''))[:100])\nprint('---')\nprint(ds[0]['system'][:200])\n\" 2>&1"
+      },
+      "name": "bash",
+      "type": "tool_use"
+    }
+  ],
+  "model": "anthropic/claude-4.6-opus-20260205",
+  "role": "assistant",
+  "stop_reason": "tool_use",
+  "stop_sequence": null,
+  "type": "message",
+  "usage": {
+    "cache_creation": null,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "inference_geo": null,
+    "input_tokens": 2663,
+    "output_tokens": 169,
+    "server_tool_use": null,
+    "service_tier": null,
+    "speed": "standard",
+    "cost": 0.01754,
+    "is_byok": false,
+    "cost_details": {
+      "upstream_inference_cost": 0.01754,
+      "upstream_inference_prompt_cost": 0.013315,
+      "upstream_inference_completions_cost": 0.004225
+    }
+  },
+  "provider": "Amazon Bedrock"
+}

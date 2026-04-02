@@ -1,0 +1,41 @@
+{
+  "id": "gen-1775114490-Fs0xXvzf3ou76WXkt1mp",
+  "container": null,
+  "content": [
+    {
+      "id": "toolu_bdrk_01WiPmYj3jPJ82u1TLanXWha",
+      "caller": {
+        "type": "direct"
+      },
+      "input": {
+        "command": "# Check that postfix is running and mailman LMTP is available\npostfix status 2>&1\necho \"===\"\n# Check if mailman runner is active\nps aux | grep -i mailman 2>&1\necho \"===\"\n# Check LMTP port\npython3 -c \"\nimport socket\ns = socket.socket()\ntry:\n    s.connect(('127.0.0.1', 8024))\n    print('LMTP port 8024: OPEN')\n    s.close()\nexcept Exception as e:\n    print('LMTP port 8024:', e)\n\" 2>&1"
+      },
+      "name": "bash",
+      "type": "tool_use"
+    }
+  ],
+  "model": "anthropic/claude-4.6-opus-20260205",
+  "role": "assistant",
+  "stop_reason": "tool_use",
+  "stop_sequence": null,
+  "type": "message",
+  "usage": {
+    "cache_creation": null,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "inference_geo": null,
+    "input_tokens": 5574,
+    "output_tokens": 202,
+    "server_tool_use": null,
+    "service_tier": null,
+    "speed": "standard",
+    "cost": 0.03292,
+    "is_byok": false,
+    "cost_details": {
+      "upstream_inference_cost": 0.03292,
+      "upstream_inference_prompt_cost": 0.02787,
+      "upstream_inference_completions_cost": 0.00505
+    }
+  },
+  "provider": "Amazon Bedrock"
+}
