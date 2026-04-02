@@ -22,13 +22,15 @@ The gap is largely infrastructure: 23 of 47 failures were runtime errors, not wr
 
 All results from jobs run on 2026-04-02, using commit `1ccb471` (batches 1-2) and `52072b5` (batches 3-5).
 
-| Batch | Job | Tasks | Passed | Rate | Notes |
-|-------|-----|-------|--------|------|-------|
-| 1 (canary) | `2026-04-02__02-07-04` | 8 | 7 | 87.5% | Reliable tasks, 1 model error |
-| 2 | `2026-04-02__02-21-26` | 24 | 18 | 75.0% | 3 fails, 3 infra errors |
-| 3 | `2026-04-02__03-57-51` | 25 | 7 | 28.0% | Hard tasks + retries of never-passed |
-| 4 | `2026-04-02__06-56-25` | 25 | 9 | 36.0% | Mixed fresh tasks |
-| 5 | `2026-04-02__10-13-49` | 7 | 1 | 14.3% | Final 7, heavy compute tasks |
+| Batch | Job Path | Tasks | Passed | Rate | Notes |
+|-------|----------|-------|--------|------|-------|
+| 1 (canary) | `jobs/2026-04-02__02-07-04/` | 8 | 7 | 87.5% | Reliable tasks, 1 model error |
+| 2 | `jobs/2026-04-02__02-21-26/` | 24 | 18 | 75.0% | 3 fails, 3 infra errors |
+| 3 | `jobs/2026-04-02__03-57-51/` | 25 | 7 | 28.0% | Hard tasks + retries of never-passed |
+| 4 | `jobs/2026-04-02__06-56-25/` | 25 | 9 | 36.0% | Mixed fresh tasks |
+| 5 | `jobs/2026-04-02__10-13-49/` | 7 | 1 | 14.3% | Final 7, heavy compute tasks |
+
+Per-trial results are in `jobs/<job>/<task>__<id>/result.json` with reward at `verifier_result.rewards.reward` (1.0 = pass, 0.0 = fail). Episode logs are in `jobs/<job>/<task>__<id>/agent/episodes/`.
 
 ### Failure Breakdown (47 failures)
 
@@ -145,6 +147,6 @@ Batches 1-5 cover all 89 official TB2 scored tasks with no overlaps.
 
 ## What's Next
 
-1. **Top up OpenRouter credits** and run `./run-retry-all-failures.sh` — 47 tasks with 6 CPUs, 16GB RAM, adaptive thinking, n=1
+1. **Run `./run-retry-all-failures.sh`** — 47 tasks with 6 CPUs, 16GB RAM, adaptive thinking, n=1
 2. **Run k=3 or k=5 attempts** on flaky tasks (ForgeCode uses 5 trials per task for their leaderboard score)
 3. **Investigate the 18 verifier fails** — most are subtle model reasoning errors (signed vs unsigned ints, off-by-one, reversed causal edges) that won't be fixed by harness changes
