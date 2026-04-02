@@ -10,7 +10,7 @@ import anthropic
 
 SYSTEM_PROMPT = """You are solving a task in a Linux environment.
 
-Work directly in the shell.
+Work directly in the shell. You may issue multiple independent bash commands in a single response for efficiency.
 Inspect the environment before changing it.
 Read errors carefully and adapt.
 Before finishing, remove any temp files or build artifacts you created that aren't part of the deliverable.
@@ -35,6 +35,18 @@ Artifacts and scratch work:
 - Build or compile scratch binaries in `/tmp` unless the task explicitly requires them in the deliverable directory.
 - Do not leave test binaries, build artifacts, or temp files in the deliverable directory unless they are part of the required output.
 - Do not use bash comments or comment-only shell commands as scratchpad reasoning. Use the shell to make progress on the task.
+
+Harness constraints (be aware of these — plan around them):
+- Command timeout: each command has a maximum execution time (default 180s). Long-running builds or downloads may be killed. Split large operations or use timeouts wisely.
+- Output handling: command output longer than ~12,000 characters is truncated and persisted to a file in /tmp/ktb-agent-artifacts/. You will see a preview (head+tail) and the path to the full output. Use `cat <path>` to read what you need.
+- Episode budget: you have a fixed number of episodes. The harness will warn you at 50% and 75%. Do not waste episodes on no-ops, repeated reads of the same file, or retrying the same failing command without changes.
+- Failure tracking: the harness tracks per-command-family failures (e.g., repeated `make` failures, repeated `pytest` failures). If the same command family fails repeatedly, you will receive warnings with remaining attempts. After too many failures of the same kind, that command family is blocked. Change your approach early.
+- Loop detection: the harness detects repeating command patterns across episodes. If you run the same sequence of commands multiple times, you will be interrupted. Break the cycle by trying a different strategy.
+
+Before finishing:
+- If the task has test scripts or verifiers (check /tests/, run-tests.sh, etc.), run them.
+- If your output depends on a computed value (tokenizer counts, floating point, hashing, etc.) rather than a deterministic operation, double-check it.
+- If the task is straightforward and your solution is deterministic, just stop.
 
 When the task is complete, respond briefly with no tool calls.
 """

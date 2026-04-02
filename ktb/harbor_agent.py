@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import os
 import re
 from pathlib import Path
 from typing import Any
@@ -20,9 +21,11 @@ INFRA_BLOCKERS = (
     "sessionnotcreatedexception: message: session not created: chrome instance exited",
 )
 
-# Loop detection: track recent (command, output_hash) pairs.
-# If the same set of commands repeats 3 times, nudge the agent.
-LOOP_WINDOW = 3  # consecutive episodes to compare
+# ---------------------------------------------------------------------------
+# Loop detection: sequence-aware pattern matching on recent episodes.
+# Detects both identical repeats (A,A,A) and cycling patterns (A,B,A,B,A,B).
+# ---------------------------------------------------------------------------
+LOOP_MIN_REPS = 3  # minimum repetitions to trigger
 
 
 def _usage_value(usage: Any, field: str) -> int | float:
@@ -37,17 +40,113 @@ def _commands_signature(tool_results: list[ToolExecution]) -> tuple[tuple[str, i
     return tuple((t.command.strip(), t.return_code) for t in tool_results)
 
 
-def _detect_loop(history: list[tuple[tuple[str, int], ...]], window: int = LOOP_WINDOW) -> bool:
-    """True if the last `window` episodes have identical command signatures."""
-    if len(history) < window:
-        return False
-    recent = history[-window:]
-    return all(sig == recent[0] for sig in recent) and len(recent[0]) > 0
+def _detect_repeating_pattern(
+    history: list[tuple[tuple[str, int], ...]],
+    max_pattern_len: int = 3,
+    min_reps: int = LOOP_MIN_REPS,
+) -> int | None:
+    """Detect repeating patterns in episode signature history.
+
+    Checks pattern lengths 1..max_pattern_len, working backwards from the tail.
+    Returns the number of consecutive repetitions if a pattern repeats >= min_reps
+    times, or None if no pattern is found.
+
+    Pattern length 1: A, A, A          (identical episodes)
+    Pattern length 2: A, B, A, B, A, B (two-step cycle)
+    Pattern length 3: A, B, C, A, B, C (three-step cycle)
+    """
+    n = len(history)
+    for plen in range(1, max_pattern_len + 1):
+        if n < plen * min_reps:
+            continue
+        # Extract the candidate pattern from the tail
+        pattern = history[-plen:]
+        # Count how many times it repeats backwards
+        reps = 1
+        pos = n - plen * 2
+        while pos >= 0:
+            chunk = history[pos : pos + plen]
+            if chunk == pattern:
+                reps += 1
+                pos -= plen
+            else:
+                break
+        if reps >= min_reps:
+            return reps
+    return None
 
 
 def _is_infra_blocker(output: str) -> bool:
     lowered = output.lower()
     return any(marker in lowered for marker in INFRA_BLOCKERS)
+
+
+# ---------------------------------------------------------------------------
+# Per-command-family failure budget with recovery.
+# ---------------------------------------------------------------------------
+_CMD_FAMILY_RE = re.compile(
+    r'^(?:sudo\s+)?'                  # optional sudo
+    r'(?:(?:[\w]+=\S+\s+)*)'         # optional env vars
+    r'([\w./-]+)'                     # the actual command name
+)
+
+MAX_COMMAND_FAMILY_FAILURES = 5  # hard-stop threshold per family
+
+
+def _command_family(command: str) -> str:
+    """Normalize a command to its 'family' for failure tracking.
+
+    Groups by the base command name: python, cargo, gcc, make, pytest, etc.
+    Multi-line commands use the first meaningful line.
+    """
+    for raw_line in command.splitlines():
+        line = raw_line.strip()
+        if not line or line.startswith("#"):
+            continue
+        m = _CMD_FAMILY_RE.match(line)
+        if m:
+            # Normalize path-based commands to basename
+            return os.path.basename(m.group(1))
+        return line.split()[0] if line.split() else "unknown"
+    return "unknown"
+
+
+class _FailureBudget:
+    """Track per-command-family failures with reset-on-success."""
+
+    def __init__(self, limit: int = MAX_COMMAND_FAMILY_FAILURES):
+        self._counts: dict[str, int] = {}
+        self._limit = limit
+
+    def record(self, family: str, success: bool) -> None:
+        if success:
+            self._counts.pop(family, None)
+        else:
+            self._counts[family] = self._counts.get(family, 0) + 1
+
+    def remaining(self, family: str) -> int:
+        return max(0, self._limit - self._counts.get(family, 0))
+
+    def exhausted(self, family: str) -> bool:
+        return self._counts.get(family, 0) >= self._limit
+
+    def any_exhausted(self) -> str | None:
+        """Return the first family that has hit its limit, or None."""
+        for family, count in self._counts.items():
+            if count >= self._limit:
+                return family
+        return None
+
+    def nudge_text(self, family: str) -> str:
+        remaining = self.remaining(family)
+        count = self._counts.get(family, 0)
+        return (
+            f"[Harness] `{family}` has failed {count} time(s). "
+            f"{remaining} attempt(s) remaining before this command family is blocked. "
+            f"Before retrying: 1) Pinpoint exactly what went wrong. "
+            f"2) Explain why — wrong flags, missing dependency, bad path? "
+            f"3) Only then make the corrected attempt."
+        )
 
 
 # --- No-op and re-read detection helpers ---
@@ -84,6 +183,53 @@ def _extract_read_paths(tool_results: list[ToolExecution]) -> set[str]:
     return paths
 
 
+class _ThinkingBudget:
+    """Adaptive thinking budget that responds to episode progress and failures.
+
+    Strategy:
+    - Early episodes (first 20%): high budget for planning and understanding
+    - Mid episodes (20-70%): standard budget for execution
+    - Late episodes (70%+): low budget to save tokens for action
+    - After failures: temporarily bump budget for re-evaluation
+    """
+
+    def __init__(
+        self,
+        high: int = 10000,
+        standard: int = 5000,
+        low: int = 2000,
+    ):
+        self._high = high
+        self._standard = standard
+        self._low = low
+        self._failure_bump_episodes = 0  # episodes remaining with boosted budget
+
+    def bump_for_failure(self, episodes: int = 2) -> None:
+        """Temporarily increase budget after a failure."""
+        self._failure_bump_episodes = max(self._failure_bump_episodes, episodes)
+
+    def get(self, episode: int, max_episodes: int) -> int:
+        # Failure bump overrides phase-based budget
+        if self._failure_bump_episodes > 0:
+            self._failure_bump_episodes -= 1
+            return self._high
+
+        pct = episode / max_episodes
+        if pct < 0.20:
+            return self._high
+        elif pct < 0.70:
+            return self._standard
+        else:
+            return self._low
+
+    def config(self, episode: int, max_episodes: int) -> dict:
+        """Return the thinking config dict for the API call."""
+        return {
+            "type": "enabled",
+            "budget_tokens": self.get(episode, max_episodes),
+        }
+
+
 class OpenRouterHarborAgent(BaseAgent):
     @staticmethod
     def name() -> str:
@@ -96,6 +242,9 @@ class OpenRouterHarborAgent(BaseAgent):
         max_episodes: int = 75,
         command_timeout: int = 300,
         temperature: float = 0.7,
+        thinking_high: int = 10000,
+        thinking_standard: int = 5000,
+        thinking_low: int = 2000,
         **kwargs,
     ):
         super().__init__(logs_dir=logs_dir, model_name=model_name, **kwargs)
@@ -103,6 +252,11 @@ class OpenRouterHarborAgent(BaseAgent):
         self._max_episodes = max_episodes
         self._command_timeout = command_timeout
         self._temperature = temperature
+        self._thinking = _ThinkingBudget(
+            high=thinking_high,
+            standard=thinking_standard,
+            low=thinking_low,
+        )
 
     def version(self) -> str | None:
         return "0.1.0"
@@ -155,6 +309,7 @@ class OpenRouterHarborAgent(BaseAgent):
         episode_signatures: list[tuple[tuple[str, int], ...]] = []
         noop_streak = 0
         file_read_streak: dict[str, int] = {}
+        failure_budget = _FailureBudget()
 
         # Extract candidate deliverable paths from the instruction
         deliverable_paths = list(dict.fromkeys(_DELIVERABLE_PATH_RE.findall(instruction)))
@@ -163,7 +318,8 @@ class OpenRouterHarborAgent(BaseAgent):
         for episode in range(self._max_episodes):
             model_attempts = 0
             try:
-                current_max_tokens = 8192
+                current_max_tokens = 16000
+                thinking_config = self._thinking.config(episode, self._max_episodes)
                 while True:
                     try:
                         response = self._client.messages.create(
@@ -172,7 +328,8 @@ class OpenRouterHarborAgent(BaseAgent):
                             system=SYSTEM_PROMPT,
                             tools=TOOLS,
                             messages=messages,
-                            temperature=self._temperature,
+                            temperature=1.0,  # required by extended thinking API
+                            thinking=thinking_config,
                         )
                     except Exception as exc:
                         if (
@@ -196,6 +353,8 @@ class OpenRouterHarborAgent(BaseAgent):
                         current_max_tokens = 65536
                         model_attempts += 1
                         continue
+                    # thinking content blocks must be preserved in conversation
+                    # history for extended thinking to work across turns
                     break
             except Exception as exc:
                 self._update_context(
@@ -229,7 +388,7 @@ class OpenRouterHarborAgent(BaseAgent):
                         "tools": TOOLS,
                         "messages": messages,
                         "model": self.model_name,
-                        "temperature": self._temperature,
+                        "thinking": thinking_config,
                     },
                     indent=2,
                     default=str,
@@ -384,14 +543,48 @@ class OpenRouterHarborAgent(BaseAgent):
                 })
                 file_read_streak[reread_path] = 0  # Reset after nudge
 
-            # --- Loop detection ---
-            episode_signatures.append(_commands_signature(tool_results))
-            if _detect_loop(episode_signatures):
+            # --- Per-command failure budget ---
+            failure_nudges: list[str] = []
+            for t in tool_results:
+                family = _command_family(t.command)
+                success = t.return_code == 0
+                failure_budget.record(family, success)
+                if not success and failure_budget.remaining(family) <= 2 and failure_budget.remaining(family) > 0:
+                    failure_nudges.append(failure_budget.nudge_text(family))
+
+            blocked_family = failure_budget.any_exhausted()
+            if blocked_family:
                 messages.append({
                     "role": "user",
                     "content": (
-                        "[Harness] You have run the same commands 3 episodes in a row with identical results. "
-                        "Either take a different action to make progress, or if the task is already complete, "
+                        f"[Harness] Command family `{blocked_family}` has exhausted its failure budget "
+                        f"({MAX_COMMAND_FAMILY_FAILURES} consecutive failures). "
+                        "You must use a fundamentally different approach. "
+                        "Do not retry this command family without significant changes to your strategy."
+                    ),
+                })
+                self._thinking.bump_for_failure(2)
+            elif failure_nudges:
+                messages.append({
+                    "role": "user",
+                    "content": "\n".join(failure_nudges),
+                })
+
+            # Bump thinking budget when multiple commands fail in one episode
+            episode_failures = sum(1 for t in tool_results if t.return_code != 0)
+            if episode_failures >= 2:
+                self._thinking.bump_for_failure(1)
+
+            # --- Sequence-aware loop detection ---
+            episode_signatures.append(_commands_signature(tool_results))
+            reps = _detect_repeating_pattern(episode_signatures)
+            if reps is not None:
+                messages.append({
+                    "role": "user",
+                    "content": (
+                        f"[Harness] Repeating pattern detected: the same command sequence has repeated "
+                        f"{reps} times. You are not making progress. "
+                        "Take a fundamentally different approach, or if the task is already complete, "
                         "respond with no tool calls to finish."
                     ),
                 })

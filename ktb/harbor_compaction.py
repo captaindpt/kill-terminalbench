@@ -54,7 +54,9 @@ def _env_int(name: str, default: int) -> int:
         return default
 
 
-COMPACTION_TRIGGER_INPUT_TOKENS = _env_int("KTB_COMPACTION_TRIGGER_INPUT_TOKENS", 187000)
+COMPACTION_TRIGGER_INPUT_TOKENS = _env_int("KTB_COMPACTION_TRIGGER_INPUT_TOKENS", 100000)
+COMPACTION_TRIGGER_TURNS = _env_int("KTB_COMPACTION_TRIGGER_TURNS", 20)
+COMPACTION_TRIGGER_MESSAGES = _env_int("KTB_COMPACTION_TRIGGER_MESSAGES", 50)
 COMPACTION_RECENT_MESSAGES = _env_int("KTB_COMPACTION_RECENT_MESSAGES", 8)
 COMPACTION_SUMMARY_TOKENS = _env_int("KTB_COMPACTION_SUMMARY_TOKENS", 4000)
 COMPACTION_MIN_EPISODE_GAP = _env_int("KTB_COMPACTION_MIN_EPISODE_GAP", 3)
@@ -68,13 +70,18 @@ def should_compact(
     episode: int,
     last_compaction_episode: int | None,
 ) -> bool:
-    if last_input_tokens < COMPACTION_TRIGGER_INPUT_TOKENS:
-        return False
     if len(messages) <= COMPACTION_RECENT_MESSAGES + 2:
         return False
-    if last_compaction_episode is None:
+    if last_compaction_episode is not None and (episode - last_compaction_episode) < COMPACTION_MIN_EPISODE_GAP:
+        return False
+    # Trigger on any of: token count, turn count, or message count
+    if last_input_tokens >= COMPACTION_TRIGGER_INPUT_TOKENS:
         return True
-    return (episode - last_compaction_episode) >= COMPACTION_MIN_EPISODE_GAP
+    if episode >= COMPACTION_TRIGGER_TURNS:
+        return True
+    if len(messages) >= COMPACTION_TRIGGER_MESSAGES:
+        return True
+    return False
 
 
 def is_prompt_too_long_error(exc: Exception) -> bool:
